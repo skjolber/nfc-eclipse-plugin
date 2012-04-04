@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="NDEF editor"
+            extensions="ndef"
+            icon="icons/icon.gif"
+            contributorClass="com.antares.nfc.plugin.NdefMultiPageEditorContributor"
+            class="com.antares.nfc.plugin.NdefMultiPageEditor"
+            id="com.antares.nfc.plugin.NdefMultiPageEditor" default="true">
+            
+            <contentTypeBinding contentTypeId="com.antares.nfc.plugin.content.ndef"/>  
+      </editor>
+   </extension>
+
+	<extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            file-extensions="ndef"
+            id="com.antares.nfc.plugin.content.ndef"
+            name="NDEF File"
+            priority="normal">
+      </content-type>
+   </extension>
+ <extension
+       point="org.eclipse.ui.newWizards">
+    <category
+          id="NFC"
+          name="Near Field Communications">
+    </category>
+    <wizard
+          category="NFC"
+          class="com.antares.nfc.plugin.NewNdefFileWizard"
+          icon="icons/icon.gif"
+          id="com.antares.nfc.plugin.NewNdefFileWizard"
+          name="NDEF File">
+    </wizard>
+ </extension>
+
+</plugin>

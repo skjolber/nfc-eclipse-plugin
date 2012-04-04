@@ -1,0 +1,47 @@
+<project name="NFCTools" basedir="." default="make">
+
+    <property name="git.dir"     value="./../../nfctools-fork"/>
+
+    <property name="src.api.dir"     value="${git.dir}/nfctools-api/src/main/java"/>
+	<property name="src.ndef.dir"     value="${git.dir}/nfctools-ndef/src/main/java"/>
+
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="./lib"/>
+    <property name="jar.filename" 	value="nfctools"/>
+
+    <property name="src.dir"     value="${build.dir}/src"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${src.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${src.dir}"/>
+
+      	 <copy todir="${src.dir}">
+      	 	<fileset dir="${src.api.dir}"/>
+      	 	<fileset dir="${src.ndef.dir}"/>
+      	 </copy>
+    	
+        <javac srcdir="${src.dir}" destdir="${classes.dir}"/>
+       	 <copy todir="${classes.dir}">
+       	 	<fileset dir="${src.dir}" excludes="**/*.java"/>
+       	 </copy>
+       	
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${jar.filename}.jar" basedir="${classes.dir}">
+            <manifest>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="make" depends="jar,clean">
+    </target>
+	
+</project>

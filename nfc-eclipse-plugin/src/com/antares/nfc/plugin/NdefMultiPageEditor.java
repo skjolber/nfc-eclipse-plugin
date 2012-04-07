@@ -48,6 +48,8 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
@@ -80,14 +82,28 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 
 	public void createBinaryQRPage() {
 		Composite composite = new Composite(getContainer(), SWT.NONE);
-		FillLayout layout = new FillLayout();
-		composite.setLayout(layout);
 		composite.setBackground(new Color(Display.getDefault(), 0xFF, 0xFF, 0xFF));
-		binaryQRLabel = new Label(composite, SWT.NONE);
+		
 
-		composite.addControlListener(new ControlAdapter() {
+		GridLayout gridLayout = new GridLayout();
+		gridLayout.numColumns = 1;
+		
+		composite.setLayout(gridLayout);
+
+		binaryQRLabel = new Label(composite, SWT.NONE);
+		
+		GridData gridData = new GridData();
+		gridData.horizontalAlignment = GridData.FILL;
+		gridData.verticalAlignment = GridData.FILL;
+		gridData.grabExcessHorizontalSpace = true;
+		gridData.grabExcessVerticalSpace = true;
+		gridData.horizontalSpan = 2;
+		binaryQRLabel.setLayoutData(gridData);
+
+		
+		binaryQRLabel.addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
-				refreshBinaryQR();
+               	refreshBinaryQR();
 			}
 		});
 
@@ -340,7 +356,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	
 	public void refreshBinaryQR() {
 
-		Point size = binaryQRLabel.getParent().getSize();
+		Point size = binaryQRLabel.getSize();
 
 		try {
 			binaryQRLabel.setImage(modelOperator.toBinaryQRImage(size.x, size.y, 0, 0));

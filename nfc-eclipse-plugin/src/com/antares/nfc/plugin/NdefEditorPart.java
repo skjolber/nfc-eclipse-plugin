@@ -49,8 +49,11 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.IEditorInput;
@@ -154,14 +157,27 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	@Override
 	public void createPartControl(Composite composite) {
 		
-		composite.setLayout(new FillLayout());
-		composite.setBackground(new Color(Display.getDefault(), 0xFF, 0xFF, 0xFF));
+		GridLayout gridLayout = new GridLayout();
+		gridLayout.numColumns = 3;
+		
+		composite.setLayout(gridLayout);
+		composite.setBackground(new Color(composite.getDisplay(), 0xFF, 0xFF, 0xFF));
 
 		treeViewer = new TreeViewer(composite, SWT.BORDER
 				| SWT.FULL_SELECTION);
 		treeViewer.getTree().setLinesVisible(true);
 		treeViewer.getTree().setHeaderVisible(true);
 				
+		GridData gridData = new GridData();
+		
+		gridData.horizontalAlignment = GridData.FILL;
+		gridData.verticalAlignment = GridData.FILL;
+		gridData.grabExcessHorizontalSpace = true;
+		gridData.grabExcessVerticalSpace = true;
+		gridData.horizontalSpan = 2;
+
+		treeViewer.getTree().setLayoutData(gridData);
+
 		TreeViewerFocusCellManager focusCellManager = new TreeViewerFocusCellManager(treeViewer,new FocusCellOwnerDrawHighlighter(treeViewer));
 		ColumnViewerEditorActivationStrategy actSupport = new ColumnViewerEditorActivationStrategy(treeViewer) {
 			@Override
@@ -178,7 +194,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 				| ColumnViewerEditor.TABBING_MOVE_TO_ROW_NEIGHBOR
 				| ColumnViewerEditor.TABBING_VERTICAL | ColumnViewerEditor.KEYBOARD_ACTIVATION);
 		
-		TreeViewerColumn column = new TreeViewerColumn(treeViewer, SWT.NONE);
+		TreeViewerColumn column = new TreeViewerColumn(treeViewer, 0, SWT.NONE);
 		column.getColumn().setWidth(200);
 		column.getColumn().setMoveable(true);
 		column.getColumn().setText("Record");
@@ -190,7 +206,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 			}
 
 		});
-
+		
 		column = new TreeViewerColumn(treeViewer, SWT.NONE);
 		column.getColumn().setWidth(200);
 		column.getColumn().setMoveable(true);

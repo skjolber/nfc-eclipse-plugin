@@ -4,8 +4,11 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="fork-nfctools-ndef-test"/>
+	<classpathentry excluding="org/nfctools/scio/" kind="src" path="fork-nfctools-api"/>
+	<classpathentry kind="src" path="fork-nfctools-ndef"/>
+	<classpathentry kind="src" path="src-zxing-javase"/>
+	<classpathentry kind="src" path="zxing-binaryqr"/>
+	<classpathentry kind="src" path="zxing-core"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry exported="true" kind="lib" path="lib/nfctools.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/binaryqr.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

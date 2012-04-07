@@ -75,7 +75,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 	@Override
 	protected boolean canEdit(Object element) {
-		return element instanceof NdefRecordModelProperty;
+		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord;
 	}
 
 	@Override
@@ -183,6 +183,12 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			}
 			// default to empty value if no value
 			return ndefRecordModelProperty.getValue();
+		} else if(element instanceof NdefRecordModelRecord) {
+			NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
+			
+			Record record = ndefRecordModelRecord.getRecord();
+			
+			return record.getKey();
 		}
 		
 		return element.toString();
@@ -192,232 +198,250 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	protected void setValue(Object element, Object value) {
 		Activator.info("Set element " + element + " value " + value + ", currently have " + getValue(element));
 
-		if(element instanceof NdefRecordModelProperty) {
-			NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
-			
-			NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelProperty.getParent();
-			
-			Record record = parent.getRecord();
-			
+
+		if(element instanceof NdefRecordModelNode) {
 			boolean change = false;
+
+			NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
 			
-			if(record instanceof ActionRecord) {
-				ActionRecord actionRecord = (ActionRecord)record;
-				
-				Action[] values = Action.values();
-				
-				Integer index = (Integer)value;
-				
-				Action action = values[index.intValue()];
-				
-				if(action != actionRecord.getAction()) {
-					actionRecord.setAction(action);
+			NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelNode.getParent();
 
-					// update property as well
-					ndefRecordModelProperty.setValue(actionRecord.getAction().name());
-					
-					change = true;
-				}
-			} else if(record instanceof TextRecord) {
-				// handle language
-				TextRecord textRecord = (TextRecord)record;
+			if(element instanceof NdefRecordModelProperty) {
+				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
 				
-				int propertyIndex  = parent.indexOf(ndefRecordModelProperty);
-				if(propertyIndex == 0) {
-					String stringValue = (String)value;
+				Record record = parent.getRecord();
+				
+				if(record instanceof ActionRecord) {
+					ActionRecord actionRecord = (ActionRecord)record;
 					
-					if(!stringValue.equals(textRecord.getText())) {
-						textRecord.setText(stringValue);
-						
-						ndefRecordModelProperty.setValue(textRecord.getText());
-						
-						change = true;
-					}
-				} else if(propertyIndex == 1) {
+					Action[] values = Action.values();
+					
 					Integer index = (Integer)value;
-
-					String[] values = Locale.getISOLanguages();
-
-					Locale locale = new Locale(values[index.intValue()]);
-					if(!locale.equals(textRecord.getLocale())) {
-						textRecord.setLocale(locale);
+					
+					Action action = values[index.intValue()];
+					
+					if(action != actionRecord.getAction()) {
+						actionRecord.setAction(action);
 	
-						ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
+						// update property as well
+						ndefRecordModelProperty.setValue(actionRecord.getAction().name());
 						
 						change = true;
 					}
-
-				} else if(propertyIndex == 2) {
-					String stringValue = (String)value;
-					try {
-						Charset charset = Charset.forName(stringValue);
+				} else if(record instanceof TextRecord) {
+					// handle language
+					TextRecord textRecord = (TextRecord)record;
+					
+					int propertyIndex  = parent.indexOf(ndefRecordModelProperty);
+					if(propertyIndex == 0) {
+						String stringValue = (String)value;
 						
-						if(!charset.equals(textRecord.getEncoding())) {
-							textRecord.setEncoding(charset);
+						if(!stringValue.equals(textRecord.getText())) {
+							textRecord.setText(stringValue);
 							
-							ndefRecordModelProperty.setValue(textRecord.getEncoding().displayName());
+							ndefRecordModelProperty.setValue(textRecord.getText());
+							
+							change = true;
+						}
+					} else if(propertyIndex == 1) {
+						Integer index = (Integer)value;
+	
+						String[] values = Locale.getISOLanguages();
+	
+						Locale locale = new Locale(values[index.intValue()]);
+						if(!locale.equals(textRecord.getLocale())) {
+							textRecord.setLocale(locale);
+		
+							ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
+							
+							change = true;
+						}
+	
+					} else if(propertyIndex == 2) {
+						String stringValue = (String)value;
+						try {
+							Charset charset = Charset.forName(stringValue);
+							
+							if(!charset.equals(textRecord.getEncoding())) {
+								textRecord.setEncoding(charset);
+								
+								ndefRecordModelProperty.setValue(textRecord.getEncoding().displayName());
+							
+								change = true;
+							}
+						} catch(UnsupportedCharsetException e) {
+							// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+							
+							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+							MessageDialog.openError(shell, "Error", "Unknown encoding '" + stringValue + "', reverting to previous value.");
+						}
+					}
+				} else if(record instanceof AndroidApplicationRecord) {
+					AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord)record;
+					
+					String stringValue = (String)value;
+					if(!stringValue.equals(androidApplicationRecord.getPackageName())) {
+						androidApplicationRecord.setPackageName(stringValue);
+						
+						ndefRecordModelProperty.setValue(androidApplicationRecord.getPackageName());
+					
+						change = true;
+					}
+				} else if(record instanceof ExternalTypeRecord) {
+					ExternalTypeRecord externalTypeRecord = (ExternalTypeRecord)record;
+					
+					int propertyIndex  = parent.indexOf(ndefRecordModelProperty);
+					if(propertyIndex == 0) {
+						String stringValue = (String)value;
+						if(!stringValue.equals(externalTypeRecord.getNamespace())) {
+							externalTypeRecord.setNamespace(stringValue);
+							
+							ndefRecordModelProperty.setValue(externalTypeRecord.getNamespace());
 						
 							change = true;
 						}
-					} catch(UnsupportedCharsetException e) {
-						// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
-						
-						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-						MessageDialog.openError(shell, "Error", "Unknown encoding '" + stringValue + "', reverting to previous value.");
-					}
-				}
-			} else if(record instanceof AndroidApplicationRecord) {
-				AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord)record;
-				
-				String stringValue = (String)value;
-				if(!stringValue.equals(androidApplicationRecord.getPackageName())) {
-					androidApplicationRecord.setPackageName(stringValue);
-					
-					ndefRecordModelProperty.setValue(androidApplicationRecord.getPackageName());
-				
-					change = true;
-				}
-			} else if(record instanceof ExternalTypeRecord) {
-				ExternalTypeRecord externalTypeRecord = (ExternalTypeRecord)record;
-				
-				int propertyIndex  = parent.indexOf(ndefRecordModelProperty);
-				if(propertyIndex == 0) {
-					String stringValue = (String)value;
-					if(!stringValue.equals(externalTypeRecord.getNamespace())) {
-						externalTypeRecord.setNamespace(stringValue);
-						
-						ndefRecordModelProperty.setValue(externalTypeRecord.getNamespace());
-					
-						change = true;
-					}
-				} else if(propertyIndex == 1) {
-					String stringValue = (String)value;
-					if(!stringValue.equals(externalTypeRecord.getContent())) {
-						externalTypeRecord.setContent(stringValue);
-						
-						ndefRecordModelProperty.setValue(externalTypeRecord.getContent());
-					
-						change = true;
-					}
-				}
-			} else if(record instanceof MimeRecord) {
-				
-				MimeRecord mimeMediaRecord = (MimeRecord)record;
-				
-				int propertyIndex  = parent.indexOf(ndefRecordModelProperty);
-				if(propertyIndex == 0) {
-					String stringValue = (String)value;
-					
-					if(!stringValue.equals(mimeMediaRecord.getContentType())) {
-						mimeMediaRecord.setContentType(stringValue);
-						
-						ndefRecordModelProperty.setValue(mimeMediaRecord.getContentType());
-					
-						change = true;
-					}
-				} else if(propertyIndex == 1) {
-					
-					if(mimeMediaRecord instanceof BinaryMimeRecord) {
-						BinaryMimeRecord binaryMimeRecord = (BinaryMimeRecord)mimeMediaRecord;
-						if(value != null) {
-						
-							String path = (String)value;
+					} else if(propertyIndex == 1) {
+						String stringValue = (String)value;
+						if(!stringValue.equals(externalTypeRecord.getContent())) {
+							externalTypeRecord.setContent(stringValue);
 							
-							File file = new File(path);
-		
-							int length = (int)file.length();
+							ndefRecordModelProperty.setValue(externalTypeRecord.getContent());
+						
+							change = true;
+						}
+					}
+				} else if(record instanceof MimeRecord) {
+					
+					MimeRecord mimeMediaRecord = (MimeRecord)record;
+					
+					int propertyIndex  = parent.indexOf(ndefRecordModelProperty);
+					if(propertyIndex == 0) {
+						String stringValue = (String)value;
+						
+						if(!stringValue.equals(mimeMediaRecord.getContentType())) {
+							mimeMediaRecord.setContentType(stringValue);
 							
-							byte[] payload = new byte[length];
+							ndefRecordModelProperty.setValue(mimeMediaRecord.getContentType());
+						
+							change = true;
+						}
+					} else if(propertyIndex == 1) {
+						
+						if(mimeMediaRecord instanceof BinaryMimeRecord) {
+							BinaryMimeRecord binaryMimeRecord = (BinaryMimeRecord)mimeMediaRecord;
+							if(value != null) {
 							
-							InputStream in = null;
-							try {
-								in = new FileInputStream(file);
-								DataInputStream din = new DataInputStream(in);
+								String path = (String)value;
 								
-								din.readFully(payload);
+								File file = new File(path);
+			
+								int length = (int)file.length();
 								
-								binaryMimeRecord.setContent(payload);
+								byte[] payload = new byte[length];
 								
-								ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes binary payload");
-		
-								change = true;
-							} catch(IOException e) {
-								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-								MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-							} finally {
-								if(in != null) {
-									try {
-										in.close();
-									} catch(IOException e) {
-										// ignore
+								InputStream in = null;
+								try {
+									in = new FileInputStream(file);
+									DataInputStream din = new DataInputStream(in);
+									
+									din.readFully(payload);
+									
+									binaryMimeRecord.setContent(payload);
+									
+									ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes binary payload");
+			
+									change = true;
+								} catch(IOException e) {
+									Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+									MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+								} finally {
+									if(in != null) {
+										try {
+											in.close();
+										} catch(IOException e) {
+											// ignore
+										}
 									}
 								}
 							}
+						} else {
+							throw new RuntimeException();
 						}
-					} else {
-						throw new RuntimeException();
 					}
-				}
-			} else if(record instanceof UriRecord) {
-				UriRecord uriRecord = (UriRecord)record;
-				
-				String stringValue = (String)value;
-				
-				if(!stringValue.equals(uriRecord.getUri())) {
-					uriRecord.setUri(stringValue);
-						
-					ndefRecordModelProperty.setValue(uriRecord.getUri());
+				} else if(record instanceof UriRecord) {
+					UriRecord uriRecord = (UriRecord)record;
 					
-					change = true;
-				}
-			} else if(record instanceof AbsoluteUriRecord) {
-				AbsoluteUriRecord uriRecord = (AbsoluteUriRecord)record;
-				
-				String stringValue = (String)value;
-				if(!stringValue.equals(uriRecord.getUri())) {
-					uriRecord.setUri(stringValue);
-						
-					ndefRecordModelProperty.setValue(uriRecord.getUri());
-				
-					change = true;
-				}
-			} else if(record instanceof GcActionRecord) {
-				GcActionRecord gcActionRecord = (GcActionRecord)record;
+					String stringValue = (String)value;
 					
-				Action[] values = Action.values();
-
-				Integer index = (Integer)value;
-
-				Action action = values[index.intValue()];
-
-				if(action != gcActionRecord.getAction()) {
-					gcActionRecord.setAction(action);
-
-					// update property as well
-					ndefRecordModelProperty.setValue(gcActionRecord.getAction().name());
-
-					change = true;
-				}
-			} else if(record instanceof GenericControlRecord) {
-				GenericControlRecord genericControlRecord = (GenericControlRecord)record;
-
-				String stringValue = (String)value;
-
-				try {
-					byte b = Byte.parseByte(stringValue);
-					
-					if(b != genericControlRecord.getConfigurationByte()) {
-						genericControlRecord.setConfigurationByte(b);
+					if(!stringValue.equals(uriRecord.getUri())) {
+						uriRecord.setUri(stringValue);
+							
+						ndefRecordModelProperty.setValue(uriRecord.getUri());
 						
-						// update property as well
-						ndefRecordModelProperty.setValue(Byte.toString(genericControlRecord.getConfigurationByte()));
-
 						change = true;
 					}
-				} catch(Exception e) {
-					Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-					MessageDialog.openError(shell, "Error", "Could not set value '" + stringValue + "', reverting to previous value.");
+				} else if(record instanceof AbsoluteUriRecord) {
+					AbsoluteUriRecord uriRecord = (AbsoluteUriRecord)record;
+					
+					String stringValue = (String)value;
+					if(!stringValue.equals(uriRecord.getUri())) {
+						uriRecord.setUri(stringValue);
+							
+						ndefRecordModelProperty.setValue(uriRecord.getUri());
+					
+						change = true;
+					}
+				} else if(record instanceof GcActionRecord) {
+					GcActionRecord gcActionRecord = (GcActionRecord)record;
+						
+					Action[] values = Action.values();
+	
+					Integer index = (Integer)value;
+	
+					Action action = values[index.intValue()];
+	
+					if(action != gcActionRecord.getAction()) {
+						gcActionRecord.setAction(action);
+	
+						// update property as well
+						ndefRecordModelProperty.setValue(gcActionRecord.getAction().name());
+	
+						change = true;
+					}
+				} else if(record instanceof GenericControlRecord) {
+					GenericControlRecord genericControlRecord = (GenericControlRecord)record;
+	
+					String stringValue = (String)value;
+	
+					try {
+						byte b = Byte.parseByte(stringValue);
+						
+						if(b != genericControlRecord.getConfigurationByte()) {
+							genericControlRecord.setConfigurationByte(b);
+							
+							// update property as well
+							ndefRecordModelProperty.setValue(Byte.toString(genericControlRecord.getConfigurationByte()));
+	
+							change = true;
+						}
+					} catch(Exception e) {
+						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+						MessageDialog.openError(shell, "Error", "Could not set value '" + stringValue + "', reverting to previous value.");
+					}
 				}
+			} else if(element instanceof NdefRecordModelRecord) {
+				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
+				
+				Record record = ndefRecordModelRecord.getRecord();
+				
+				String stringValue = (String)value;
+				
+				if(!stringValue.equals(record.getKey())) {
+					record.setKey(stringValue);
+						
+					change = true;
+				}
+
 			}
 			
 			if(change) {
@@ -430,10 +454,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					// notify listener
 					listener.update(p);
 				}			
-
+	
 				// update all but the root node
 				NdefRecordModelNode node = (NdefRecordModelNode) element;
-
+	
 				do {
 					treeViewer.update(node, null);
 					

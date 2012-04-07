@@ -27,6 +27,7 @@
 package com.antares.nfc.model;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.nfctools.ndef.Record;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
 
@@ -38,6 +39,12 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 				// System.out.println("Get element " + element + " label " + ndefRecordModelProperty.getValue());
 
 				return ndefRecordModelProperty.getValue();
+			} else if(element instanceof NdefRecordModelRecord) {
+				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
+				
+				Record record = ndefRecordModelRecord.getRecord();
+				
+				return record.getKey();
 			}
 			return null;
 		}

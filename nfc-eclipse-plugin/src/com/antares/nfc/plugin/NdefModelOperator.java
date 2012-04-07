@@ -50,6 +50,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
+import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
@@ -285,6 +286,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		} else if(recordType == UnknownRecord.class) {
 			UnknownRecord unknownRecord = new UnknownRecord();
 
+			unknownRecord.setPayload(NdefConstants.EMPTY_BYTE_ARRAY);
+			
 			child = unknownRecord;
 		} else if(recordType == UriRecord.class) {
 			UriRecord uriRecord = new UriRecord("");
@@ -547,6 +550,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if(ndef.length > 0) {
 			int parent = Math.min(parentWidth, parentHeight);
 			
+			//System.out.println("Parent is " + parentWidth + "x" + parentHeight);
+			
 			writer.setAligment(horizontal, vertical);
 
 			//get a byte matrix for the data
@@ -556,6 +561,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			int width = matrix.getWidth(); 
 			int height = matrix.getHeight(); 
 
+			//System.out.println("Image is " + width + "x" + height);
+			
 			//create buffered image to draw to
 			ImageData imageData = new ImageData(width, height, 1, new PaletteData(new RGB[]{new RGB(0xFF, 0xFF, 0xFF), new RGB(0x00, 0x00, 0x00)}));
 			//iterate through the matrix and draw the pixels to the image

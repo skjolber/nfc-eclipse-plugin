@@ -42,8 +42,6 @@ import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
-import org.nfctools.ndef.reserved.ReservedRecord;
-import org.nfctools.ndef.unchanged.UnchangedRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.AlternativeCarrierRecord;
@@ -78,9 +76,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			HandoverSelectRecord.class,
 			HandoverCarrierRecord.class,
 			HandoverRequestRecord.class,
-			
-			ReservedRecord.class,
-			UnchangedRecord.class,
 			
 			GenericControlRecord.class
 	};

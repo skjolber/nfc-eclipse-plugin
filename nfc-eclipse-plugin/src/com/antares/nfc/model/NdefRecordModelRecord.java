@@ -33,7 +33,6 @@ import org.nfctools.ndef.Record;
 public class NdefRecordModelRecord extends NdefRecordModelParent {
 	
 	private Record record;
-	private int size = -1;
 
 	public NdefRecordModelRecord(Record record, List<NdefRecordModelNode> children, NdefRecordModelParent parent) {
 		super(children, parent);
@@ -54,13 +53,6 @@ public class NdefRecordModelRecord extends NdefRecordModelParent {
 		return record.getClass().getSimpleName();
 	}
 
-	public int getRecordSize() {
-		return size;
-	}
-
-	public void setRecordSize(int size) {
-		this.size = size;
-	}
 
 	
 	

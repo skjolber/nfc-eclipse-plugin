@@ -27,6 +27,8 @@
 package com.antares.nfc.model;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.widgets.Display;
 import org.nfctools.ndef.Record;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
@@ -44,11 +46,29 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 				
 				Record record = ndefRecordModelRecord.getRecord();
 				
+				byte[] id = record.getId();
+				if(id == null || id.length == 0) {
+					return "Record URI";
+				}
 				return record.getKey();
 			}
 			return null;
 		}
-		
-		
 
+		
+		@Override
+		public Color getForeground(Object element) {
+			
+			if(element instanceof NdefRecordModelRecord) {
+				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
+			
+				Record record = ndefRecordModelRecord.getRecord();
+			
+				byte[] id = record.getId();
+				if(id == null || id.length == 0) {
+					return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+				}
+			}
+			return super.getForeground(element);
+		}
 }

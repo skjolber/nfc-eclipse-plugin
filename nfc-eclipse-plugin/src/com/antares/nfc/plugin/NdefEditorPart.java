@@ -147,7 +147,6 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		//
 		firePropertyChange(IEditorPart.PROP_DIRTY);
 	}
-
 	
 	@Override
 	public boolean isSaveAsAllowed() {

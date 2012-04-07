@@ -58,6 +58,8 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 
 import com.antares.nfc.plugin.Activator;
 
+import org.eclipse.swt.custom.*;
+
 public class NdefRecordModelEditingSupport extends EditingSupport {
 
 	private NdefRecordModelChangeListener listener;
@@ -107,8 +109,26 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else if(record instanceof TextRecord) {
 				if(parent.indexOf(ndefRecordModelProperty) == 1) {
 					// handle language codes
+					
+					return new ComboBoxCellEditor(treeViewer.getTree(), Locale.getISOLanguages()) {
+						// subclass to allow typing of language value, if it is the list of iso languages
+						protected Object doGetValue() {
+							Integer integer =  (Integer) super.doGetValue();
+							
+							if(integer.intValue() == -1) {
+								String text = ((CCombo)this.getControl()).getText();
 
-					return new ComboBoxCellEditor(treeViewer.getTree(), Locale.getISOLanguages());
+								String[] isoLanguages = Locale.getISOLanguages();
+								
+								for(int i = 0; i < isoLanguages.length; i++) {
+									if(isoLanguages[i].equalsIgnoreCase(text)) {
+										return new Integer(i);
+									}
+								}
+							}
+							return integer;
+						}
+					};
 				}
 			} else if(record instanceof GcActionRecord) {
 				GcActionRecord gcActionRecord = (GcActionRecord)record;
@@ -204,11 +224,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 			NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
 			
-			NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelNode.getParent();
-
 			if(element instanceof NdefRecordModelProperty) {
 				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
-				
+
+				NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelNode.getParent();
+
 				Record record = parent.getRecord();
 				
 				if(record instanceof ActionRecord) {
@@ -246,17 +266,18 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					} else if(propertyIndex == 1) {
 						Integer index = (Integer)value;
 	
-						String[] values = Locale.getISOLanguages();
-	
-						Locale locale = new Locale(values[index.intValue()]);
-						if(!locale.equals(textRecord.getLocale())) {
-							textRecord.setLocale(locale);
+						if(index.intValue() != -1) {
+							String[] values = Locale.getISOLanguages();
 		
-							ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
-							
-							change = true;
+							Locale locale = new Locale(values[index.intValue()]);
+							if(!locale.equals(textRecord.getLocale())) {
+								textRecord.setLocale(locale);
+			
+								ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
+								
+								change = true;
+							}
 						}
-	
 					} else if(propertyIndex == 2) {
 						String stringValue = (String)value;
 						try {
@@ -447,7 +468,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			if(change) {
 				if(listener != null) {
 					// find root
-					NdefRecordModelParent p = parent;
+					NdefRecordModelParent p = ndefRecordModelNode.getParent();
 					while(p.hasParent()) {
 						p = p.getParent();
 					}

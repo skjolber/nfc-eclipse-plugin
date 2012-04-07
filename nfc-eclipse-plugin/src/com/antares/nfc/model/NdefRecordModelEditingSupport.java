@@ -41,6 +41,7 @@ import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.Record;
@@ -110,7 +111,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				if(parent.indexOf(ndefRecordModelProperty) == 1) {
 					// handle language codes
 					
-					return new ComboBoxCellEditor(treeViewer.getTree(), Locale.getISOLanguages()) {
+					final String[] isoLanguages = Locale.getISOLanguages();
+					
+					return new ComboBoxCellEditor(treeViewer.getTree(), isoLanguages) {
 						// subclass to allow typing of language value, if it is the list of iso languages
 						protected Object doGetValue() {
 							Integer integer =  (Integer) super.doGetValue();
@@ -118,17 +121,53 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							if(integer.intValue() == -1) {
 								String text = ((CCombo)this.getControl()).getText();
 
-								String[] isoLanguages = Locale.getISOLanguages();
-								
 								for(int i = 0; i < isoLanguages.length; i++) {
 									if(isoLanguages[i].equalsIgnoreCase(text)) {
 										return new Integer(i);
 									}
 								}
+								
+								// return entered text for error message
+								return text;
 							}
 							return integer;
 						}
 					};
+				} else if(parent.indexOf(ndefRecordModelProperty) == 2) {
+					// handle encodings, utf-8 or utf-16
+					
+					final String[] encodings = new String[]{TextRecord.UTF8.name(), TextRecord.UTF16.name()};
+					
+					return new ComboBoxCellEditor(treeViewer.getTree(), encodings) {
+						// subclass to allow typing of language value, if it is the list of iso languages
+						protected Object doGetValue() {
+							Integer integer =  (Integer) super.doGetValue();
+							
+							if(integer.intValue() == -1) {
+								final String text = ((CCombo)this.getControl()).getText();
+
+								String uppercaseText = text.toUpperCase();
+								
+								if(TextRecord.UTF8.aliases().contains(uppercaseText)) {
+									return new Integer(0);
+								}
+								
+								if(TextRecord.UTF16.aliases().contains(uppercaseText)) {
+									return new Integer(1);
+								}
+								
+								// be extra helpful for special utf-16 encodings?
+								if(uppercaseText.equals("UTF-16") || uppercaseText.equals("UTF16")) {
+									return new Integer(1);
+								}
+								
+								// return entered text for error message
+								return text;
+							}
+							return integer;
+						}
+					};
+
 				}
 			} else if(record instanceof GcActionRecord) {
 				GcActionRecord gcActionRecord = (GcActionRecord)record;
@@ -187,6 +226,20 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 					}
 					throw new IllegalArgumentException("Unknown language " + textRecord.getLocale().getLanguage());
+				} else if(parent.indexOf(ndefRecordModelProperty) == 2) {
+					// handle encodings, utf-8 or utf-16
+					
+					TextRecord textRecord = (TextRecord)record;
+
+					Charset encoding = textRecord.getEncoding();
+					if(encoding == TextRecord.UTF8 || TextRecord.UTF8.aliases().contains(encoding.name())) {
+						return 0;
+					} else if(encoding == TextRecord.UTF16 || TextRecord.UTF16.aliases().contains(encoding.name())) {
+						return 1;
+					}
+					
+					throw new IllegalArgumentException("Illegal encoding " + encoding);
+
 				}
 			} else if(record instanceof GcActionRecord) {
 				GcActionRecord gcActionRecord = (GcActionRecord)record;
@@ -264,38 +317,78 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							change = true;
 						}
 					} else if(propertyIndex == 1) {
-						Integer index = (Integer)value;
-	
-						if(index.intValue() != -1) {
-							String[] values = Locale.getISOLanguages();
+						if(value instanceof Integer) {
+							Integer index = (Integer)value;
 		
-							Locale locale = new Locale(values[index.intValue()]);
-							if(!locale.equals(textRecord.getLocale())) {
-								textRecord.setLocale(locale);
+							if(index.intValue() != -1) {
+								String[] values = Locale.getISOLanguages();
 			
-								ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
-								
-								change = true;
+								Locale locale = new Locale(values[index.intValue()]);
+								if(!locale.equals(textRecord.getLocale())) {
+									textRecord.setLocale(locale);
+				
+									ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
+									
+									change = true;
+								}
 							}
+						} else {
+
+							// manually entered value
+							final String stringValue = (String)value;
+							
+					    	Display.getCurrent().asyncExec(
+					                new Runnable()
+					                {
+					                    public void run()
+					                    {
+											// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+											Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+											MessageDialog.openError(shell, "Error", "Illegal language '" + stringValue + "', must be ISO language code.");
+					                    }
+					                }
+					            );
+							
+							
 						}
 					} else if(propertyIndex == 2) {
-						String stringValue = (String)value;
-						try {
-							Charset charset = Charset.forName(stringValue);
+						if(value instanceof Integer) {
+							Integer index = (Integer)value;
 							
-							if(!charset.equals(textRecord.getEncoding())) {
-								textRecord.setEncoding(charset);
-								
-								ndefRecordModelProperty.setValue(textRecord.getEncoding().displayName());
-							
-								change = true;
+							Charset charset;
+							if(index == 0) {
+								charset = TextRecord.UTF8;
+							} else if(index == 1) {
+								charset = TextRecord.UTF16;
+							} else {
+								charset = null;
 							}
-						} catch(UnsupportedCharsetException e) {
-							// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+								
+							if(charset != null) {
+								if(!charset.equals(textRecord.getEncoding())) {
+									textRecord.setEncoding(charset);
+									
+									ndefRecordModelProperty.setValue(textRecord.getEncoding().displayName());
+								
+									change = true;
+								}
+							}
+						} else {
+							// manually entered value
+							final String stringValue = (String)value;
 							
-							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-							MessageDialog.openError(shell, "Error", "Unknown encoding '" + stringValue + "', reverting to previous value.");
-						}
+					    	Display.getCurrent().asyncExec(
+					                new Runnable()
+					                {
+					                    public void run()
+					                    {
+											// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+											Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+											MessageDialog.openError(shell, "Error", "Illegal encoding '" + stringValue + "', only UTF-8 and UTF-16 supported.");
+					                    }
+					                }
+					            );
+							}
 					}
 				} else if(record instanceof AndroidApplicationRecord) {
 					AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord)record;

@@ -54,7 +54,6 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 			}
 			return null;
 		}
-
 		
 		@Override
 		public Color getForeground(Object element) {

@@ -44,17 +44,17 @@ import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.records.ActionRecord;
-import org.nfctools.ndef.wkt.records.AlternativeCarrierRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
-import org.nfctools.ndef.wkt.records.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.HandoverRequestRecord;
-import org.nfctools.ndef.wkt.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
+import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverRequestRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
 
 import com.antares.nfc.plugin.Activator;
 
@@ -345,6 +345,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 						menuManager.add(addGenericControlDataRecord);
 					}
 				}
+			} else if(selectedNode instanceof NdefRecordModelPropertyListItem) {
+				
+			} else if(selectedNode instanceof NdefRecordModelPropertyList) {
+				
 			} else {
 				Activator.info("Ignore " + selectedNode.getClass().getSimpleName());
 			}

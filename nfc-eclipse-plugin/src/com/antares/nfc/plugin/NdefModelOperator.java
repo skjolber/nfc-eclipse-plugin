@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -65,17 +66,19 @@ import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.records.Action;
 import org.nfctools.ndef.wkt.records.ActionRecord;
-import org.nfctools.ndef.wkt.records.AlternativeCarrierRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
-import org.nfctools.ndef.wkt.records.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.HandoverRequestRecord;
-import org.nfctools.ndef.wkt.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
+import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.CollisionResolutionRecord;
+import org.nfctools.ndef.wkt.records.handover.ErrorRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverRequestRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
 import com.antares.nfc.model.NdefRecordModelFactory;
@@ -227,7 +230,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			child = record;
 		} else if(recordType == ActionRecord.class) {
 			ActionRecord actionRecord = new ActionRecord();
-			actionRecord.setAction(Action.DEFAULT_ACTION);
+			//actionRecord.setAction(Action.DEFAULT_ACTION);
 			
 			child = actionRecord;
 		} else if(recordType == AndroidApplicationRecord.class) {
@@ -236,15 +239,11 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			String packageName = getAndroidProjectPackageName();
 			if(packageName != null) {
 				androidApplicationRecord.setPackageName(packageName);
-			} else {
-				androidApplicationRecord.setPackageName("");
 			}
 			
 			child = androidApplicationRecord;
 		} else if(recordType == ExternalTypeRecord.class) {
 			ExternalTypeRecord externalTypeRecord = new ExternalTypeRecord();
-			externalTypeRecord.setNamespace("");
-			externalTypeRecord.setContent("");
 			
 			child = externalTypeRecord;
 		} else if(recordType == EmptyRecord.class) {
@@ -262,7 +261,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			SmartPosterRecord smartPosterRecord = new SmartPosterRecord();
 
 			ActionRecord actionRecord = new ActionRecord();
-			actionRecord.setAction(Action.DEFAULT_ACTION);
 			smartPosterRecord.setAction(actionRecord);
 			
 			TextRecord textRecord = new TextRecord();
@@ -308,7 +306,31 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		} else if(recordType == HandoverRequestRecord.class) {
 			HandoverRequestRecord handoverRequestRecord = new HandoverRequestRecord();
 			
+			// add collision
+			CollisionResolutionRecord collisionResolutionRecord = new CollisionResolutionRecord();
+			Random random = new Random();
+			int nextInt = random.nextInt(65536);
+			collisionResolutionRecord.setRandomNumber(nextInt);
+			handoverRequestRecord.setCollisionResolution(collisionResolutionRecord);
+			
 			child = handoverRequestRecord;
+		} else if(recordType == ErrorRecord.class) {
+			ErrorRecord errorRecord = new ErrorRecord();
+			
+			errorRecord.setErrorReason(null);
+			errorRecord.setErrorData(null);
+			
+			child = errorRecord;
+		} else if(recordType == CollisionResolutionRecord.class) {
+			CollisionResolutionRecord collisionResolutionRecord = new CollisionResolutionRecord();
+			
+			Random random = new Random();
+			
+			int nextInt = random.nextInt(65536);
+
+			collisionResolutionRecord.setRandomNumber(nextInt);
+			
+			child = collisionResolutionRecord;
 		} else if(recordType == GenericControlRecord.class) {
 			GenericControlRecord genericControlRecord = new GenericControlRecord();
 

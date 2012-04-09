@@ -26,6 +26,9 @@
 
 package com.antares.nfc.model;
 
+import java.util.List;
+
+import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
@@ -35,17 +38,21 @@ import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.records.ActionRecord;
-import org.nfctools.ndef.wkt.records.AlternativeCarrierRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
-import org.nfctools.ndef.wkt.records.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.HandoverRequestRecord;
-import org.nfctools.ndef.wkt.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
+import org.nfctools.ndef.wkt.records.WellKnownRecord;
+import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.CollisionResolutionRecord;
+import org.nfctools.ndef.wkt.records.handover.ErrorRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord.CarrierTypeFormat;
+import org.nfctools.ndef.wkt.records.handover.HandoverRequestRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
 
 public class NdefRecordModelFactory {
 
@@ -67,8 +74,12 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			NdefRecordModelProperty ndefRecordModelProperty = new NdefRecordModelProperty("Package name", androidApplicationRecord.getPackageName(), ndefRecordModelRecord);
-			
+			NdefRecordModelProperty ndefRecordModelProperty;
+			if(androidApplicationRecord.hasPackageName()) {
+				ndefRecordModelProperty = new NdefRecordModelProperty("Package name", androidApplicationRecord.getPackageName(), ndefRecordModelRecord);
+			} else {
+				ndefRecordModelProperty = new NdefRecordModelProperty("Package name", "", ndefRecordModelRecord);
+			}
 			ndefRecordModelRecord.add(ndefRecordModelProperty);
 			
 			return ndefRecordModelRecord;
@@ -77,17 +88,28 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Namespace", externalTypeRecord.getNamespace(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", externalTypeRecord.getContent(), ndefRecordModelRecord));
-			
+			if(externalTypeRecord.hasNamespace()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Namespace", externalTypeRecord.getNamespace(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Namespace", "", ndefRecordModelRecord));
+			}
+			if(externalTypeRecord.hasContent()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", externalTypeRecord.getContent(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "", ndefRecordModelRecord));
+			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof AbsoluteUriRecord) {
 			AbsoluteUriRecord uriRecord = (AbsoluteUriRecord)record;
 				
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			NdefRecordModelProperty ndefRecordModelProperty = new NdefRecordModelProperty("URI", uriRecord.getUri(), ndefRecordModelRecord);
-			
+			NdefRecordModelProperty ndefRecordModelProperty;
+			if(uriRecord.hasUri()) {
+				ndefRecordModelProperty = new NdefRecordModelProperty("URI", uriRecord.getUri(), ndefRecordModelRecord);
+			} else {
+				ndefRecordModelProperty = new NdefRecordModelProperty("URI", "", ndefRecordModelRecord);
+			}
 			ndefRecordModelRecord.add(ndefRecordModelProperty);
 			
 			return ndefRecordModelRecord;
@@ -106,18 +128,35 @@ public class NdefRecordModelFactory {
 
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Message", textRecord.getText(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Locale", textRecord.getLocale().toString(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Encoding", textRecord.getEncoding().displayName(), ndefRecordModelRecord));
+			if(textRecord.hasText()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Text", textRecord.getText(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Text", "", ndefRecordModelRecord));
+			}
 			
+			if(textRecord.hasLocale()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Locale", textRecord.getLocale().toString(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Locale", "", ndefRecordModelRecord));
+			}
+			
+			if(textRecord.hasEncoding()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Encoding", textRecord.getEncoding().displayName(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Encoding", "", ndefRecordModelRecord));
+			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof ActionRecord) {
 			ActionRecord actionRecord = (ActionRecord)record;
 
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			NdefRecordModelProperty ndefRecordModelProperty = new NdefRecordModelProperty("Action", actionRecord.getAction().toString(), ndefRecordModelRecord);
-			
+			NdefRecordModelProperty ndefRecordModelProperty;
+			if(actionRecord.hasAction()) {
+				ndefRecordModelProperty = new NdefRecordModelProperty("Action", actionRecord.getAction().toString(), ndefRecordModelRecord);
+			} else {
+				ndefRecordModelProperty = new NdefRecordModelProperty("Action", "", ndefRecordModelRecord);
+			}
 			ndefRecordModelRecord.add(ndefRecordModelProperty);
 			
 			return ndefRecordModelRecord;
@@ -133,30 +172,181 @@ public class NdefRecordModelFactory {
 			}
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(binaryMimeRecord, ndefRecordModelParent);
 
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Mimetype", binaryMimeRecord.getContentType(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", Integer.toString(binaryMimeRecord.getContentAsBytes().length) + " bytes binary payload", ndefRecordModelRecord));
+			if(binaryMimeRecord.hasContentType()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mimetype", binaryMimeRecord.getContentType(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mimetype", "", ndefRecordModelRecord));
+			}
+			
+			if(binaryMimeRecord.hasContent()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", Integer.toString(binaryMimeRecord.getContentAsBytes().length) + " bytes binary payload", ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Empty binary payload", ndefRecordModelRecord));
+			}
 			
 			return ndefRecordModelRecord;
 		} else if(record instanceof UnknownRecord) {
 			UnknownRecord unknownRecord = (UnknownRecord)record;
 
-			return new NdefRecordModelRecord(unknownRecord, ndefRecordModelParent);
-		} else if(record instanceof AlternativeCarrierRecord) {
-			AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
-
-			return new NdefRecordModelRecord(alternativeCarrierRecord, ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+			
+			if(unknownRecord.hasPayload()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", Integer.toString(unknownRecord.getPayload().length) + " bytes payload", ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", "Empty payload", ndefRecordModelRecord));
+			}
+			
+			return ndefRecordModelRecord;
 		} else if(record instanceof HandoverCarrierRecord) {
 			HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
 			
-			return new NdefRecordModelRecord(handoverCarrierRecord, ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+
+			CarrierTypeFormat carrierTypeFormat = handoverCarrierRecord.getCarrierTypeFormat();
+			if(carrierTypeFormat != null) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier type format", carrierTypeFormat.toString(), ndefRecordModelRecord));
+			
+				Object carrierType = handoverCarrierRecord.getCarrierType();
+				
+				NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Carrier type", ndefRecordModelRecord);
+				
+				ndefRecordModelRecord.add(ndefRecordModelParentProperty);
+
+				if(carrierType != null) {
+					
+					switch(carrierTypeFormat) {
+						case WellKnown : {
+							// NFC Forum well-known type [NFC RTD]
+							if(carrierType instanceof WellKnownRecord) {
+								WellKnownRecord abstractWellKnownRecord = (WellKnownRecord)carrierType;
+								
+								ndefRecordModelParentProperty.add(getNode(abstractWellKnownRecord, ndefRecordModelParentProperty));
+			
+								break;
+							} else {
+								throw new IllegalArgumentException();
+							}
+						}
+						case Media : {
+							// Media-type as defined in RFC 2046 [RFC 2046]
+							String string = (String)carrierType;
+							
+							ndefRecordModelParentProperty.add(new NdefRecordModelProperty("Media type", string, ndefRecordModelParentProperty));
+							break;
+						}
+						case AbsoluteURI : {
+							// Absolute URI as defined in RFC 3986 [RFC 3986]
+							String string = (String)carrierType;
+							
+							ndefRecordModelParentProperty.add(new NdefRecordModelProperty("Absolute URI", string, ndefRecordModelParentProperty));
+							break;
+						}
+						case External : {
+							// NFC Forum external type [NFC RTD]
+							if(carrierType instanceof ExternalTypeRecord) {
+								ExternalTypeRecord externalTypeRecord = (ExternalTypeRecord)carrierType;
+								
+								ndefRecordModelParentProperty.add(getNode(externalTypeRecord, ndefRecordModelParentProperty));
+												
+								break;
+							} else {
+								throw new IllegalArgumentException();
+							}
+						}
+						default: {
+							throw new RuntimeException();
+						}
+					}
+				}
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier type format", "", ndefRecordModelRecord));
+				
+				ndefRecordModelRecord.add(new NdefRecordModelParentProperty("Carrier type", ndefRecordModelRecord));
+			}
+
+			if(handoverCarrierRecord.hasCarrierData()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data", Integer.toString(handoverCarrierRecord.getCarrierData().length), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data", "", ndefRecordModelRecord));
+			}
+			
+			return ndefRecordModelRecord;
 		} else if(record instanceof HandoverRequestRecord) {
 			HandoverRequestRecord handoverRequestRecord = (HandoverRequestRecord)record;
+
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Major version", Byte.toString(handoverRequestRecord.getMajorVersion()), ndefRecordModelRecord));
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Minor version", Byte.toString(handoverRequestRecord.getMinorVersion()), ndefRecordModelRecord));
+
+			ndefRecordModelRecord.add(getNode(handoverRequestRecord.getCollisionResolution(), ndefRecordModelRecord));
+
+			List<AlternativeCarrierRecord> alternativeCarriers = handoverRequestRecord.getAlternativeCarriers();
+			for(AlternativeCarrierRecord alternativeCarrierRecord : alternativeCarriers) {
+				ndefRecordModelRecord.add(getNode(alternativeCarrierRecord, ndefRecordModelRecord));
+			}
 			
-			return new NdefRecordModelRecord(handoverRequestRecord, ndefRecordModelParent);
+			return ndefRecordModelRecord;
+		} else if(record instanceof AlternativeCarrierRecord) {
+			AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
+			
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+
+			if(alternativeCarrierRecord.hasCarrierPowerState()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier power state", alternativeCarrierRecord.getCarrierPowerState().toString(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier power state", "", ndefRecordModelRecord));
+			}
+			if(alternativeCarrierRecord.hasCarrierDataReference()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data reference", alternativeCarrierRecord.getCarrierDataReference(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data reference", "", ndefRecordModelRecord));
+			}
+
+			NdefRecordModelPropertyList list = new NdefRecordModelPropertyList("Auxiliary data References", "#%d", ndefRecordModelRecord);
+
+			List<String> auxiliaryDataReferences = alternativeCarrierRecord.getAuxiliaryDataReferences();
+			for(int i = 0; i < auxiliaryDataReferences.size(); i++) {
+				list.add(new NdefRecordModelPropertyListItem(auxiliaryDataReferences.get(i), list));
+			}
+			
+			return ndefRecordModelRecord;
+			
+			
+		} else if(record instanceof CollisionResolutionRecord) {
+			CollisionResolutionRecord collisionResolutionRecord = (CollisionResolutionRecord)record;
+			
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Random number", Integer.toString(collisionResolutionRecord.getRandomNumber()), ndefRecordModelRecord));
+			
+			return ndefRecordModelRecord;
+			
+		} else if(record instanceof ErrorRecord) {
+			ErrorRecord errorRecord = (ErrorRecord)record;
+			
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Reason", errorRecord.getErrorReason().toString(), ndefRecordModelRecord));
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Data", Long.toHexString(errorRecord.getErrorData().longValue()), ndefRecordModelRecord));
+			
+			return ndefRecordModelRecord;
 		} else if(record instanceof HandoverSelectRecord) {
 			HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)record;
 			
-			return new NdefRecordModelRecord(handoverSelectRecord, ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Major version", Byte.toString(handoverSelectRecord.getMajorVersion()), ndefRecordModelRecord));
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Minor version", Byte.toString(handoverSelectRecord.getMinorVersion()), ndefRecordModelRecord));
+
+			List<AlternativeCarrierRecord> alternativeCarriers = handoverSelectRecord.getAlternativeCarriers();
+			for(AlternativeCarrierRecord alternativeCarrierRecord : alternativeCarriers) {
+				ndefRecordModelRecord.add(getNode(alternativeCarrierRecord, ndefRecordModelRecord));
+			}
+			if(handoverSelectRecord.hasError()) {
+				ndefRecordModelRecord.add(getNode(handoverSelectRecord.getError(), ndefRecordModelRecord));
+			}
+			return ndefRecordModelRecord;
 		} else if(record instanceof EmptyRecord) {
 			EmptyRecord emptyRecord = (EmptyRecord)record;
 				
@@ -166,10 +356,11 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(uriRecord, ndefRecordModelParent);
 
-			NdefRecordModelProperty ndefRecordModelProperty = new NdefRecordModelProperty("URI", uriRecord.getUri(), ndefRecordModelRecord);
-			
-			ndefRecordModelRecord.add(ndefRecordModelProperty);
-			
+			if(uriRecord.hasUri()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("URI", uriRecord.getUri(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("URI", "", ndefRecordModelRecord));
+			}
 			return ndefRecordModelRecord;		
 		} else if(record instanceof GenericControlRecord) {
 			GenericControlRecord genericControlRecord = (GenericControlRecord)record;
@@ -207,7 +398,13 @@ public class NdefRecordModelFactory {
 
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(gcActionRecord, ndefRecordModelParent);
 			
-			NdefRecordModelProperty ndefRecordModelProperty = new NdefRecordModelProperty("Action", gcActionRecord.getAction().toString(), ndefRecordModelRecord);
+			NdefRecordModelProperty ndefRecordModelProperty;
+			if(gcActionRecord.hasAction()) {
+				ndefRecordModelProperty = new NdefRecordModelProperty("Action", gcActionRecord.getAction().toString(), ndefRecordModelRecord);
+			} else {
+				ndefRecordModelProperty = new NdefRecordModelProperty("Action", "", ndefRecordModelRecord);
+			}
+			
 			ndefRecordModelRecord.add(ndefRecordModelProperty);
 
 			if(gcActionRecord.hasActionRecord()) {

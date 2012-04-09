@@ -32,7 +32,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.Locale;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -41,6 +40,7 @@ import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -50,16 +50,18 @@ import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
+import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.records.Action;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
+import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.ErrorRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
 
 import com.antares.nfc.plugin.Activator;
-
-import org.eclipse.swt.custom.*;
 
 public class NdefRecordModelEditingSupport extends EditingSupport {
 
@@ -78,7 +80,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 	@Override
 	protected boolean canEdit(Object element) {
-		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord;
+		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord || element instanceof NdefRecordModelPropertyListItem;
 	}
 
 	@Override
@@ -179,7 +181,47 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				}
 				
 				return new ComboBoxCellEditor(treeViewer.getTree(), strings);
-
+			} else if(record instanceof HandoverCarrierRecord) {
+				
+				if(parent.indexOf(ndefRecordModelProperty) == 0) {
+					HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+					
+					HandoverCarrierRecord.CarrierTypeFormat[] values = HandoverCarrierRecord.CarrierTypeFormat.values();
+					String[] strings = new String[values.length];
+					for(int i = 0; i < values.length; i++) {
+						strings[i] = values[i].toString();
+					}
+					
+					return new ComboBoxCellEditor(treeViewer.getTree(), strings);
+				}
+			} else if(record instanceof ErrorRecord) {
+				if(parent.indexOf(ndefRecordModelProperty) == 0) {
+	
+					ErrorRecord errorRecord = (ErrorRecord)record;
+					
+					ErrorRecord.ErrorReason[] values = ErrorRecord.ErrorReason.values();
+					String[] strings = new String[values.length];
+					for(int i = 0; i < values.length; i++) {
+						strings[i] = values[i].toString();
+					}
+					
+					return new ComboBoxCellEditor(treeViewer.getTree(), strings);
+				}
+			} else if(record instanceof AlternativeCarrierRecord) {
+				if(parent.indexOf(ndefRecordModelProperty) == 0) {
+	
+					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
+					
+					AlternativeCarrierRecord.CarrierPowerState[] values = AlternativeCarrierRecord.CarrierPowerState.values();
+					String[] strings = new String[values.length];
+					for(int i = 0; i < values.length; i++) {
+						strings[i] = values[i].toString();
+					}
+					
+					return new ComboBoxCellEditor(treeViewer.getTree(), strings);
+				}
+			} else if(record instanceof UnknownRecord) {
+				return new FileDialogCellEditor(treeViewer.getTree());
 			}
 		}
 		return textCellEditor;
@@ -207,7 +249,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 					}
 				}
-				throw new IllegalArgumentException();
+				return new Integer(-1);
 			} else if(record instanceof MimeRecord) {
 				if(parent.indexOf(ndefRecordModelProperty) == 1) {
 					// handle mime media
@@ -252,7 +294,53 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 					}
 				}
-				throw new IllegalArgumentException();
+				return new Integer(-1);
+			} else if(record instanceof HandoverCarrierRecord) {
+				
+				if(parent.indexOf(ndefRecordModelProperty) == 0) {
+					HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+					
+					if(handoverCarrierRecord.hasCarrierTypeFormat()) {
+						HandoverCarrierRecord.CarrierTypeFormat[] values = HandoverCarrierRecord.CarrierTypeFormat.values();
+						for(int i = 0; i < values.length; i++) {
+							if(values[i] == handoverCarrierRecord.getCarrierTypeFormat()) {
+								return new Integer(i);
+							}
+						}
+					}
+					return new Integer(-1);
+				}
+			} else if(record instanceof ErrorRecord) {
+				if(parent.indexOf(ndefRecordModelProperty) == 0) {
+	
+					ErrorRecord errorRecord = (ErrorRecord)record;
+					
+					if(errorRecord.hasErrorReason()) {
+						ErrorRecord.ErrorReason[] values = ErrorRecord.ErrorReason.values();
+						for(int i = 0; i < values.length; i++) {
+							if(values[i] == errorRecord.getErrorReason()) {
+								return new Integer(i);
+							}
+						}
+					}
+					return new Integer(-1);
+				}
+			} else if(record instanceof AlternativeCarrierRecord) {
+				if(parent.indexOf(ndefRecordModelProperty) == 0) {
+	
+					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
+					
+					if(alternativeCarrierRecord.hasCarrierPowerState()) {
+						AlternativeCarrierRecord.CarrierPowerState[] values = AlternativeCarrierRecord.CarrierPowerState.values();
+						for(int i = 0; i < values.length; i++) {
+							if(values[i] == alternativeCarrierRecord.getCarrierPowerState()) {
+								return new Integer(i);
+							}
+						}
+					}
+					
+					return new Integer(-1);
+				}
 			}
 			// default to empty value if no value
 			return ndefRecordModelProperty.getValue();
@@ -287,18 +375,25 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				if(record instanceof ActionRecord) {
 					ActionRecord actionRecord = (ActionRecord)record;
 					
-					Action[] values = Action.values();
-					
 					Integer index = (Integer)value;
 					
-					Action action = values[index.intValue()];
+					Action action;
+					if(index.intValue() != -1) {
+						Action[] values = Action.values();
 					
+						action = values[index.intValue()];
+					} else {
+						action = null;
+					}
 					if(action != actionRecord.getAction()) {
 						actionRecord.setAction(action);
 	
 						// update property as well
-						ndefRecordModelProperty.setValue(actionRecord.getAction().name());
-						
+						if(actionRecord.hasAction()) {
+							ndefRecordModelProperty.setValue(actionRecord.getAction().name());
+						} else {
+							ndefRecordModelProperty.setValue(null);
+						}
 						change = true;
 					}
 				} else if(record instanceof TextRecord) {
@@ -508,18 +603,25 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				} else if(record instanceof GcActionRecord) {
 					GcActionRecord gcActionRecord = (GcActionRecord)record;
 						
-					Action[] values = Action.values();
-	
 					Integer index = (Integer)value;
-	
-					Action action = values[index.intValue()];
-	
+
+					Action action;
+					if(index.intValue() != -1) {
+						Action[] values = Action.values();
+						action = values[index.intValue()];
+					} else {
+						action = null;
+					}
+
 					if(action != gcActionRecord.getAction()) {
 						gcActionRecord.setAction(action);
 	
 						// update property as well
-						ndefRecordModelProperty.setValue(gcActionRecord.getAction().name());
-	
+						if(gcActionRecord.hasAction()) {
+							ndefRecordModelProperty.setValue(gcActionRecord.getAction().name());
+						} else {
+							ndefRecordModelProperty.setValue(null);
+						}
 						change = true;
 					}
 				} else if(record instanceof GenericControlRecord) {
@@ -542,6 +644,141 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 						MessageDialog.openError(shell, "Error", "Could not set value '" + stringValue + "', reverting to previous value.");
 					}
+				} else if(record instanceof HandoverCarrierRecord) {
+					
+					if(parent.indexOf(ndefRecordModelProperty) == 0) {
+						HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+						
+						Integer index = (Integer)value;
+		
+						HandoverCarrierRecord.CarrierTypeFormat carrierTypeFormat;
+						if(index.intValue() != -1) {
+							HandoverCarrierRecord.CarrierTypeFormat[] values = HandoverCarrierRecord.CarrierTypeFormat.values();
+							carrierTypeFormat = values[index.intValue()];
+						} else {
+							carrierTypeFormat = null;
+						}
+						
+						if(carrierTypeFormat != handoverCarrierRecord.getCarrierTypeFormat()) {
+							handoverCarrierRecord.setCarrierTypeFormat(carrierTypeFormat);
+		
+							// update property as well
+							if(handoverCarrierRecord.hasCarrierTypeFormat()) {
+								ndefRecordModelProperty.setValue(handoverCarrierRecord.getCarrierTypeFormat().name());
+							} else {
+								ndefRecordModelProperty.setValue(null);
+							}
+							change = true;
+						}
+					}
+				} else if(record instanceof ErrorRecord) {
+					if(parent.indexOf(ndefRecordModelProperty) == 0) {
+		
+						ErrorRecord errorRecord = (ErrorRecord)record;
+						
+						
+						Integer index = (Integer)value;
+		
+						ErrorRecord.ErrorReason errorReason;
+						if(index.intValue() != -1) {
+							ErrorRecord.ErrorReason[] values = ErrorRecord.ErrorReason.values();
+							errorReason = values[index.intValue()];
+						} else {
+							errorReason = null;
+						}
+						if(errorReason !=  errorRecord.getErrorReason()) {
+							errorRecord.setErrorReason(errorReason);
+		
+							// update property as well
+							if(errorRecord.hasErrorReason()) {
+								ndefRecordModelProperty.setValue(errorRecord.getErrorReason().name());
+							} else {
+								ndefRecordModelProperty.setValue(null);
+							}
+							change = true;
+						}
+					}
+				} else if(record instanceof AlternativeCarrierRecord) {
+					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
+					if(parent.indexOf(ndefRecordModelProperty) == 0) {
+								
+						Integer index = (Integer)value;
+		
+						AlternativeCarrierRecord.CarrierPowerState carrierPowerState;
+						if(index.intValue() != -1) {
+							AlternativeCarrierRecord.CarrierPowerState[] values = AlternativeCarrierRecord.CarrierPowerState.values();
+							carrierPowerState = values[index.intValue()];
+						} else {
+							carrierPowerState = null;
+						}
+						
+						if(carrierPowerState !=  alternativeCarrierRecord.getCarrierPowerState()) {
+							alternativeCarrierRecord.setCarrierPowerState(carrierPowerState);
+		
+							// update property as well
+							if(alternativeCarrierRecord.hasCarrierPowerState()) {
+								ndefRecordModelProperty.setValue(alternativeCarrierRecord.getCarrierPowerState().name());
+							} else {
+								ndefRecordModelProperty.setValue(null);
+							}
+							change = true;
+						}
+					
+					} else if(parent.indexOf(ndefRecordModelProperty) == 1) {
+						String stringValue = (String)value;
+						
+						String carrierDataReference = alternativeCarrierRecord.getCarrierDataReference();
+						
+						if(!stringValue.equals(carrierDataReference)) {
+							alternativeCarrierRecord.setCarrierDataReference(stringValue);
+								
+							// update property as well
+							if(alternativeCarrierRecord.hasCarrierDataReference()) {
+								ndefRecordModelProperty.setValue(alternativeCarrierRecord.getCarrierDataReference());
+							} else {
+								ndefRecordModelProperty.setValue("");
+							}
+							change = true;
+						}
+					}
+				} else if(record instanceof UnknownRecord) {
+					UnknownRecord unknownRecord = (UnknownRecord)record;
+					
+					if(value != null) {
+					
+						String path = (String)value;
+						
+						File file = new File(path);
+
+						int length = (int)file.length();
+						
+						byte[] payload = new byte[length];
+						
+						InputStream in = null;
+						try {
+							in = new FileInputStream(file);
+							DataInputStream din = new DataInputStream(in);
+							
+							din.readFully(payload);
+							
+							unknownRecord.setPayload(payload);
+							
+							ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes payload");
+
+							change = true;
+						} catch(IOException e) {
+							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+							MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+						} finally {
+							if(in != null) {
+								try {
+									in.close();
+								} catch(IOException e) {
+									// ignore
+								}
+							}
+						}
+					}
 				}
 			} else if(element instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
@@ -556,6 +793,36 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					change = true;
 				}
 
+			} else if(element instanceof NdefRecordModelPropertyListItem) {
+				NdefRecordModelPropertyListItem ndefRecordModelPropertyListItem = (NdefRecordModelPropertyListItem)element;
+				
+				NdefRecordModelPropertyList parent = (NdefRecordModelPropertyList) ndefRecordModelPropertyListItem.getParent();
+
+				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)parent.getParent();
+
+				Record record = ndefRecordModelRecord.getRecord();
+				
+				if(record instanceof AlternativeCarrierRecord) {
+					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
+					
+					String stringValue = (String)value;
+					int index = ndefRecordModelPropertyListItem.getParentIndex();
+
+					String auxiliaryDataReference = alternativeCarrierRecord.getAuxiliaryDataReferenceAt(index);
+					
+					if(!stringValue.equals(auxiliaryDataReference)) {
+						alternativeCarrierRecord.setAuxiliaryDataReferenceAt(index, stringValue);
+							
+						// update list value
+						
+						ndefRecordModelPropertyListItem.setValue(stringValue);
+						
+						change = true;
+					}
+
+				}
+				
+				
 			}
 			
 			if(change) {

@@ -60,7 +60,12 @@ public class NdefRecordModelParent extends NdefRecordModelNode {
 	}
 
 	public int indexOf(NdefRecordModelNode node) {
-		return children.indexOf(node);
+		for(int i = 0; i < children.size(); i++) { // do not use indexOf list, we do not want to check using equals, but using reference
+			if(node == children.get(i)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	public void insert(NdefRecordModelNode node, int index) {
@@ -76,7 +81,13 @@ public class NdefRecordModelParent extends NdefRecordModelNode {
 	}
 
 	public void remove(NdefRecordModelNode node) {
-		children.remove(node);
+		for(int i = 0; i < children.size(); i++) { // do not use indexOf list, we do not want to check using equals, but using reference
+			if(node == children.get(i)) {
+				children.remove(i);
+				
+				break;
+			}
+		}
 	}
 
 	public boolean hasRecordChildren() {

@@ -29,6 +29,14 @@ package com.antares.nfc.model;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
+/**
+ * 
+ * Tree interface for model.
+ * 
+ * @author trs
+ *
+ */
+
 public class NdefRecordModelContentProvider implements ITreeContentProvider {
 
 	@Override

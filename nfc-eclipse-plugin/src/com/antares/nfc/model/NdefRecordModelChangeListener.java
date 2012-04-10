@@ -37,4 +37,7 @@ public interface NdefRecordModelChangeListener {
 	void add(NdefRecordModelParent node, Class<? extends Record> recordType);
 
 	void remove(NdefRecordModelNode node);
+	
+	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class type);
+
 }

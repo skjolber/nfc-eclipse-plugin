@@ -67,6 +67,9 @@ public class NdefRecordModelFactory {
 		return ndefRecordModelParent;
 		
 	}
+	public NdefRecordModelNode getNode(String name, String value, NdefRecordModelParent ndefRecordModelParent) {
+		return new NdefRecordModelProperty(name, value, ndefRecordModelParent);
+	}
 	
 	public NdefRecordModelNode getNode(Record record, NdefRecordModelParent ndefRecordModelParent) {
 		if(record instanceof AndroidApplicationRecord) {
@@ -281,10 +284,14 @@ public class NdefRecordModelFactory {
 
 			ndefRecordModelRecord.add(getNode(handoverRequestRecord.getCollisionResolution(), ndefRecordModelRecord));
 
+			NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Alternative carriers", ndefRecordModelRecord);
+
 			List<AlternativeCarrierRecord> alternativeCarriers = handoverRequestRecord.getAlternativeCarriers();
 			for(AlternativeCarrierRecord alternativeCarrierRecord : alternativeCarriers) {
-				ndefRecordModelRecord.add(getNode(alternativeCarrierRecord, ndefRecordModelRecord));
+				ndefRecordModelParentProperty.add(getNode(alternativeCarrierRecord, ndefRecordModelParentProperty));
 			}
+			
+			ndefRecordModelRecord.add(ndefRecordModelParentProperty);
 			
 			return ndefRecordModelRecord;
 		} else if(record instanceof AlternativeCarrierRecord) {
@@ -309,6 +316,8 @@ public class NdefRecordModelFactory {
 			for(int i = 0; i < auxiliaryDataReferences.size(); i++) {
 				list.add(new NdefRecordModelPropertyListItem(auxiliaryDataReferences.get(i), list));
 			}
+			
+			ndefRecordModelRecord.add(list);
 			
 			return ndefRecordModelRecord;
 			
@@ -339,10 +348,15 @@ public class NdefRecordModelFactory {
 			ndefRecordModelRecord.add(new NdefRecordModelProperty("Major version", Byte.toString(handoverSelectRecord.getMajorVersion()), ndefRecordModelRecord));
 			ndefRecordModelRecord.add(new NdefRecordModelProperty("Minor version", Byte.toString(handoverSelectRecord.getMinorVersion()), ndefRecordModelRecord));
 
+			NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Alternative carriers", ndefRecordModelRecord);
+
 			List<AlternativeCarrierRecord> alternativeCarriers = handoverSelectRecord.getAlternativeCarriers();
 			for(AlternativeCarrierRecord alternativeCarrierRecord : alternativeCarriers) {
-				ndefRecordModelRecord.add(getNode(alternativeCarrierRecord, ndefRecordModelRecord));
+				ndefRecordModelParentProperty.add(getNode(alternativeCarrierRecord, ndefRecordModelParentProperty));
 			}
+			
+			ndefRecordModelRecord.add(ndefRecordModelParentProperty);
+			
 			if(handoverSelectRecord.hasError()) {
 				ndefRecordModelRecord.add(getNode(handoverSelectRecord.getError(), ndefRecordModelRecord));
 			}
@@ -387,11 +401,15 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(gcTargetRecord, ndefRecordModelParent);
 			
+			NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Target identifier", ndefRecordModelRecord);
+
 			// text or uri type
 			if(gcTargetRecord.hasTargetIdentifier()) {
-				ndefRecordModelRecord.add(getNode(gcTargetRecord.getTargetIdentifier(), ndefRecordModelRecord));
+				ndefRecordModelParentProperty.add(getNode(gcTargetRecord.getTargetIdentifier(), ndefRecordModelRecord));
 			}
 			
+			ndefRecordModelRecord.add(ndefRecordModelParentProperty);
+
 			return ndefRecordModelRecord;
 		} else if(record instanceof GcActionRecord) {
 			GcActionRecord gcActionRecord = (GcActionRecord)record;
@@ -407,10 +425,14 @@ public class NdefRecordModelFactory {
 			
 			ndefRecordModelRecord.add(ndefRecordModelProperty);
 
+			NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("ActionRecord", ndefRecordModelRecord);
+			
 			if(gcActionRecord.hasActionRecord()) {
-				ndefRecordModelRecord.add(getNode(gcActionRecord.getActionRecord(), ndefRecordModelRecord));
+				ndefRecordModelParentProperty.add(getNode(gcActionRecord.getActionRecord(), ndefRecordModelParentProperty));
 			}
 
+			ndefRecordModelRecord.add(ndefRecordModelParentProperty);
+			
 			return ndefRecordModelRecord;
 		} else if(record instanceof GcDataRecord) {
 

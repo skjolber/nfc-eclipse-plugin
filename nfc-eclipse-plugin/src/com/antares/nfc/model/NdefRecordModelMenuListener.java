@@ -139,9 +139,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	// GenericControlTarget
 	private MenuManager setGenericControlTargetRecord;
 
-	// GenericControlAction
-	private MenuManager setGenericControlActionRecord;
-
 	// GenericControl
 	private MenuManager addGenericControlActionRecord;
 	private MenuManager addGenericControlDataRecord;
@@ -270,11 +267,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			}
 		};
 
-		setGenericControlActionRecord = new MenuManager("Add action", null);
-        for(Class<? extends Record> recordType: genericControlRecordActionRecordTypes) {
-        	setGenericControlActionRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
-        }
-		
 		setGenericControlTargetRecord = new MenuManager("Add target identifier", null);
         for(Class<? extends Record> recordType: genericControlRecordTargetRecordTypes) {
         	setGenericControlTargetRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
@@ -331,9 +323,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					if(!gcTargetRecord.hasTargetIdentifier()) {
 						menuManager.add(setGenericControlTargetRecord);
 					}
-				} else if(childType == GcActionRecord.class) {
-					menuManager.add(setGenericControlActionRecord);
-					menuManager.add(removeRecord);
 				} else if(childType == GenericControlRecord.class) {
 					GenericControlRecord genericControlRecord = (GenericControlRecord)selectedNodeRecord.getRecord();
 					

@@ -64,6 +64,7 @@ import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
+import org.nfctools.ndef.wkt.encoder.handover.HandoverCarrierRecordEncoder;
 import org.nfctools.ndef.wkt.records.Action;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
@@ -84,6 +85,8 @@ import com.antares.nfc.model.NdefRecordModelChangeListener;
 import com.antares.nfc.model.NdefRecordModelFactory;
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelParent;
+import com.antares.nfc.model.NdefRecordModelParentProperty;
+import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.model.NdefRecordModelRecord;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
@@ -222,6 +225,25 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void insert(NdefRecordModelParent parent, int index, Class<? extends Record> recordType) {
 		Activator.info("Insert " + recordType.getSimpleName() + " at " + index);
 		
+		Record child = createRecord(recordType);
+		
+		if(child != null) {
+			int parentIndex = -1;
+			if(parent instanceof NdefRecordModelRecord) {
+				NdefRecordModelRecord ndefRecordModelRecordParent = (NdefRecordModelRecord)parent;
+				
+				parentIndex = connect(ndefRecordModelRecordParent.getRecord(), child);
+			}
+			
+			if(parentIndex != -1) {
+				parent.insert(ndefRecordModelFactory.getNode(child, parent), parentIndex);
+			} else {
+				parent.insert(ndefRecordModelFactory.getNode(child, parent), index);
+			}
+		}
+	}
+
+	private Record createRecord(Class<? extends Record> recordType) {
 		Record child = null;
 		if(recordType == AbsoluteUriRecord.class) {
 			AbsoluteUriRecord record = new AbsoluteUriRecord();
@@ -313,6 +335,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			collisionResolutionRecord.setRandomNumber(nextInt);
 			handoverRequestRecord.setCollisionResolution(collisionResolutionRecord);
 			
+			// add alternative carrier record (one is required)
+			AlternativeCarrierRecord alternativeCarrierRecord = new AlternativeCarrierRecord();
+			handoverRequestRecord.add(alternativeCarrierRecord);
+			
 			child = handoverRequestRecord;
 		} else if(recordType == ErrorRecord.class) {
 			ErrorRecord errorRecord = new ErrorRecord();
@@ -371,21 +397,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			
 			child = gcDataRecord;
 		}
-		
-		if(child != null) {
-			int parentIndex = -1;
-			if(parent instanceof NdefRecordModelRecord) {
-				NdefRecordModelRecord ndefRecordModelRecordParent = (NdefRecordModelRecord)parent;
-				
-				parentIndex = connect(ndefRecordModelRecordParent.getRecord(), child);
-			}
-			
-			if(parentIndex != -1) {
-				parent.insert(ndefRecordModelFactory.getNode(child, parent), parentIndex);
-			} else {
-				parent.insert(ndefRecordModelFactory.getNode(child, parent), index);
-			}
-		}
+		return child;
 	}
 	
 	/**
@@ -425,6 +437,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				}
 				return 1 + 1;
 			}
+		} else if(parent instanceof HandoverCarrierRecord) {
+			HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)parent;
+			
+			handoverCarrierRecord.setCarrierType(child);
 		}
 		return -1;
 	}
@@ -461,6 +477,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				GenericControlRecord genericControlRecord = (GenericControlRecord)parent;
 				genericControlRecord.setData(null);
 			}
+		} else if(parent instanceof HandoverCarrierRecord) {
+			HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)parent;
+			
+			handoverCarrierRecord.setCarrierType(null);
 		}
 	}
 
@@ -607,5 +627,80 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	         display = Display.getDefault();
 	      return display;		
 	   }
+
+	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class type) {
+		NdefRecordModelParent parent = ndefRecordModelParentProperty.getParent();
+		
+		if(parent instanceof NdefRecordModelRecord) {
+			NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)parent;
+			
+			Record record = ndefRecordModelRecord.getRecord();
+		
+			if(record instanceof GcTargetRecord) {
+				
+				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
+				
+				if(gcTargetRecord.hasTargetIdentifier()) {
+					disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
+					
+					ndefRecordModelParentProperty.remove(0);
+				}
+				
+				Record child = createRecord((Class<? extends Record>)type);
+				
+				connect(record, child);
+				
+				ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
+
+			} else if(record instanceof GcActionRecord) {
+
+				GcActionRecord gcActionRecord = (GcActionRecord)record;
+				
+				if(gcActionRecord.hasActionRecord()) {
+					disconnect(gcActionRecord, gcActionRecord.getActionRecord());
+					
+					ndefRecordModelParentProperty.remove(0);
+				}
+				
+				Record child = createRecord((Class<? extends Record>)type);
+
+				connect(record, child);
+				
+				ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
+
+			} else if(record instanceof HandoverCarrierRecord) {
+
+				HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+
+				if(handoverCarrierRecord.hasCarrierType()) {
+					Object carrierType = handoverCarrierRecord.getCarrierType();
+					if(carrierType instanceof Record) {
+						disconnect(handoverCarrierRecord, (Record)carrierType);
+					} else {
+						handoverCarrierRecord.setCarrierType(null);
+					}
+					ndefRecordModelParentProperty.remove(0);
+				}
+				
+				if(type != null) {
+					if(type == String.class) {
+						handoverCarrierRecord.setCarrierType("");
+						
+						ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(handoverCarrierRecord.getCarrierTypeFormat().name(), handoverCarrierRecord.getCarrierType().toString(), ndefRecordModelParentProperty));
+	
+					} else {
+						
+						Record child = createRecord((Class<? extends Record>)type);
+	
+						connect(record, child);
+						
+						ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
+					}
+				}
+			}
+		}
+		
+
+	}
 	
 }

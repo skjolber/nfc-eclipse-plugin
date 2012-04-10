@@ -67,4 +67,9 @@ public class NdefRecordModelPropertyList extends NdefRecordModelParent {
 		}
 		throw new IllegalArgumentException();
 	}
+	
+	@Override
+	public String toString() {
+		return name;
+	}
 }

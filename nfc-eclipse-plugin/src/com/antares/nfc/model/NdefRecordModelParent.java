@@ -39,8 +39,7 @@ public class NdefRecordModelParent extends NdefRecordModelNode {
 	}
 
 	public NdefRecordModelParent(NdefRecordModelParent parent) {
-		super(parent);
-		this.children = new ArrayList<NdefRecordModelNode>();
+		this(new ArrayList<NdefRecordModelNode>(), parent);
 	}
 
 	public NdefRecordModelParent() {
@@ -70,6 +69,10 @@ public class NdefRecordModelParent extends NdefRecordModelNode {
 
 	public void insert(NdefRecordModelNode node, int index) {
 		children.add(index, node);
+	}
+
+	public NdefRecordModelNode getChild(int i) {
+		return children.get(i);
 	}
 
 	public int getSize() {

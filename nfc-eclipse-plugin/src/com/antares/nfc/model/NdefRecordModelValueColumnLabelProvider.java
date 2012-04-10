@@ -30,6 +30,9 @@ import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.nfctools.ndef.Record;
+import org.nfctools.ndef.wkt.records.GcActionRecord;
+import org.nfctools.ndef.wkt.records.GcTargetRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
 
@@ -48,9 +51,52 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 				
 				byte[] id = record.getId();
 				if(id == null || id.length == 0) {
-					return "Record URI";
+					return "ID";
 				}
 				return record.getKey();
+			} else if(element instanceof NdefRecordModelParentProperty) {
+				NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)element;
+				
+				NdefRecordModelParent parent = ndefRecordModelParentProperty.getParent();
+				if(parent instanceof NdefRecordModelRecord) {
+					NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)parent;
+					
+					Record record = ndefRecordModelRecord.getRecord();
+					
+					if(record instanceof GcTargetRecord)  {
+						GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
+						
+						if(gcTargetRecord.hasTargetIdentifier()) {
+							return gcTargetRecord.getTargetIdentifier().getClass().getSimpleName();
+						} else {
+							return "Select target identifier..";
+						}
+					} else if(record instanceof GcActionRecord) {
+						GcActionRecord gcActionRecord = (GcActionRecord)record;
+						
+						if(gcActionRecord.hasActionRecord()) {
+							return gcActionRecord.getActionRecord().getClass().getSimpleName();
+						} else {
+							return "Select action record..";
+						}
+					} else if(record instanceof HandoverCarrierRecord) {
+						HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+						
+						if(handoverCarrierRecord.hasCarrierType()) {
+							if(handoverCarrierRecord.getCarrierType() instanceof Record) {
+								return handoverCarrierRecord.getCarrierType().getClass().getSimpleName();
+							} else {
+								return "-";
+							}
+						} else {
+							if(!handoverCarrierRecord.hasCarrierTypeFormat()) {
+								return "Select carrier type format..";
+							} else {
+								return "Select carrier type..";
+							}
+						}
+					}
+				}
 			}
 			return null;
 		}
@@ -66,6 +112,35 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 				byte[] id = record.getId();
 				if(id == null || id.length == 0) {
 					return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+				}
+			} else if(element instanceof NdefRecordModelParentProperty) {
+				NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)element;
+				
+				NdefRecordModelParent parent = ndefRecordModelParentProperty.getParent();
+				if(parent instanceof NdefRecordModelRecord) {
+					NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)parent;
+					
+					Record record = ndefRecordModelRecord.getRecord();
+					
+					if(record instanceof GcTargetRecord)  {
+						GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
+						
+						if(!gcTargetRecord.hasTargetIdentifier()) {
+							return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+						}
+					} else if(record instanceof GcActionRecord) {
+						GcActionRecord gcActionRecord = (GcActionRecord)record;
+						
+						if(!gcActionRecord.hasActionRecord()) {
+							return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+						}
+					} else if(record instanceof HandoverCarrierRecord) {
+						HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+						
+						if(!handoverCarrierRecord.hasCarrierType()) {
+							return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+						}
+					}
 				}
 			}
 			return super.getForeground(element);

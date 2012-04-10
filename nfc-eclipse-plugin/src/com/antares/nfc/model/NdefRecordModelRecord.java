@@ -54,6 +54,7 @@ public class NdefRecordModelRecord extends NdefRecordModelParent {
 	}
 
 
+
 	
 	
 }

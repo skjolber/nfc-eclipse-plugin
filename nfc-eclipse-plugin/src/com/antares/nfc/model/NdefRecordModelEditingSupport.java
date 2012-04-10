@@ -253,6 +253,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 						
 						return new ComboBoxCellEditor(treeViewer.getTree(), strings);
+					} else if(recordParent.indexOf(ndefRecordModelProperty) == 2) {
+						return new FileDialogCellEditor(treeViewer.getTree());
 					}
 				} else if(record instanceof ErrorRecord) {
 					if(recordParent.indexOf(ndefRecordModelProperty) == 0) {
@@ -913,6 +915,42 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								
 								change = true;
 							}
+						} else if(recordParent.indexOf(ndefRecordModelProperty) == 2) {
+							
+							String path = (String)value;
+							
+							File file = new File(path);
+		
+							int length = (int)file.length();
+							
+							byte[] payload = new byte[length];
+							
+							InputStream in = null;
+							try {
+								in = new FileInputStream(file);
+								DataInputStream din = new DataInputStream(in);
+								
+								din.readFully(payload);
+								
+								handoverCarrierRecord.setCarrierData(payload);
+								
+								ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes data");
+		
+								change = true;
+							} catch(IOException e) {
+								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+								MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+							} finally {
+								if(in != null) {
+									try {
+										in.close();
+									} catch(IOException e) {
+										// ignore
+									}
+								}
+							}
+
+							
 						}
 					} else if(record instanceof ErrorRecord) {
 						if(recordParent.indexOf(ndefRecordModelProperty) == 0) {

@@ -63,8 +63,10 @@ import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 import org.nfctools.ndef.wkt.records.WellKnownRecord;
 import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.CollisionResolutionRecord;
 import org.nfctools.ndef.wkt.records.handover.ErrorRecord;
 import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.ErrorRecord.ErrorReason;
 import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord.CarrierTypeFormat;
 import org.nfctools.ndef.wkt.records.handover.HandoverRequestRecord;
 import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
@@ -86,7 +88,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			TextRecord.class,
 			UnknownRecord.class,
 			UriRecord.class,
-			AlternativeCarrierRecord.class,
 			HandoverSelectRecord.class,
 			HandoverCarrierRecord.class,
 			HandoverRequestRecord.class,
@@ -137,7 +138,38 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 	@Override
 	protected boolean canEdit(Object element) {
-		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord || element instanceof NdefRecordModelPropertyListItem || element instanceof NdefRecordModelParentProperty;
+		
+		if(element instanceof NdefRecordModelParentProperty) {
+			NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)element;
+			
+			Record record = ndefRecordModelParentProperty.getRecord();
+			int recordIndex = ndefRecordModelParentProperty.getRecordIndex();
+			
+			if(record instanceof HandoverSelectRecord) {
+				if(recordIndex == 3) {
+					return true;
+				}
+				return false;
+			} else if(record instanceof HandoverCarrierRecord) {
+				HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+				if(recordIndex == 1) {
+					if(handoverCarrierRecord.hasCarrierTypeFormat()) {
+						
+						CarrierTypeFormat carrierTypeFormat = handoverCarrierRecord.getCarrierTypeFormat();
+						if(carrierTypeFormat == CarrierTypeFormat.External || carrierTypeFormat == CarrierTypeFormat.WellKnown) {
+							return true;
+						}
+					}
+					
+					return false;
+				}
+			} else if(record instanceof HandoverRequestRecord) {
+				return false;
+			}
+
+		}
+		
+		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord || element instanceof NdefRecordModelPropertyListItem;
 	}
 
 	@Override
@@ -347,9 +379,13 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					}
 					return new ComboBoxCellEditor(treeViewer.getTree(), new String[]{});
 				}
+			} else if(record instanceof HandoverSelectRecord) {
+				HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)record;
+				
+				if(ndefRecordModelParentProperty.getParentIndex() == 3) {
+					return new ComboBoxCellEditor(treeViewer.getTree(), new String[]{"Off", "On"});
+				}
 			}
-			
-			
 		}
 
 		return textCellEditor;
@@ -551,10 +587,21 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					}
 					return -1;
 				}
+			} else if(record instanceof HandoverSelectRecord) {
+				HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)record;
+				
+				if(ndefRecordModelParentProperty.getParentIndex() == 3) {
+					if(handoverSelectRecord.hasError()) {
+						return new Integer(1);
+					}
+					return new Integer(0);
+				}
 			}
+		} else if(element instanceof NdefRecordModelPropertyListItem) {
+			NdefRecordModelPropertyListItem ndefRecordModelPropertyListItem = (NdefRecordModelPropertyListItem)element;
 			
-		}
-		
+			return ndefRecordModelPropertyListItem.getValue();
+		}		
 		return element.toString();
 	}
 
@@ -1148,6 +1195,20 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								}
 							}
 						}
+					} else if(record instanceof CollisionResolutionRecord) {
+						CollisionResolutionRecord collisionResolutionRecord = (CollisionResolutionRecord)record;
+						
+						String stringValue = (String)value;
+						
+						int intValue = Integer.parseInt(stringValue) & 0xFFF;
+						
+						if(collisionResolutionRecord.getRandomNumber() != intValue) {
+							collisionResolutionRecord.setRandomNumber(intValue);
+							
+							ndefRecordModelProperty.setValue(Integer.toString(collisionResolutionRecord.getRandomNumber()));
+							
+							change = true;
+						}
 					}
 				} else if(parent instanceof NdefRecordModelParentProperty) {
 					NdefRecordModelRecord recordParent = (NdefRecordModelRecord) parent.getParent();
@@ -1199,7 +1260,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					String auxiliaryDataReference = alternativeCarrierRecord.getAuxiliaryDataReferenceAt(index);
 					
 					if(!stringValue.equals(auxiliaryDataReference)) {
-						alternativeCarrierRecord.setAuxiliaryDataReferenceAt(index, stringValue);
+						alternativeCarrierRecord.setAuxiliaryDataReference(index, stringValue);
 							
 						// update list value
 						
@@ -1321,9 +1382,34 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							}
 						}
 					}
+				} else if(record instanceof HandoverSelectRecord) {
 					
-					
-					
+					if(ndefRecordModelParentProperty.getParentIndex() == 3) {
+
+						Integer index = (Integer)value;
+	
+						if(index.intValue() != -1) {
+							HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)record;
+							
+							int previousIndex;
+							if(handoverSelectRecord.hasError()) {
+								previousIndex = 1;
+							} else {
+								previousIndex = 0;
+							}
+							
+							if(index.intValue() != previousIndex) {
+								if(index.intValue() == 0) {
+									listener.set(ndefRecordModelParentProperty, null);
+								} else {
+									listener.set(ndefRecordModelParentProperty, ErrorRecord.class);
+	
+								}
+								
+								change = true;
+							}
+						}
+					}
 				}
 				
 				

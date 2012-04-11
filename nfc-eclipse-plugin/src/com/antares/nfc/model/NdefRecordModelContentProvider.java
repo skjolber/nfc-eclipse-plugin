@@ -69,7 +69,7 @@ public class NdefRecordModelContentProvider implements ITreeContentProvider {
 		if (element == null) {
 			return null;
 		}
-		return ((NdefRecordModelParent) element).getParent();
+		return ((NdefRecordModelNode) element).getParent();
 	}
 
 	@Override

@@ -144,6 +144,17 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private MenuManager addGenericControlDataRecord;
 	private MenuManager addGenericControlDataOrActionRecord;
 
+	// Lists
+	private Action addListItem;
+	private Action insertListItemSiblingBefore;
+	private Action insertListItemSiblingAfter;
+	private Action removeListItem;
+
+	// HandoverRequestRecord
+	private Action insertAlternativeCarrierRecordSiblingRecordBefore;
+	private Action insertAlternativeCarrierRecordSiblingRecordAfter;
+	private Action addAlternativeCarrierRecordChildRecord;
+
 	private class InsertSiblingAction extends Action {
 
 		private Class<? extends Record> recordType;
@@ -182,6 +193,57 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		}
 	}
 	
+	private class InsertListItemAction extends Action {
+
+		private int offset;
+		
+		public InsertListItemAction(String name, int offset) {
+			super(name);
+			
+			this.offset = offset;
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				listener.insert(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, String.class);
+			}
+		}
+	}
+	
+	private class AddListItemAction extends Action {
+
+		public AddListItemAction(String name) {
+			super(name);
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				listener.add((NdefRecordModelParent)selectedNode, String.class);
+			}
+		}
+	}
+
+	private class RemoveAction extends Action {
+
+		public RemoveAction(String name) {
+			super(name);
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				if(selectedNode != null) {
+					listener.remove(selectedNode);
+					
+					selectedNode = null;
+				}
+			}
+		}
+
+	}
+
 	public NdefRecordModelMenuListener(final TreeViewer treeViewer, final NdefRecordModelChangeListener listener, NdefRecordModelParent root) {
 		this.treeViewer = treeViewer;
 		this.listener = listener;
@@ -254,24 +316,24 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         addGenericControlDataOrActionRecord.add(new AddChildAction(GcActionRecord.class.getSimpleName(), GcActionRecord.class));
         addGenericControlDataOrActionRecord.add(new AddChildAction(GcDataRecord.class.getSimpleName(), GcDataRecord.class));
 
-		removeRecord = new Action("Remove record") {
-			@Override
-			public void run() {
-				if(listener != null) {
-					if(selectedNode != null) {
-						listener.remove(selectedNode);
-						
-						selectedNode = null;
-					}
-				}
-			}
-		};
+		removeRecord = new RemoveAction("Remove record");
 
 		setGenericControlTargetRecord = new MenuManager("Add target identifier", null);
         for(Class<? extends Record> recordType: genericControlRecordTargetRecordTypes) {
         	setGenericControlTargetRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
         }
-		
+        
+        // HandoverRequestRecord
+    	insertAlternativeCarrierRecordSiblingRecordBefore = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " before", AlternativeCarrierRecord.class, 0);
+    	insertAlternativeCarrierRecordSiblingRecordAfter = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " after", AlternativeCarrierRecord.class, 1);
+    	addAlternativeCarrierRecordChildRecord = new AddChildAction("Add " + AlternativeCarrierRecord.class.getSimpleName(), AlternativeCarrierRecord.class);
+
+        // list
+        addListItem = new AddListItemAction("Add item");
+        insertListItemSiblingBefore = new InsertListItemAction("Insert item before", 0);
+        insertListItemSiblingAfter = new InsertListItemAction("Insert item after", 1);
+        removeListItem = new RemoveAction("Remove item");
+        
 		manager.setRemoveAllWhenShown(true);
 		manager.addMenuListener(this);
 		
@@ -310,6 +372,21 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					} else if(parentType == GcActionRecord.class) {
 						menuManager.add(removeRecord);
 					}
+				} else if(selectedNodeParent instanceof NdefRecordModelParentProperty) {
+					NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)selectedNodeParent;
+					
+					NdefRecordModelRecord selectedNodeParentRecord = (NdefRecordModelRecord)ndefRecordModelParentProperty.getParent();
+					
+					Record record = selectedNodeParentRecord.getRecord();
+					if(record instanceof HandoverRequestRecord) {
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
+						menuManager.add(removeRecord);
+					} else if(record instanceof HandoverSelectRecord) {
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
+						menuManager.add(removeRecord);
+					}
 				}
 				
 				// child operation options
@@ -335,9 +412,25 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					}
 				}
 			} else if(selectedNode instanceof NdefRecordModelPropertyListItem) {
-				
+				menuManager.add(insertListItemSiblingBefore);
+				menuManager.add(insertListItemSiblingAfter);
+				menuManager.add(removeListItem);
 			} else if(selectedNode instanceof NdefRecordModelPropertyList) {
+				menuManager.add(addListItem);
+			} else if(selectedNode instanceof NdefRecordModelParentProperty) {
 				
+				NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)selectedNode;
+				
+				NdefRecordModelRecord selectedNodeParentRecord = (NdefRecordModelRecord)ndefRecordModelParentProperty.getParent();
+				
+				Record record = selectedNodeParentRecord.getRecord();
+				
+				// child operations
+				if(record instanceof HandoverRequestRecord) {
+					menuManager.add(addAlternativeCarrierRecordChildRecord);
+				} else if(record instanceof HandoverSelectRecord) {
+					menuManager.add(addAlternativeCarrierRecordChildRecord);
+				}
 			} else {
 				Activator.info("Ignore " + selectedNode.getClass().getSimpleName());
 			}

@@ -26,6 +26,8 @@
 
 package com.antares.nfc.model;
 
+import org.nfctools.ndef.Record;
+
 public class NdefRecordModelNode {
 	
 	protected NdefRecordModelParent parent;
@@ -72,6 +74,36 @@ public class NdefRecordModelNode {
 			
 			p = next;
 		}
+		
+		return -1;
+	}
+	
+	public Record getRecord() {
+		NdefRecordModelNode p = this;
+		
+		do {
+			if(p instanceof NdefRecordModelRecord) {
+				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)p;
+				
+				return ndefRecordModelRecord.getRecord();
+			}
+			
+			p = p.getParent();
+		} while(p.hasParent());
+		
+		return null;
+	}
+	
+	public int getRecordIndex() {
+		NdefRecordModelNode p = this;
+		
+		do {
+			if(p.getParent() instanceof NdefRecordModelRecord) {
+				return p.getParentIndex();
+			}
+			
+			p = p.getParent();
+		} while(p.hasParent());
 		
 		return -1;
 	}

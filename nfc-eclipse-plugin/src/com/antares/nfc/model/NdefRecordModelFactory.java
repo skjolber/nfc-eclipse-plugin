@@ -310,7 +310,7 @@ public class NdefRecordModelFactory {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data reference", "", ndefRecordModelRecord));
 			}
 
-			NdefRecordModelPropertyList list = new NdefRecordModelPropertyList("Auxiliary data References", "#%d", ndefRecordModelRecord);
+			NdefRecordModelPropertyList list = new NdefRecordModelPropertyList("Auxiliary data references", "Auxiliary data reference #%d", ndefRecordModelRecord);
 
 			List<String> auxiliaryDataReferences = alternativeCarrierRecord.getAuxiliaryDataReferences();
 			for(int i = 0; i < auxiliaryDataReferences.size(); i++) {
@@ -336,9 +336,16 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Reason", errorRecord.getErrorReason().toString(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Data", Long.toHexString(errorRecord.getErrorData().longValue()), ndefRecordModelRecord));
-			
+			if(errorRecord.hasErrorReason()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Reason", errorRecord.getErrorReason().toString(), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Reason", "", ndefRecordModelRecord));
+			}
+			if(errorRecord.hasErrorData()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Data", Long.toHexString(errorRecord.getErrorData().longValue()), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Error Data", "", ndefRecordModelRecord));
+			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof HandoverSelectRecord) {
 			HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)record;
@@ -348,18 +355,23 @@ public class NdefRecordModelFactory {
 			ndefRecordModelRecord.add(new NdefRecordModelProperty("Major version", Byte.toString(handoverSelectRecord.getMajorVersion()), ndefRecordModelRecord));
 			ndefRecordModelRecord.add(new NdefRecordModelProperty("Minor version", Byte.toString(handoverSelectRecord.getMinorVersion()), ndefRecordModelRecord));
 
-			NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Alternative carriers", ndefRecordModelRecord);
+			NdefRecordModelParentProperty alternativeCarrierParentProperty = new NdefRecordModelParentProperty("Alternative carriers", ndefRecordModelRecord);
 
 			List<AlternativeCarrierRecord> alternativeCarriers = handoverSelectRecord.getAlternativeCarriers();
 			for(AlternativeCarrierRecord alternativeCarrierRecord : alternativeCarriers) {
-				ndefRecordModelParentProperty.add(getNode(alternativeCarrierRecord, ndefRecordModelParentProperty));
+				alternativeCarrierParentProperty.add(getNode(alternativeCarrierRecord, alternativeCarrierParentProperty));
 			}
 			
-			ndefRecordModelRecord.add(ndefRecordModelParentProperty);
-			
+			ndefRecordModelRecord.add(alternativeCarrierParentProperty);
+
+			NdefRecordModelParentProperty errorParentProperty = new NdefRecordModelParentProperty("Error", ndefRecordModelRecord);
+
 			if(handoverSelectRecord.hasError()) {
-				ndefRecordModelRecord.add(getNode(handoverSelectRecord.getError(), ndefRecordModelRecord));
+				errorParentProperty.add(getNode(handoverSelectRecord.getError(), errorParentProperty));
 			}
+			
+			ndefRecordModelRecord.add(errorParentProperty);
+			
 			return ndefRecordModelRecord;
 		} else if(record instanceof EmptyRecord) {
 			EmptyRecord emptyRecord = (EmptyRecord)record;

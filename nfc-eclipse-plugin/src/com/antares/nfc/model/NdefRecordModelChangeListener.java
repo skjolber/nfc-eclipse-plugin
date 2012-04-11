@@ -32,9 +32,9 @@ public interface NdefRecordModelChangeListener {
 
 	void update(NdefRecordModelParent node);
 	
-	void insert(NdefRecordModelParent node, int index, Class<? extends Record> recordType);
+	void insert(NdefRecordModelParent node, int index, Class recordType);
 
-	void add(NdefRecordModelParent node, Class<? extends Record> recordType);
+	void add(NdefRecordModelParent node, Class recordType);
 
 	void remove(NdefRecordModelNode node);
 	

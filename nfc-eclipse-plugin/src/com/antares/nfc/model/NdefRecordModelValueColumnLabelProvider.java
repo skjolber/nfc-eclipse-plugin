@@ -33,6 +33,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
 
@@ -95,9 +96,24 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 								return "Select carrier type..";
 							}
 						}
+					} else if(record instanceof HandoverSelectRecord) {
+						HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)record;
+						
+						if(ndefRecordModelParentProperty.getParentIndex() == 3) {
+							if(handoverSelectRecord.hasError()) {
+								return "On";
+							} else {
+								return "Off";
+							}
+						}
 					}
 				}
+			} else if(element instanceof NdefRecordModelPropertyListItem) {
+				NdefRecordModelPropertyListItem ndefRecordModelPropertyListItem = (NdefRecordModelPropertyListItem)element;
+				
+				return ndefRecordModelPropertyListItem.getValue();
 			}
+
 			return null;
 		}
 		

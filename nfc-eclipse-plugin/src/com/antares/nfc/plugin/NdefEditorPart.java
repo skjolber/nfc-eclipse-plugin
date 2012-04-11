@@ -89,8 +89,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 	
 	@Override
-	public void insert(NdefRecordModelParent parent, int index, Class<? extends Record> recordType) {
-		operator.insert(parent, index, recordType);
+	public void insert(NdefRecordModelParent parent, int index, Class type) {
+		operator.insert(parent, index, type);
 		
 		modified();
 	}
@@ -110,8 +110,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 
 	@Override
-	public void add(NdefRecordModelParent node, Class<? extends Record> recordType) {
-		operator.add(node, recordType);
+	public void add(NdefRecordModelParent node, Class type) {
+		operator.add(node, type);
 
 		modified();
 	}

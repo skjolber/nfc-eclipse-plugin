@@ -2,7 +2,8 @@
 <feature
       id="com.antares.nfc.plugin.feature"
       label="NDEF Editor"
-      version="1.0.0.qualifier">
+      version="1.1.0.qualifier"
+      provider-name="Antares Gruppen">
 
    <description url="http://code.google.com/p/nfc-eclipse-plugin/">
       NDEF Editor
@@ -21,6 +22,10 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    </license>
+
+   <url>
+      <update label="NFC Eclipse Plugin Google code update site" url="http://nfc-eclipse-plugin.googlecode.com/git/nfc-eclipse-plugin-feature/update-site/"/>
+   </url>
 
    <plugin
          id="com.antares.nfc.plugin"

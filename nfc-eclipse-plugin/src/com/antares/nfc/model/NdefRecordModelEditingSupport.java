@@ -1000,11 +1000,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							
 						}
 					} else if(record instanceof ErrorRecord) {
+						ErrorRecord errorRecord = (ErrorRecord)record;
+						
 						if(recordParent.indexOf(ndefRecordModelProperty) == 0) {
 			
-							ErrorRecord errorRecord = (ErrorRecord)record;
-							
-							
 							Integer index = (Integer)value;
 			
 							ErrorRecord.ErrorReason errorReason;
@@ -1024,6 +1023,54 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 									ndefRecordModelProperty.setValue(null);
 								}
 								change = true;
+							}
+						} else if(recordParent.indexOf(ndefRecordModelProperty) == 1) {
+							String stringValue = (String)value;
+									
+							try {
+								
+								Long longValue = Long.parseLong(stringValue);
+								
+								System.out.println("Long value is " + longValue.longValue());
+								if(errorRecord.hasErrorReason()) {
+									switch(errorRecord.getErrorReason()) {
+									
+									case TemporaryMemoryConstraints : {
+										if(longValue.longValue() > 255) {
+											throw new IllegalArgumentException("Expected value <= 255 (1 byte)");
+										}
+										break;
+									}
+									
+									case PermanenteMemoryConstraints : {
+										if(longValue.longValue() > 4294967295L) {
+											throw new IllegalArgumentException("Expected value <= 4294967295 (4 bytes)");
+										}
+
+										break;
+									}
+
+									case CarrierSpecificConstraints : {
+										if(longValue.longValue() > 255) {
+											throw new IllegalArgumentException("Expected 8-bit value <= 255 (1 byte)");
+										}
+										break;
+									}
+									
+									}
+								}
+								
+								errorRecord.setErrorData(longValue);
+								
+								ndefRecordModelProperty.setValue(longValue.toString());
+								
+								change = true;
+							} catch(NumberFormatException e) {
+								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+								MessageDialog.openError(shell, "Error", "Could not set value '" + stringValue + "', reverting to previous value.");
+							} catch(IllegalArgumentException e) {
+								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+								MessageDialog.openError(shell, "Error", e.getMessage() + "', reverting to previous value.");
 							}
 						}
 					} else if(record instanceof AlternativeCarrierRecord) {

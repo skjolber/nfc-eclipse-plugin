@@ -26,7 +26,6 @@
 
 package com.antares.nfc.model;
 
-import org.nfctools.ndef.Record;
 
 public interface NdefRecordModelChangeListener {
 

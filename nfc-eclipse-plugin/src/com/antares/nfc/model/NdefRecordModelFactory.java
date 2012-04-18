@@ -28,7 +28,6 @@ package com.antares.nfc.model;
 
 import java.util.List;
 
-import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
@@ -37,6 +36,13 @@ import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
+import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.CollisionResolutionRecord;
+import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord.CarrierTypeFormat;
+import org.nfctools.ndef.wkt.handover.records.HandoverRequestRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
@@ -46,13 +52,6 @@ import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 import org.nfctools.ndef.wkt.records.WellKnownRecord;
-import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
-import org.nfctools.ndef.wkt.records.handover.CollisionResolutionRecord;
-import org.nfctools.ndef.wkt.records.handover.ErrorRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord.CarrierTypeFormat;
-import org.nfctools.ndef.wkt.records.handover.HandoverRequestRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
 
 public class NdefRecordModelFactory {
 

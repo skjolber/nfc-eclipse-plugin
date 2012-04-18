@@ -43,6 +43,10 @@ import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
+import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverRequestRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
@@ -51,12 +55,6 @@ import org.nfctools.ndef.wkt.records.GenericControlRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
-import org.nfctools.ndef.wkt.records.handover.AlternativeCarrierRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverRequestRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
-
-import com.antares.nfc.plugin.Activator;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 
@@ -72,7 +70,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			TextRecord.class,
 			UnknownRecord.class,
 			UriRecord.class,
-			AlternativeCarrierRecord.class,
 			HandoverSelectRecord.class,
 			HandoverCarrierRecord.class,
 			HandoverRequestRecord.class,
@@ -89,7 +86,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	@SuppressWarnings("rawtypes")
 	private Class[] genericControlRecordDataChildRecordTypes = rootRecordTypes;
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "rawtypes", "unused" })
 	private Class[] genericControlRecordActionRecordTypes = rootRecordTypes;
 
 	private TreeViewer treeViewer;
@@ -244,6 +241,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public NdefRecordModelMenuListener(final TreeViewer treeViewer, final NdefRecordModelChangeListener listener, NdefRecordModelParent root) {
 		this.treeViewer = treeViewer;
 		this.listener = listener;
@@ -348,118 +346,81 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	public void menuAboutToShow(IMenuManager menuManager) {
 		
 		if(selectedNode != null) {
-			
-			if(selectedNode instanceof NdefRecordModelRecord) {
-				
-				// parent operation (sibling) options
-				NdefRecordModelParent selectedNodeParent = selectedNode.getParent();
-				if(!selectedNodeParent.hasParent()) { 
-					// add and remove sibling nodes
-					menuManager.add(insertRootSiblingRecordBefore);
-					menuManager.add(insertRootSiblingRecordAfter);
-					menuManager.add(removeRecord);
-				} else if(selectedNodeParent instanceof NdefRecordModelRecord) {
-					NdefRecordModelRecord selectedNodeParentRecord = (NdefRecordModelRecord)selectedNodeParent;
-					
-					Class<? extends Record> parentType = selectedNodeParentRecord.getRecord().getClass();
-					if(parentType == GcDataRecord.class) {
-						// add and remove sibling nodes
-						menuManager.add(insertGenericControlDataSiblingRecordBefore);
-						menuManager.add(insertGenericControlDataSiblingRecordAfter);
-						menuManager.add(removeRecord);
-					} else if(parentType == GcTargetRecord.class) {
-						menuManager.add(removeRecord);
-					} else if(parentType == GcActionRecord.class) {
-						menuManager.add(removeRecord);
-					}
-				} else if(selectedNodeParent instanceof NdefRecordModelParentProperty) {
-					NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)selectedNodeParent;
-					
-					NdefRecordModelRecord selectedNodeParentRecord = (NdefRecordModelRecord)ndefRecordModelParentProperty.getParent();
-					
-					Record record = selectedNodeParentRecord.getRecord();
-					if(record instanceof HandoverRequestRecord) {
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
-						menuManager.add(removeRecord);
-					} else if(record instanceof HandoverSelectRecord) {
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
-						menuManager.add(removeRecord);
-					}
-				}
-				
-				// child operation options
-				NdefRecordModelRecord selectedNodeRecord = (NdefRecordModelRecord)selectedNode;
-				Class<? extends Record> childType = selectedNodeRecord.getRecord().getClass();
-				if(childType == GcDataRecord.class) {
-					menuManager.add(addGenericControlDataChildRecord);
-					menuManager.add(removeRecord);
-				} else if(childType == GcTargetRecord.class) {
-					GcTargetRecord gcTargetRecord = (GcTargetRecord) selectedNodeRecord.getRecord();
-					if(!gcTargetRecord.hasTargetIdentifier()) {
-						menuManager.add(setGenericControlTargetRecord);
-					}
-				} else if(childType == GenericControlRecord.class) {
-					GenericControlRecord genericControlRecord = (GenericControlRecord)selectedNodeRecord.getRecord();
-					
-					if(!genericControlRecord.hasAction() && !genericControlRecord.hasData()) {
-						menuManager.add(addGenericControlDataOrActionRecord);
-					} else if(!genericControlRecord.hasAction()) {
-						menuManager.add(addGenericControlActionRecord);
-					} else if(!genericControlRecord.hasData()) {
-						menuManager.add(addGenericControlDataRecord);
-					}
-				}
-			} else if(selectedNode instanceof NdefRecordModelPropertyListItem) {
+
+			// filter out list types
+			if(selectedNode instanceof NdefRecordModelPropertyListItem) {
 				menuManager.add(insertListItemSiblingBefore);
 				menuManager.add(insertListItemSiblingAfter);
 				menuManager.add(removeListItem);
 			} else if(selectedNode instanceof NdefRecordModelPropertyList) {
 				menuManager.add(addListItem);
-			} else if(selectedNode instanceof NdefRecordModelParentProperty) {
-				
-				NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)selectedNode;
-				
-				NdefRecordModelRecord selectedNodeParentRecord = (NdefRecordModelRecord)ndefRecordModelParentProperty.getParent();
-				
-				Record record = selectedNodeParentRecord.getRecord();
-				
-				// child operations
-				if(record instanceof HandoverRequestRecord) {
-					menuManager.add(addAlternativeCarrierRecordChildRecord);
-				} else if(record instanceof HandoverSelectRecord) {
-					menuManager.add(addAlternativeCarrierRecordChildRecord);
-				}
 			} else {
-				Activator.info("Ignore " + selectedNode.getClass().getSimpleName());
-			}
 			
-
+				// parent operation (sibling) options
+				Record parentRecord = selectedNode.getParentRecord();
+				if(parentRecord == null) {
+					// root
+					// add and remove sibling nodes
+					menuManager.add(insertRootSiblingRecordBefore);
+					menuManager.add(insertRootSiblingRecordAfter);
+					menuManager.add(removeRecord);
+				} else {
+					// parent operation options
+					if(parentRecord instanceof GcDataRecord) {
+						// add and remove sibling nodes
+						menuManager.add(insertGenericControlDataSiblingRecordBefore);
+						menuManager.add(insertGenericControlDataSiblingRecordAfter);
+						menuManager.add(removeRecord);
+					} else if(parentRecord instanceof GcTargetRecord) {
+						menuManager.add(removeRecord);
+					} else if(parentRecord instanceof GcActionRecord) {
+						menuManager.add(removeRecord);
+					} else if(parentRecord instanceof HandoverRequestRecord) {
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
+						menuManager.add(removeRecord);
+					} else if(parentRecord instanceof HandoverSelectRecord) {
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
+						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
+						menuManager.add(removeRecord);
+					}
+					
+					// child operation options
+					Record record = selectedNode.getRecord();
+					
+					if(record instanceof GcDataRecord) {
+						menuManager.add(addGenericControlDataChildRecord);
+						menuManager.add(removeRecord);
+					} else if(record instanceof GcTargetRecord) {
+						GcTargetRecord gcTargetRecord = (GcTargetRecord) record;
+						if(!gcTargetRecord.hasTargetIdentifier()) {
+							menuManager.add(setGenericControlTargetRecord);
+						}
+					} else if(record instanceof GenericControlRecord) {
+						GenericControlRecord genericControlRecord = (GenericControlRecord)record;
+						
+						if(!genericControlRecord.hasAction() && !genericControlRecord.hasData()) {
+							menuManager.add(addGenericControlDataOrActionRecord);
+						} else if(!genericControlRecord.hasAction()) {
+							menuManager.add(addGenericControlActionRecord);
+						} else if(!genericControlRecord.hasData()) {
+							menuManager.add(addGenericControlDataRecord);
+						}
+					} else if(record instanceof HandoverRequestRecord) {
+						menuManager.add(addAlternativeCarrierRecordChildRecord);
+					} else if(record instanceof HandoverSelectRecord) {
+						menuManager.add(addAlternativeCarrierRecordChildRecord);
+					}
+				}
+			}
 		} else {
+			// force select of root node
 			selectedNode = root;
 			
 			menuManager.add(addRootChildRecord);
 		}
 	}
 	
-	public boolean hasParent(NdefRecordModelNode node, Class<? extends Record> type) {
-		NdefRecordModelParent parent = node.getParent();
-		while(parent != null) {
-			
-			if(parent instanceof NdefRecordModelRecord) {
-				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)parent;
-
-				if(ndefRecordModelRecord.getRecord().getClass() == type) {
-					return true;
-				}
-			}
-			
-			parent = parent.getParent();
-		}
-		return false;
-	}
-
 	@Override
 	public void selectionChanged(SelectionChangedEvent event) {
         IStructuredSelection iStructuredSelection = (IStructuredSelection)event.getSelection();

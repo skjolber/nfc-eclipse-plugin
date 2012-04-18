@@ -77,10 +77,33 @@ public class NdefRecordModelNode {
 		
 		return -1;
 	}
+
+	/**
+	 * 
+	 * Get the record to which the first parent of this node belongs
+	 * 
+	 * @return
+	 */
+
+	public Record getParentRecord() {
+		if(parent != null) {
+			return getRecord(parent);
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * Get the record to which this node belongs
+	 * 
+	 * @return
+	 */
 	
 	public Record getRecord() {
-		NdefRecordModelNode p = this;
-		
+		return getRecord(this);
+	}
+	
+	protected Record getRecord(NdefRecordModelNode p) {
 		do {
 			if(p instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)p;
@@ -89,12 +112,12 @@ public class NdefRecordModelNode {
 			}
 			
 			p = p.getParent();
-		} while(p.hasParent());
+		} while(p != null && p.hasParent());
 		
 		return null;
 	}
 	
-	public int getRecordIndex() {
+	public int getRecordBranchIndex() {
 		NdefRecordModelNode p = this;
 		
 		do {

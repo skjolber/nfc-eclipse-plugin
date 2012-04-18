@@ -30,10 +30,10 @@ import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.nfctools.ndef.Record;
+import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.handover.HandoverSelectRecord;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
 

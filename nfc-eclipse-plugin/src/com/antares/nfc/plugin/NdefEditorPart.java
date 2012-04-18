@@ -27,11 +27,13 @@
 package com.antares.nfc.plugin;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.layout.TableColumnLayout;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
+import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -58,11 +60,11 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
-import org.nfctools.ndef.Record;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
 import com.antares.nfc.model.NdefRecordModelContentProvider;
 import com.antares.nfc.model.NdefRecordModelEditingSupport;
+import com.antares.nfc.model.NdefRecordModelHintColumnProvider;
 import com.antares.nfc.model.NdefRecordModelMenuListener;
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelParent;
@@ -198,6 +200,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 				| ColumnViewerEditor.TABBING_MOVE_TO_ROW_NEIGHBOR
 				| ColumnViewerEditor.TABBING_VERTICAL | ColumnViewerEditor.KEYBOARD_ACTIVATION);
 		
+		
 		TreeViewerColumn column = new TreeViewerColumn(treeViewer, 0, SWT.NONE);
 		column.getColumn().setWidth(200);
 		column.getColumn().setMoveable(true);
@@ -224,6 +227,20 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		column.getColumn().setText("Size");
 		column.getColumn().setAlignment(SWT.CENTER);
 		column.setLabelProvider(new NdefRecordModelSizeColumnLabelProvider());
+		
+		//TableColumn singleColumn = new TableColumn(v.getTable(), SWT.NONE);
+		 //TableColumnLayout tableColumnLayout = new TableColumnLayout();
+		 //tableColumnLayout.setColumnData(singleColumn, new ColumnWeightData(100));
+		 //tableComposite.setLayout(tableColumnLayout);
+		
+		// http://blog.eclipse-tips.com/2008/05/single-column-tableviewer-and.html
+		column = new TreeViewerColumn(treeViewer, SWT.NONE);
+		column.getColumn().setWidth(200);
+		column.getColumn().setMoveable(true);
+		column.getColumn().setText("Hint");
+		column.getColumn().setAlignment(SWT.LEFT);
+		
+		column.setLabelProvider(new NdefRecordModelHintColumnProvider());
 		
 		treeViewer.setContentProvider(new NdefRecordModelContentProvider());
 

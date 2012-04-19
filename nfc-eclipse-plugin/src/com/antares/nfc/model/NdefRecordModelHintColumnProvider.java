@@ -88,9 +88,6 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 				}
 			}
 			
-
-
-
 			return null;
 		}
 		
@@ -99,9 +96,24 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 			
 			if(element instanceof NdefRecordModelNode) {
 				NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
-				
+
 				Record record = ndefRecordModelNode.getRecord();
-				
+
+				// first check problems with encoding
+				if(element instanceof NdefRecordModelRecord) {
+					try {
+						encoder.encodeSingle(ndefRecordModelNode.getRecord());
+					} catch(NdefEncoderException e) {
+						if(e.getLocation() == ndefRecordModelNode.getRecord()) {
+							return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+						} else {
+							// do nothing
+						}
+					} catch(Exception e) {
+						// do nothing
+					}
+				}
+								
 				if(record instanceof AndroidApplicationRecord) {
 					if(element instanceof NdefRecordModelRecord) {
 						 
@@ -111,7 +123,6 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 						if(androidApplicationRecord.hasPackageName()) {
 			
 							// ^[a-z]+(\.[a-zA-Z_][a-zA-Z0-9_]*)*$
-
 							if(!androidApplicationRecord.getPackageName().matches(JAVA_PACKAGE_CONVENSION)) {
 								return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
 							}

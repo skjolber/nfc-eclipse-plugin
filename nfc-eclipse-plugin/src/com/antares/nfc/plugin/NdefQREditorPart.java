@@ -31,7 +31,7 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
@@ -55,17 +55,13 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 
 		super.createPartControl(composite);
 
-		binaryQRLabel = new Label(composite, SWT.NONE);
-
-		GridData gridData = new GridData();
-		gridData.horizontalAlignment = GridData.FILL;
-		gridData.verticalAlignment = GridData.FILL;
-		gridData.grabExcessHorizontalSpace = true;
-		gridData.grabExcessVerticalSpace = true;
-		gridData.horizontalSpan = 1;
+		Composite wrapper = new Composite(form, SWT.NONE);
+		wrapper.setLayout(new FillLayout());
 		
-		binaryQRLabel.setLayoutData(gridData);
+		binaryQRLabel = new Label(wrapper, SWT.NONE);		
 		binaryQRLabel.setBackground(new Color(composite.getDisplay(), 0xFF, 0xFF, 0xFF));
+		
+		form.setWeights(new int[] {10, 10});
 		
 		composite.getDisplay().asyncExec(
 				new Runnable()
@@ -82,7 +78,7 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
                	refreshBinaryQR();
 			}
 		});
-		
+	
 	}
 
 	public void refreshBinaryQR() {

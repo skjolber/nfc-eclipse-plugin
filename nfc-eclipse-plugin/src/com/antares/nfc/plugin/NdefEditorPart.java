@@ -27,13 +27,11 @@
 package com.antares.nfc.plugin;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.layout.TableColumnLayout;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
-import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -41,18 +39,23 @@ import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.TreeViewerEditor;
 import org.eclipse.jface.viewers.TreeViewerFocusCellManager;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSourceEvent;
 import org.eclipse.swt.dnd.DragSourceListener;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TreeDropTargetEffect;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.ScrollBar;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.IEditorInput;
@@ -78,7 +81,9 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	protected boolean dirty = false;
 	protected TreeViewer treeViewer; 
 	protected NdefModelOperator operator;
-	
+	protected SashForm form;
+	protected final int hintColumnMinimumSize = 200;
+
 	public NdefEditorPart(NdefModelOperator operator) {
 		this.operator = operator;
 	}
@@ -162,28 +167,21 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 
 	@Override
 	public void createPartControl(Composite composite) {
-		
-		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 3;
-		
-		composite.setLayout(gridLayout);
+
+		composite.setLayout (new FillLayout());
 		composite.setBackground(new Color(composite.getDisplay(), 0xFF, 0xFF, 0xFF));
 
-		treeViewer = new TreeViewer(composite, SWT.BORDER
+		form = new SashForm(composite, SWT.HORIZONTAL);
+		form.setLayout(new FillLayout());
+
+		Composite wrapper = new Composite(form,SWT.NONE);
+		wrapper.setLayout(new FillLayout());
+
+		treeViewer = new TreeViewer(wrapper, SWT.BORDER
 				| SWT.FULL_SELECTION);
 		treeViewer.getTree().setLinesVisible(true);
 		treeViewer.getTree().setHeaderVisible(true);
 				
-		GridData gridData = new GridData();
-		
-		gridData.horizontalAlignment = GridData.FILL;
-		gridData.verticalAlignment = GridData.FILL;
-		gridData.grabExcessHorizontalSpace = true;
-		gridData.grabExcessVerticalSpace = true;
-		gridData.horizontalSpan = 2;
-
-		treeViewer.getTree().setLayoutData(gridData);
-
 		TreeViewerFocusCellManager focusCellManager = new TreeViewerFocusCellManager(treeViewer,new FocusCellOwnerDrawHighlighter(treeViewer));
 		ColumnViewerEditorActivationStrategy actSupport = new ColumnViewerEditorActivationStrategy(treeViewer) {
 			@Override
@@ -234,9 +232,11 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		 //tableComposite.setLayout(tableColumnLayout);
 		
 		// http://blog.eclipse-tips.com/2008/05/single-column-tableviewer-and.html
+		
 		column = new TreeViewerColumn(treeViewer, SWT.NONE);
-		column.getColumn().setWidth(200);
+		column.getColumn().setWidth(hintColumnMinimumSize);
 		column.getColumn().setMoveable(true);
+		column.getColumn().setResizable(false);
 		column.getColumn().setText("Hint");
 		column.getColumn().setAlignment(SWT.LEFT);
 		
@@ -250,6 +250,24 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		
 		treeViewer.expandAll();
 
+		composite.getDisplay().asyncExec(
+				new Runnable()
+				{
+					public void run()
+					{
+						fillColumn();
+					}
+				}
+				);
+
+		// we want the last column to 'fill' with the layout
+		treeViewer.getTree().addControlListener(new ControlAdapter() {
+			public void controlResized(ControlEvent e) {
+               	fillColumn();
+			}
+		});
+		
+		// drag and drop
 	    Transfer[] types = new Transfer[] {LocalSelectionTransfer.getTransfer()};
 	    int operations = DND.DROP_MOVE;
 
@@ -307,7 +325,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 			
 			/**
 			 * 
-			 * Check out what kind of insert feedback to give user in GUI while dragging: insert before or after.
+			 * Check out what kind of (visual) insert feedback to give user in GUI while dragging: insert before or after.
 			 * 
 			 */
 			
@@ -406,6 +424,36 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		});
 	}
 	
+	protected void fillColumn() {
+		Tree tree = treeViewer.getTree();
+		int columnsWidth = 0;
+		for (int i = 0; i < tree.getColumnCount() - 1; i++) {
+			columnsWidth += tree.getColumn(i).getWidth();
+		}
+		
+		Point size = tree.getSize();
+		
+		int scrollBarWidth;
+		ScrollBar verticalBar = treeViewer.getTree().getVerticalBar();
+		if(verticalBar.isVisible()) {
+			scrollBarWidth = verticalBar.getSize().x;
+		} else {
+			scrollBarWidth = 0;
+		}
+
+		// adjust column according to available horizontal space
+		TreeColumn lastColumn = tree.getColumn(tree.getColumnCount() - 1);
+		if(columnsWidth + hintColumnMinimumSize + tree.getBorderWidth() * 2 < size.x - scrollBarWidth) {
+			lastColumn.setWidth(size.x - scrollBarWidth - columnsWidth - tree.getBorderWidth() * 2);
+			
+		} else {
+			// fall back to minimum, scrollbar will show
+			if(lastColumn.getWidth() != hintColumnMinimumSize) {
+				lastColumn.setWidth(hintColumnMinimumSize);
+			}
+		}
+	}
+
 	private int getColumn(int x) {
 		int a = 0;
 		for (int i = 0; i < treeViewer.getTree().getColumnCount(); i++) {

@@ -55,6 +55,7 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 					try {
 						encoder.encodeSingle(ndefRecordModelNode.getRecord());
 					} catch(NdefEncoderException e) {
+						
 						if(e.getLocation() == ndefRecordModelNode.getRecord()) {
 							return e.getMessage();
 						} else {

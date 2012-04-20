@@ -431,7 +431,7 @@ public class NdefRecordModelFactory {
 			if(gcActionRecord.hasAction()) {
 				ndefRecordModelProperty = new NdefRecordModelProperty("Action", gcActionRecord.getAction().toString(), ndefRecordModelRecord);
 			} else {
-				ndefRecordModelProperty = new NdefRecordModelProperty("Action", "", ndefRecordModelRecord);
+				ndefRecordModelProperty = new NdefRecordModelProperty("Action", "-", ndefRecordModelRecord);
 			}
 			
 			ndefRecordModelRecord.add(ndefRecordModelProperty);

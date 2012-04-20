@@ -44,6 +44,14 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 				
 				// System.out.println("Get element " + element + " label " + ndefRecordModelProperty.getValue());
 
+				Record record = ndefRecordModelProperty.getRecord();
+				if(record instanceof GcActionRecord) {
+					GcActionRecord gcActionRecord = (GcActionRecord)record;
+					if(!gcActionRecord.hasAction()) {
+						return "Select action ..";
+					}
+				}
+				
 				return ndefRecordModelProperty.getValue();
 			} else if(element instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
@@ -120,7 +128,19 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 		@Override
 		public Color getForeground(Object element) {
 			
-			if(element instanceof NdefRecordModelRecord) {
+			if(element instanceof NdefRecordModelProperty) {
+				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
+				
+				// System.out.println("Get element " + element + " label " + ndefRecordModelProperty.getValue());
+
+				Record record = ndefRecordModelProperty.getRecord();
+				if(record instanceof GcActionRecord) {
+					GcActionRecord gcActionRecord = (GcActionRecord)record;
+					if(!gcActionRecord.hasAction()) {
+						return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+					}
+				}
+			} else if(element instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
 			
 				Record record = ndefRecordModelRecord.getRecord();

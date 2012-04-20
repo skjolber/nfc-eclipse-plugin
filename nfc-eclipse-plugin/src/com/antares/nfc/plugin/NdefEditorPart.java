@@ -92,7 +92,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void update(NdefRecordModelParent model) {
 		operator.update(model);
 		
-		setDirty(true);
+		modified();
 	}
 	
 	@Override
@@ -126,6 +126,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	protected void modified() {
 		treeViewer.refresh(operator.getModel());
 
+		form.update();
+		
 		setDirty(true);
 	}
 	
@@ -353,13 +355,13 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 							}
 							
 						} else {
-							//System.out.println("Ignore node " + node.getClass().getSimpleName() + " at level " + node.getLevel());
+							// ignore node
 						}
 					} else {
-						//System.out.println("Ignore node " + node.getClass().getSimpleName());
+						// ignore node
 					}
 				} else if(item != null) {
-					// System.out.println("Ignore item " + item.getClass().getSimpleName() + " " + item.getData());
+					// ignore item
 				} else if(item == null) {
 					// ignore null item
 				}

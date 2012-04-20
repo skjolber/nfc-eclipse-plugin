@@ -211,6 +211,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			NdefRecordModelRecord record = (NdefRecordModelRecord)child;
 			
 			records.add(record.getRecord());
+			
 		}
 		byte[] encode = ndefMessageEncoder.encode(records);
 		return encode;
@@ -430,6 +431,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 */
 	
 	private int connect(Record parent, Record child) {
+		Activator.info("Connect " + parent.getClass().getSimpleName() + " to " + child.getClass().getSimpleName());
 		if(parent instanceof GcDataRecord) {
 			GcDataRecord gcDataRecord = (GcDataRecord)parent;
 			
@@ -582,6 +584,21 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				
 				alternativeCarrierRecord.removeAuxiliaryDataReference(index);
 			}				
+		} else if(parent instanceof NdefRecordModelParentProperty) {
+			Record record = parent.getRecord();
+			if(record instanceof GcTargetRecord) {
+				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
+
+				if(gcTargetRecord.hasTargetIdentifier()) {
+					disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
+				}
+			} else if(record instanceof GcActionRecord) {
+				GcActionRecord gcActionRecord = (GcActionRecord)record;
+				
+				if(gcActionRecord.hasActionRecord()) {
+					disconnect(gcActionRecord, gcActionRecord.getActionRecord());
+				}
+			}
 		}
 	}
 	
@@ -615,10 +632,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 			connect(parentRecordNode.getRecord(), childRecordNode.getRecord());
 		}
-		
-		
 	}
-
 
 	@Override
 	public void add(NdefRecordModelParent node, Class type) {
@@ -638,8 +652,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if(ndef.length > 0) {
 			int parent = Math.min(parentWidth, parentHeight);
 			
-			//System.out.println("Parent is " + parentWidth + "x" + parentHeight);
-			
 			writer.setAligment(horizontal, vertical);
 
 			//get a byte matrix for the data
@@ -649,8 +661,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			int width = matrix.getWidth(); 
 			int height = matrix.getHeight(); 
 
-			//System.out.println("Image is " + width + "x" + height);
-			
 			//create buffered image to draw to
 			ImageData imageData = new ImageData(width, height, 1, new PaletteData(new RGB[]{new RGB(0xFF, 0xFF, 0xFF), new RGB(0x00, 0x00, 0x00)}));
 			//iterate through the matrix and draw the pixels to the image
@@ -675,6 +685,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	   }
 
 	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class type) {
+		
 		NdefRecordModelParent parent = ndefRecordModelParentProperty.getParent();
 		
 		if(parent instanceof NdefRecordModelRecord) {
@@ -694,7 +705,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				
 				Record child = createRecord(type);
 				
-				connect(record, child);
+				connect(record, child); // ignore index, only one child
 				
 				ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
 

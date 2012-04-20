@@ -65,16 +65,18 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			AndroidApplicationRecord.class,
 			ExternalTypeRecord.class,
 			EmptyRecord.class,
+			GenericControlRecord.class,
+			
+			HandoverSelectRecord.class,
+			HandoverCarrierRecord.class,
+			HandoverRequestRecord.class,
+
 			MimeRecord.class,
 			SmartPosterRecord.class,
 			TextRecord.class,
 			UnknownRecord.class,
-			UriRecord.class,
-			HandoverSelectRecord.class,
-			HandoverCarrierRecord.class,
-			HandoverRequestRecord.class,
+			UriRecord.class
 			
-			GenericControlRecord.class
 	};
 	
 	@SuppressWarnings("rawtypes")
@@ -133,8 +135,11 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private MenuManager insertGenericControlDataSiblingRecordAfter;
 	private MenuManager addGenericControlDataChildRecord;
 	
-	// GenericControlTarget
+	// GenericControl Target Record
 	private MenuManager setGenericControlTargetRecord;
+
+	// GenericControl Action Record
+	private MenuManager setGenericControlActionRecord;
 
 	// GenericControl
 	private MenuManager addGenericControlActionRecord;
@@ -189,6 +194,25 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			}
 		}
 	}
+	
+	private class SetChildAction extends Action {
+
+		private Class<? extends Record> recordType;
+		
+		public SetChildAction(String name, Class<? extends Record> recordType) {
+			super(name);
+			
+			this.recordType = recordType;
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				listener.set((NdefRecordModelParentProperty)selectedNode, recordType);
+			}
+		}
+	}
+
 	
 	private class InsertListItemAction extends Action {
 
@@ -316,9 +340,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 		removeRecord = new RemoveAction("Remove record");
 
-		setGenericControlTargetRecord = new MenuManager("Add target identifier", null);
+		setGenericControlTargetRecord = new MenuManager("Set target identifier", null);
         for(Class<? extends Record> recordType: genericControlRecordTargetRecordTypes) {
-        	setGenericControlTargetRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
+        	setGenericControlTargetRecord.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        }
+        
+        setGenericControlActionRecord = new MenuManager("Set action record", null);
+        for(Class<? extends Record> recordType: rootRecordTypes) {
+        	setGenericControlActionRecord.add(new SetChildAction(recordType.getSimpleName(), recordType));
         }
         
         // HandoverRequestRecord
@@ -333,6 +362,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         removeListItem = new RemoveAction("Remove item");
         
 		manager.setRemoveAllWhenShown(true);
+		
 		manager.addMenuListener(this);
 		
 		treeViewer.getControl().setMenu(manager.createContextMenu(treeViewer.getControl()));
@@ -365,24 +395,31 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					menuManager.add(insertRootSiblingRecordAfter);
 					menuManager.add(removeRecord);
 				} else {
-					// parent operation options
-					if(parentRecord instanceof GcDataRecord) {
-						// add and remove sibling nodes
-						menuManager.add(insertGenericControlDataSiblingRecordBefore);
-						menuManager.add(insertGenericControlDataSiblingRecordAfter);
-						menuManager.add(removeRecord);
-					} else if(parentRecord instanceof GcTargetRecord) {
-						menuManager.add(removeRecord);
-					} else if(parentRecord instanceof GcActionRecord) {
-						menuManager.add(removeRecord);
-					} else if(parentRecord instanceof HandoverRequestRecord) {
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
-						menuManager.add(removeRecord);
-					} else if(parentRecord instanceof HandoverSelectRecord) {
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
-						menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
-						menuManager.add(removeRecord);
+					
+					if(selectedNode instanceof NdefRecordModelRecord) {
+						// parent operation options
+						if(parentRecord instanceof GcDataRecord) {
+							// add and remove sibling nodes
+							menuManager.add(insertGenericControlDataSiblingRecordBefore);
+							menuManager.add(insertGenericControlDataSiblingRecordAfter);
+							menuManager.add(removeRecord);
+						} else if(parentRecord instanceof GcTargetRecord) {
+							menuManager.add(removeRecord);
+						} else if(parentRecord instanceof GcActionRecord) {
+							menuManager.add(removeRecord);
+						} else if(parentRecord instanceof HandoverRequestRecord) {
+							if(selectedNode.getRecordBranchIndex() == 3) {
+								menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
+								menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
+								menuManager.add(removeRecord);
+							}
+						} else if(parentRecord instanceof HandoverSelectRecord) {
+							if(selectedNode.getRecordBranchIndex() == 2) {
+								menuManager.add(insertAlternativeCarrierRecordSiblingRecordBefore);
+								menuManager.add(insertAlternativeCarrierRecordSiblingRecordAfter);
+								menuManager.add(removeRecord);
+							}
+						}
 					}
 					
 					// child operation options
@@ -390,11 +427,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					
 					if(record instanceof GcDataRecord) {
 						menuManager.add(addGenericControlDataChildRecord);
-						menuManager.add(removeRecord);
 					} else if(record instanceof GcTargetRecord) {
-						GcTargetRecord gcTargetRecord = (GcTargetRecord) record;
-						if(!gcTargetRecord.hasTargetIdentifier()) {
+						if(selectedNode instanceof NdefRecordModelParentProperty) {
 							menuManager.add(setGenericControlTargetRecord);
+						}
+					} else if(record instanceof GcActionRecord) {
+						if(selectedNode instanceof NdefRecordModelParentProperty) {
+							menuManager.add(setGenericControlActionRecord);
 						}
 					} else if(record instanceof GenericControlRecord) {
 						GenericControlRecord genericControlRecord = (GenericControlRecord)record;
@@ -407,9 +446,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 							menuManager.add(addGenericControlDataRecord);
 						}
 					} else if(record instanceof HandoverRequestRecord) {
-						menuManager.add(addAlternativeCarrierRecordChildRecord);
+						if(selectedNode instanceof NdefRecordModelParentProperty) {
+							menuManager.add(addAlternativeCarrierRecordChildRecord);
+						}
 					} else if(record instanceof HandoverSelectRecord) {
-						menuManager.add(addAlternativeCarrierRecordChildRecord);
+						if(selectedNode instanceof NdefRecordModelParentProperty) {
+							menuManager.add(addAlternativeCarrierRecordChildRecord);
+						}
 					}
 				}
 			}

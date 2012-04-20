@@ -163,6 +163,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				}
 			} else if(record instanceof HandoverRequestRecord) {
 				return false;
+			} else if(record instanceof GcActionRecord) {
+				return true;
+			} else if(record instanceof GcTargetRecord) {
+				return true;
 			}
 
 		}
@@ -170,24 +174,35 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord || element instanceof NdefRecordModelPropertyListItem;
 	}
 	
-	protected ComboBoxCellEditor getComboBoxCellEditor(Object[] values) {
-		
-		String[] strings = new String[values.length];
-		for(int i = 0; i < values.length; i++) {
-			strings[i] = values[i].toString();
+	protected ComboBoxCellEditor getComboBoxCellEditor(Object[] values, boolean nullable) {
+
+		String[] strings;
+		if(nullable) {
+			strings = new String[values.length + 1];
+			strings[0] = "-";
+			
+			for(int i = 0; i < values.length; i++) {
+				strings[1 + i] = values[i].toString();
+			}
+		} else {
+			strings = new String[values.length];
+			
+			for(int i = 0; i < values.length; i++) {
+				strings[i] = values[i].toString();
+			}
 		}
 		
 		return new ComboBoxCellEditor(treeViewer.getTree(), strings);
 	}
 
-	protected ComboBoxCellEditor getComboBoxCellEditor(Class[] values) {
+	protected ComboBoxCellEditor getComboBoxCellEditor(Class[] values, boolean nullable) {
 		
 		String[] strings = new String[values.length];
 		for(int i = 0; i < values.length; i++) {
 			strings[i] = values[i].getSimpleName();
 		}
 		
-		return new ComboBoxCellEditor(treeViewer.getTree(), strings);
+		return getComboBoxCellEditor(strings, nullable);
 	}
 
 	
@@ -204,7 +219,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				Record record = recordParent.getRecord();
 				
 				if(record instanceof ActionRecord) {
-					return getComboBoxCellEditor(Action.values());
+					return getComboBoxCellEditor(Action.values(), false);
 				} else if(record instanceof MimeRecord) {
 					if(recordParent.indexOf(ndefRecordModelProperty) == 1) {
 						// handle mime media
@@ -274,21 +289,21 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	
 					}
 				} else if(record instanceof GcActionRecord) {
-					return getComboBoxCellEditor(Action.values());
+					return getComboBoxCellEditor(Action.values(), true);
 				} else if(record instanceof HandoverCarrierRecord) {
 					
 					if(recordParent.indexOf(ndefRecordModelProperty) == 0) {
-						return getComboBoxCellEditor(HandoverCarrierRecord.CarrierTypeFormat.values());
+						return getComboBoxCellEditor(HandoverCarrierRecord.CarrierTypeFormat.values(), false);
 					} else if(recordParent.indexOf(ndefRecordModelProperty) == 2) {
 						return new FileDialogCellEditor(treeViewer.getTree());
 					}
 				} else if(record instanceof ErrorRecord) {
 					if(recordParent.indexOf(ndefRecordModelProperty) == 0) {
-						return getComboBoxCellEditor(ErrorRecord.ErrorReason.values());
+						return getComboBoxCellEditor(ErrorRecord.ErrorReason.values(), false);
 					}
 				} else if(record instanceof AlternativeCarrierRecord) {
 					if(recordParent.indexOf(ndefRecordModelProperty) == 0) {
-						return getComboBoxCellEditor(AlternativeCarrierRecord.CarrierPowerState.values());
+						return getComboBoxCellEditor(AlternativeCarrierRecord.CarrierPowerState.values(), false);
 					}
 				} else if(record instanceof UnknownRecord) {
 					return new FileDialogCellEditor(treeViewer.getTree());
@@ -304,13 +319,13 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			if(record instanceof GcTargetRecord) {
 				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
 				if(parent.indexOf(ndefRecordModelParentProperty) == 0) {
-					return getComboBoxCellEditor(genericControlRecordTargetRecordTypes);
+					return getComboBoxCellEditor(genericControlRecordTargetRecordTypes, false);
 				}
 			} else if(record instanceof GcActionRecord) {
 				GcActionRecord gcActionRecord = (GcActionRecord)record;
 				
 				if(parent.indexOf(ndefRecordModelParentProperty) == 1) {
-					return getComboBoxCellEditor(recordTypes);
+					return getComboBoxCellEditor(recordTypes, true);
 				}
 			} else if(record instanceof HandoverCarrierRecord) {
 				HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
@@ -322,12 +337,12 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						switch(carrierTypeFormat) {
 							case WellKnown : {
 								// NFC Forum well-known type [NFC RTD]
-								return getComboBoxCellEditor(wellKnownRecordTypes);
+								return getComboBoxCellEditor(wellKnownRecordTypes, false);
 							}
 						
 							case External : {
 								// NFC Forum external type [NFC RTD]
-								return getComboBoxCellEditor(externalRecordTypes);
+								return getComboBoxCellEditor(externalRecordTypes, false);
 							}
 						}
 					}
@@ -402,9 +417,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					GcActionRecord gcActionRecord = (GcActionRecord)record;
 					
 					if(gcActionRecord.hasAction()) {
-						return gcActionRecord.getAction().ordinal();
+						return 1 + gcActionRecord.getAction().ordinal();
 					}
-					return -1;
+					return 0;
 				} else if(record instanceof HandoverCarrierRecord) {
 					
 					if(recordParent.indexOf(ndefRecordModelProperty) == 0) {
@@ -466,9 +481,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				
 				if(parent.indexOf(ndefRecordModelParentProperty) == 1) {
 					if(gcActionRecord.hasActionRecord()) {
-						return getIndex(recordTypes, gcActionRecord.getActionRecord().getClass());
+						return 1 + getIndex(recordTypes, gcActionRecord.getActionRecord().getClass());
 					}
-					return -1;
+					return 0;
 				}
 				
 			} else if(record instanceof HandoverCarrierRecord) {
@@ -783,8 +798,12 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	
 						Action action;
 						if(index.intValue() != -1) {
-							Action[] values = Action.values();
-							action = values[index.intValue()];
+							if(index.intValue() == 0) {
+								action = null;
+							} else {
+								Action[] values = Action.values();
+								action = values[index.intValue() - 1];
+							}
 						} else {
 							action = null;
 						}
@@ -1287,10 +1306,15 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								}
 							}
 						}
+						
+						previousIndex++;
 
 						if(previousIndex != index.intValue()) {
-							listener.set(ndefRecordModelParentProperty, recordTypes[index]);
-							
+							if(index.intValue() == 0)  {
+								listener.remove(ndefRecordModelParentProperty.getChild(0));
+							} else {
+								listener.set(ndefRecordModelParentProperty, recordTypes[index - 1]);
+							}
 							treeViewer.update(ndefRecordModelParentProperty, null);
 
 							change = true;
@@ -1397,6 +1421,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					listener.update(p);
 				}			
 	
+				
 				// update all but the root node
 				NdefRecordModelNode node = (NdefRecordModelNode) element;
 	
@@ -1405,6 +1430,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					
 					node = node.getParent();
 				} while(node != null && node.hasParent());
+	
+				
 			}	
 		}
 		

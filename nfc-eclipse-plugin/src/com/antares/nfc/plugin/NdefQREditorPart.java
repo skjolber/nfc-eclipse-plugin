@@ -83,23 +83,20 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 
 	public void refreshBinaryQR() {
 
-		//Point parentSize = binaryQRLabel.getParent().getSize();
-
 		Point size = binaryQRLabel.getSize();
 
 		try {
 			binaryQRLabel.setImage(operator.toBinaryQRImage(size.x, size.y, -1, 0));
 		} catch (Exception e) {
-			// TODO error message
 			binaryQRLabel.setImage(null);
 		}
 	}
 
 	@Override
 	protected void modified() {
-		super.modified();
-		
 		refreshBinaryQR();
+		
+		super.modified();
 	}
 	
 	@Override

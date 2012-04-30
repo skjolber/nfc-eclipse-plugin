@@ -32,7 +32,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
-import org.nfctools.ndef.ext.ExternalTypeRecord;
+import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
@@ -85,8 +85,8 @@ public class NdefRecordModelFactory {
 			ndefRecordModelRecord.add(ndefRecordModelProperty);
 			
 			return ndefRecordModelRecord;
-		} else if(record instanceof ExternalTypeRecord) {
-			ExternalTypeRecord externalTypeRecord = (ExternalTypeRecord)record;
+		} else if(record instanceof UnsupportedExternalTypeRecord) {
+			UnsupportedExternalTypeRecord externalTypeRecord = (UnsupportedExternalTypeRecord)record;
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
@@ -245,8 +245,8 @@ public class NdefRecordModelFactory {
 						}
 						case External : {
 							// NFC Forum external type [NFC RTD]
-							if(carrierType instanceof ExternalTypeRecord) {
-								ExternalTypeRecord externalTypeRecord = (ExternalTypeRecord)carrierType;
+							if(carrierType instanceof UnsupportedExternalTypeRecord) {
+								UnsupportedExternalTypeRecord externalTypeRecord = (UnsupportedExternalTypeRecord)carrierType;
 								
 								ndefRecordModelParentProperty.add(getNode(externalTypeRecord, ndefRecordModelParentProperty));
 												

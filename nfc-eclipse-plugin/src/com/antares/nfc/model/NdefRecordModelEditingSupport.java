@@ -48,7 +48,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
-import org.nfctools.ndef.ext.ExternalTypeRecord;
+import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
@@ -79,7 +79,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			AbsoluteUriRecord.class,
 			ActionRecord.class,
 			AndroidApplicationRecord.class,
-			ExternalTypeRecord.class,
+			UnsupportedExternalTypeRecord.class,
 			EmptyRecord.class,
 			MimeRecord.class,
 			SmartPosterRecord.class,
@@ -111,7 +111,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	@SuppressWarnings("rawtypes")
 	private static Class[] externalRecordTypes = new Class[]{
 			AndroidApplicationRecord.class,
-			ExternalTypeRecord.class,
+			UnsupportedExternalTypeRecord.class,
 	};
 	
 	@SuppressWarnings("rawtypes")
@@ -687,8 +687,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						
 							change = true;
 						}
-					} else if(record instanceof ExternalTypeRecord) {
-						ExternalTypeRecord externalTypeRecord = (ExternalTypeRecord)record;
+					} else if(record instanceof UnsupportedExternalTypeRecord) {
+						UnsupportedExternalTypeRecord externalTypeRecord = (UnsupportedExternalTypeRecord)record;
 						
 						int propertyIndex  = recordParent.indexOf(ndefRecordModelProperty);
 						if(propertyIndex == 0) {

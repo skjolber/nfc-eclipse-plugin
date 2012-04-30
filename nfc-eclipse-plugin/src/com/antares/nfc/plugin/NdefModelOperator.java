@@ -60,7 +60,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
-import org.nfctools.ndef.ext.ExternalTypeRecord;
+import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
@@ -285,8 +285,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			}
 			
 			child = androidApplicationRecord;
-		} else if(recordType == ExternalTypeRecord.class) {
-			ExternalTypeRecord externalTypeRecord = new ExternalTypeRecord();
+		} else if(recordType == UnsupportedExternalTypeRecord.class) {
+			UnsupportedExternalTypeRecord externalTypeRecord = new UnsupportedExternalTypeRecord();
 			
 			child = externalTypeRecord;
 		} else if(recordType == EmptyRecord.class) {

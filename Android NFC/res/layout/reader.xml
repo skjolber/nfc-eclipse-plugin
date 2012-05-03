@@ -9,5 +9,12 @@
         android:layout_height="wrap_content"
         android:text="@string/reader" />
 
+      <ListView
+          android:id="@+id/recordListView"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"
+          android:orientation="horizontal"
+		  android:cacheColorHint="@android:color/transparent"
+      />
     
 </LinearLayout>

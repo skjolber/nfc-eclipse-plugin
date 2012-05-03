@@ -22,7 +22,7 @@ import com.antares.nfc.client.AndroidNfcActivity;
 
 public class NdefWriter {
 
-    private static final String TAG = AndroidNfcActivity.class.getSimpleName();
+    private static final String TAG = NdefWriter.class.getSimpleName();
     
     public static interface NdefWriterListener {
 

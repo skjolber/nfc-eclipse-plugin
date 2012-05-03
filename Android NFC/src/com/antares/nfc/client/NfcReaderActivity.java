@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.widget.Toast;
 
@@ -19,6 +20,8 @@ import com.antares.nfc.util.NdefReader.NdefReaderListener;
  */
 
 public class NfcReaderActivity extends NfcDetectorActivity implements NdefReaderListener {
+
+	private static final String TAG = NfcReaderActivity.class.getSimpleName();
 
 	protected NdefReader reader;
 
@@ -44,15 +47,12 @@ public class NfcReaderActivity extends NfcDetectorActivity implements NdefReader
 	
 	@Override
 	public void nfcIntentDetected(Intent intent, String action) {
-		if(action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
-			
-			if(reader.read(intent)) {
-				// do something
-			} else {
-				// do nothing(?)
-			}
-		} else if(action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
-			// create your own non-ndef tag reader here
+		Log.d(TAG, "nfcIntentDetected: " + action);
+		
+		if(reader.read(intent)) {
+			// do something
+		} else {
+			// do nothing(?)
 		}
 	}
 

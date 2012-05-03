@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.os.Parcelable;
+import android.util.Log;
 
 /**
  * 
@@ -26,6 +27,8 @@ public class NdefReader {
 
 	}
 	
+	private static final String TAG = NdefReader.class.getSimpleName();
+	   
 	private NdefReaderListener listener;
 	
 	public NdefReaderListener getListener() {
@@ -37,6 +40,8 @@ public class NdefReader {
 	}
 
 	public boolean read(Intent intent) {
+		Log.d(TAG, "Read intent");
+
 		Parcelable[] messages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 		if (messages != null) {
 			NdefMessage[] ndefMessages = new NdefMessage[messages.length];

@@ -20,7 +20,7 @@ import com.antares.nfc.client.AndroidNfcActivity;
 
 public class NfcDetector {
 
-    private static final String TAG = AndroidNfcActivity.class.getSimpleName();
+    private static final String TAG = NfcDetector.class.getSimpleName();
     
     public static interface NfcIntentListener {
     	
@@ -31,7 +31,6 @@ public class NfcDetector {
 	protected IntentFilter[] writeTagFilters;
 	protected PendingIntent nfcPendingIntent;
 	
-	protected boolean write = false;
 	protected boolean foreground = false;
 	protected NdefMessage message;
 
@@ -51,7 +50,7 @@ public class NfcDetector {
         	
 	        IntentFilter tagDetected = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
 	        IntentFilter ndefDetected = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-	        writeTagFilters = new IntentFilter[] {tagDetected, ndefDetected};
+	        writeTagFilters = new IntentFilter[] {ndefDetected, tagDetected};
 	        nfcAdapter.enableForegroundDispatch(context, nfcPendingIntent, writeTagFilters, null);
 	        
 	    	foreground = true;

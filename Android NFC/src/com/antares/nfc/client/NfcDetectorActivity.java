@@ -22,6 +22,8 @@ public abstract class NfcDetectorActivity extends Activity implements NfcDetecto
     
 	protected NfcDetector detector;
 	
+	protected boolean intentProcessed = false;
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +52,11 @@ public abstract class NfcDetectorActivity extends Activity implements NfcDetecto
     	if(detector != null) {
     		detector.enableForeground();
     		
-    		detector.processIntent();
+    		if(!intentProcessed) {
+    			intentProcessed = true;
+    			
+    			detector.processIntent();
+    		}
     	}
     }
 	  
@@ -69,6 +75,8 @@ public abstract class NfcDetectorActivity extends Activity implements NfcDetecto
     	Log.d(TAG, "onNewIntent");
 
         // onResume gets called after this to handle the intent
+    	intentProcessed = false;
+    	
         setIntent(intent);
     }
 	

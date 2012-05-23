@@ -26,42 +26,49 @@
 
 package com.antares.nfc.plugin;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.MultiPageEditorActionBarContributor;
 
 public class NdefMultiPageEditorContributor extends MultiPageEditorActionBarContributor {
 	
 	private IEditorPart activeEditorPart;
 	
+	public NdefMultiPageEditorContributor() {
+		super();
+	}
+
 	public void setActivePage(IEditorPart part) {
 		if (activeEditorPart != part) {
 			activeEditorPart = part;
 			
 			if(activeEditorPart instanceof NdefEditorPart) {
-			
+				final NdefEditorPart ndefEditorPart = (NdefEditorPart)activeEditorPart;
+				
 				IActionBars actionBars = getActionBars();
 				if (actionBars != null) {
 		
-					/* TODO
+					
 					Action undoAction = new Action() {
 					    public void run() {
-					    	if (fCurrentEditor != null)
-					    		fCurrentEditor.undo();
+					    	if (ndefEditorPart != null)
+					    		ndefEditorPart.undo();
 					    }
 					};
-					bars.setGlobalActionHandler(ActionFactory.UNDO.getId(), undoAction);
+					actionBars.setGlobalActionHandler(ActionFactory.UNDO.getId(), undoAction);
 			
 					Action redoAction = new Action() {
 					    public void run() {
-					    	if (fCurrentEditor != null)
-					    		fCurrentEditor.redo();
+					    	if (ndefEditorPart != null)
+					    		ndefEditorPart.redo();
 					    }
 					};
-					bars.setGlobalActionHandler(ActionFactory.REDO.getId(), redoAction);
+					actionBars.setGlobalActionHandler(ActionFactory.REDO.getId(), redoAction);
 					
 					actionBars.updateActionBars();
-					*/
+					
 	
 				}
 			}

@@ -27,8 +27,10 @@
 
 package com.antares.nfc.plugin;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.EditorActionBarContributor;
 
 public class NdefEditorContributor extends EditorActionBarContributor {
@@ -45,7 +47,6 @@ public class NdefEditorContributor extends EditorActionBarContributor {
 	public void init(IActionBars bars) {
 		super.init(bars);
 		
-		/* TODO
 		Action undoAction = new Action() {
 		    public void run() {
 		    	if (fCurrentEditor != null)
@@ -61,7 +62,6 @@ public class NdefEditorContributor extends EditorActionBarContributor {
 		    }
 		};
 		bars.setGlobalActionHandler(ActionFactory.REDO.getId(), redoAction);
-		*/
 	}
 
 	public void setActiveEditor(IEditorPart targetEditor) {

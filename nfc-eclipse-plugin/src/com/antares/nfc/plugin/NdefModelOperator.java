@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.Stack;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -51,6 +52,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
+import org.eclipse.ui.actions.ActionFactory;
 import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefMessage;
@@ -220,11 +222,15 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	@Override
 	public void update(NdefRecordModelParent model) {
 		Activator.info("Update model");
+		
+		addUndoStep();
 	}
 	
 	@Override
 	public void insert(NdefRecordModelParent parent, int index, Class type) {
 		Activator.info("Insert " + type.getSimpleName() + " at " + index);
+		
+		addUndoStep();
 		
 		if(Record.class.isAssignableFrom(type)) {
 		
@@ -783,5 +789,76 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		
 
 	}
+	
+	/**
+	 * We use two stacks to store undo & redo information 
+	 */
+	private Stack<NdefRecordModelParent> undolist = new Stack<NdefRecordModelParent>();
+	private Stack<NdefRecordModelParent> redolist = new Stack<NdefRecordModelParent>();
+
+	private int maxUndoSteps = 100;
+	
+	/** 
+	 * Undo a command stored in undolist, and move this command 
+	 * in redolist
+	 */	
+	public void undo(){
+		if(undolist.empty())
+			return;
+		
+		NdefRecordModelParent comm = (NdefRecordModelParent)undolist.pop();
+		if (comm == null)
+			return;
+
+		this.model = comm;
+		
+		redolist.push(comm);
+	}
+	
+	/** 
+	 * Redo a command stored in redolist, and move this command 
+	 * in undolist
+	 */
+	public void redo(){
+		if(redolist.empty())
+			return;
+		
+		NdefRecordModelParent comm = (NdefRecordModelParent)redolist.pop();
+		if (comm == null)
+			return;
+		
+		this.model = comm;
+		
+		undolist.push(comm);
+	}
+	
+	public boolean canUndo() {
+		return !undolist.isEmpty();
+	}
+
+	public boolean canRedo() {
+		return !redolist.isEmpty();
+	}
+	
+	/**
+	 * Executes the command and adds a command to undolist, then redolist is cleared.
+	 * undolist.size() will always be less than PROPERTY_MAX_UNDO_STEPS 
+	 * @param comm
+	 */
+	private void addUndoStep(){
+		undolist.push(model);
+		redolist.clear();
+		
+		if(maxUndoSteps >0 && undolist.size()>maxUndoSteps){
+			undolist.remove(0);
+		}
+	}
+
+	/*
+	public boolean canPaste() {
+		return getClipboard().getContents(BinaryTransfer.instance) instanceof byte[] ||
+				getClipboard().getContents(TextTransfer.getInstance()) instanceof String;
+	}
+	*/
 	
 }

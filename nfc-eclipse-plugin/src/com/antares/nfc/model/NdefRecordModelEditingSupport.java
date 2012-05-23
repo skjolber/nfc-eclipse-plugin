@@ -32,7 +32,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
@@ -126,21 +128,235 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private TextCellEditor textCellEditor;
 	private TreeViewer treeViewer;
 	
+	private Map<Class<? extends Record>, RecordEditingSupport> editing = new HashMap<Class<? extends Record>, RecordEditingSupport>();
+	
+	private static interface RecordEditingSupport {
+		
+		boolean canEdit(NdefRecordModelNode node);
+		
+		boolean setValue(NdefRecordModelNode node, Object value);
+
+		Object getValue(NdefRecordModelNode node);
+		
+		CellEditor getCellEditor(NdefRecordModelNode node);
+	}
+	
+	private class ActionRecordEditingSuppport implements RecordEditingSupport {
+
+		@Override
+		public boolean canEdit(NdefRecordModelNode element) {
+			return true;
+		}
+
+		@Override
+		public boolean setValue(NdefRecordModelNode node, Object value) {
+			ActionRecord record = (ActionRecord) node.getRecord();
+			if(node instanceof NdefRecordModelProperty) {
+				Integer index = (Integer)value;
+				
+				Action action;
+				if(index.intValue() != -1) {
+					Action[] values = Action.values();
+				
+					action = values[index.intValue()];
+				} else {
+					action = null;
+				}
+				if(action != record.getAction()) {
+					record.setAction(action);
+
+					// update property as well
+					NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
+					if(record.hasAction()) {
+						ndefRecordModelProperty.setValue(record.getAction().name());
+					} else {
+						ndefRecordModelProperty.setValue(null);
+					}
+					return true;
+				}
+			} else if(node instanceof NdefRecordModelRecord) {
+				String stringValue = (String)value;
+				
+				if(!stringValue.equals(record.getKey())) {
+					record.setKey(stringValue);
+						
+					return true;
+				}
+			} else {
+				throw new RuntimeException();
+			}
+			return false;
+		}
+
+		@Override
+		public Object getValue(NdefRecordModelNode node) {
+			ActionRecord record = (ActionRecord) node.getRecord();
+			if(node instanceof NdefRecordModelProperty) {
+				if(record.hasAction()) {
+					return record.getAction().ordinal();
+				}
+				return -1;
+			} else if(node instanceof NdefRecordModelRecord) {
+				return record.getKey();
+			} else {
+				throw new RuntimeException();
+			}
+		}
+
+		@Override
+		public CellEditor getCellEditor(NdefRecordModelNode node) {
+			if(node instanceof NdefRecordModelProperty) {
+				return getComboBoxCellEditor(Action.values(), false);
+			} else if(node instanceof NdefRecordModelRecord) {
+				return textCellEditor;
+			} else {
+				throw new RuntimeException();
+			}
+
+		}
+		
+	}
+	
+	private class GcActionRecordEditingSuppport implements RecordEditingSupport {
+
+		@Override
+		public boolean canEdit(NdefRecordModelNode element) {
+			return true;
+		}
+
+		@Override
+		public boolean setValue(NdefRecordModelNode node, Object value) {
+			GcActionRecord gcActionRecord = (GcActionRecord) node.getRecord();
+			if(node instanceof NdefRecordModelProperty) {
+				Integer index = (Integer)value;
+				
+				Action action;
+				if(index.intValue() != -1) {
+					Action[] values = Action.values();
+				
+					action = values[index.intValue()];
+				} else {
+					action = null;
+				}
+				if(action != gcActionRecord.getAction()) {
+					gcActionRecord.setAction(action);
+
+					// update property as well
+					NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
+					if(gcActionRecord.hasAction()) {
+						ndefRecordModelProperty.setValue(gcActionRecord.getAction().name());
+					} else {
+						ndefRecordModelProperty.setValue(null);
+					}
+					return true;
+				}
+				
+			} else if(node instanceof NdefRecordModelParentProperty) {
+				Integer index = (Integer)value;
+
+				if(index.intValue() != -1) {
+					int previousIndex = -1;
+					if(gcActionRecord.hasActionRecord()) {
+						for(int i = 0; i < recordTypes.length; i++) {
+							if(gcActionRecord.getActionRecord().getClass() == recordTypes[i]) {
+								previousIndex = i;
+							}
+						}
+					}
+					
+					previousIndex++;
+
+					if(previousIndex != index.intValue()) {
+						NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)node;
+						if(index.intValue() == 0)  {
+							listener.remove(ndefRecordModelParentProperty.getChild(0));
+						} else {
+							listener.set(ndefRecordModelParentProperty, recordTypes[index - 1]);
+						}
+						treeViewer.update(ndefRecordModelParentProperty, null);
+
+						return true;
+					}
+					
+				}			
+				
+			} else if(node instanceof NdefRecordModelRecord) {
+				String stringValue = (String)value;
+				
+				if(!stringValue.equals(gcActionRecord.getKey())) {
+					gcActionRecord.setKey(stringValue);
+						
+					return true;
+				}
+			} else {
+				throw new RuntimeException();
+			}
+			return false;
+		}
+
+		@Override
+		public Object getValue(NdefRecordModelNode node) {
+			GcActionRecord gcActionRecord = (GcActionRecord) node.getRecord();
+			if(node instanceof NdefRecordModelProperty) {
+				if(gcActionRecord.hasAction()) {
+					return gcActionRecord.getAction().ordinal();
+				}
+				return -1;
+			} else if(node instanceof NdefRecordModelParentProperty) {
+				if(gcActionRecord.hasActionRecord()) {
+					return 1 + getIndex(recordTypes, gcActionRecord.getActionRecord().getClass());
+				}
+				return 0;
+			} else if(node instanceof NdefRecordModelRecord) {
+				return gcActionRecord.getKey();
+			} else {
+				throw new RuntimeException();
+			}
+		}
+
+		@Override
+		public CellEditor getCellEditor(NdefRecordModelNode node) {
+			if(node instanceof NdefRecordModelProperty) {
+				return getComboBoxCellEditor(Action.values(), false);
+			} else if(node instanceof NdefRecordModelParentProperty) {
+				return getComboBoxCellEditor(recordTypes, true);
+			} else if(node instanceof NdefRecordModelRecord) {
+				return textCellEditor;
+			} else {
+				throw new RuntimeException();
+			}
+
+		}
+		
+	}
+	
+	
 	public NdefRecordModelEditingSupport(TreeViewer viewer, NdefRecordModelChangeListener listener) {
 		super(viewer);
 		this.listener = listener;
 		this.treeViewer = viewer;
 		
 		this.textCellEditor = new TextCellEditor(viewer.getTree());
+		
+		editing.put(ActionRecord.class, new ActionRecordEditingSuppport());
+		editing.put(GcActionRecord.class, new GcActionRecordEditingSuppport());
 	}
 
 	@Override
 	protected boolean canEdit(Object element) {
 		
+		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
+		Record record = ndefRecordModelNode.getRecord();
+		if(record != null) {
+			RecordEditingSupport recordEditingSupport = editing.get(record.getClass());
+			if(recordEditingSupport != null) {
+				return recordEditingSupport.canEdit(ndefRecordModelNode);
+			}
+		}
+		
 		if(element instanceof NdefRecordModelParentProperty) {
 			NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)element;
 			
-			Record record = ndefRecordModelParentProperty.getRecord();
 			int recordIndex = ndefRecordModelParentProperty.getRecordBranchIndex();
 			
 			if(record instanceof HandoverSelectRecord) {
@@ -208,6 +424,15 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	
 	@Override
 	protected CellEditor getCellEditor(Object element) {
+		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
+		Record record = ndefRecordModelNode.getRecord();
+		if(record != null) {
+			RecordEditingSupport recordEditingSupport = editing.get(record.getClass());
+			if(recordEditingSupport != null) {
+				return recordEditingSupport.getCellEditor(ndefRecordModelNode);
+			}
+		}
+
 		if(element instanceof NdefRecordModelProperty) {
 			NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
 
@@ -215,8 +440,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 			if(parent instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord recordParent = (NdefRecordModelRecord) parent;
-				
-				Record record = recordParent.getRecord();
 				
 				if(record instanceof ActionRecord) {
 					return getComboBoxCellEditor(Action.values(), false);
@@ -314,8 +537,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			
 			NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelParentProperty.getParent();
 			
-			Record record = parent.getRecord();
-			
 			if(record instanceof GcTargetRecord) {
 				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
 				if(parent.indexOf(ndefRecordModelParentProperty) == 0) {
@@ -364,6 +585,17 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	protected Object getValue(Object element) {
 		Activator.info("Get element " + element + " value");
 
+		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
+		Record record = ndefRecordModelNode.getRecord();
+		if(record != null) {
+			RecordEditingSupport recordEditingSupport = editing.get(record.getClass());
+			if(recordEditingSupport != null) {
+				Activator.info("Get from " + recordEditingSupport.getClass().getSimpleName());
+				
+				return recordEditingSupport.getValue(ndefRecordModelNode);
+			}
+		}
+		
 		if(element instanceof NdefRecordModelProperty) {
 			NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
 			
@@ -372,7 +604,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			if(parent instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord recordParent = (NdefRecordModelRecord) parent;
 				
-				Record record = recordParent.getRecord();
+				record = recordParent.getRecord();
 				
 				if(record instanceof ActionRecord) {
 					ActionRecord actionRecord = (ActionRecord)record;
@@ -457,7 +689,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		} else if(element instanceof NdefRecordModelRecord) {
 			NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
 			
-			Record record = ndefRecordModelRecord.getRecord();
+			record = ndefRecordModelRecord.getRecord();
 			
 			return record.getKey();
 		} else if(element instanceof NdefRecordModelParentProperty) {
@@ -465,7 +697,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			
 			NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelParentProperty.getParent();
 			
-			Record record = parent.getRecord();
+			record = parent.getRecord();
 			
 			if(record instanceof GcTargetRecord) {
 				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
@@ -547,12 +779,16 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	protected void setValue(Object element, Object value) {
 		Activator.info("Set element " + element + " value " + value + ", currently have " + getValue(element));
 
-
-		if(element instanceof NdefRecordModelNode) {
-			boolean change = false;
-
-			NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
-			
+		boolean change = false;
+		
+		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
+		Record record = ndefRecordModelNode.getRecord();
+		if(record != null) {
+			RecordEditingSupport recordEditingSupport = editing.get(record.getClass());
+			if(recordEditingSupport != null) {
+				change = recordEditingSupport.setValue(ndefRecordModelNode, value);
+			}
+		} else {
 			if(element instanceof NdefRecordModelProperty) {
 				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
 
@@ -561,7 +797,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				if(parent instanceof NdefRecordModelRecord) {
 					NdefRecordModelRecord recordParent = (NdefRecordModelRecord)parent;
 	
-					Record record = recordParent.getRecord();
+					record = recordParent.getRecord();
 					
 					if(record instanceof ActionRecord) {
 						ActionRecord actionRecord = (ActionRecord)record;
@@ -1202,7 +1438,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				} else if(parent instanceof NdefRecordModelParentProperty) {
 					NdefRecordModelRecord recordParent = (NdefRecordModelRecord) parent.getParent();
 					
-					Record record = recordParent.getRecord();
+					record = recordParent.getRecord();
 					
 					if(record instanceof HandoverCarrierRecord) {
 						HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
@@ -1221,7 +1457,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else if(element instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
 				
-				Record record = ndefRecordModelRecord.getRecord();
+				record = ndefRecordModelRecord.getRecord();
 				
 				String stringValue = (String)value;
 				
@@ -1238,7 +1474,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)parent.getParent();
 
-				Record record = ndefRecordModelRecord.getRecord();
+				record = ndefRecordModelRecord.getRecord();
 				
 				if(record instanceof AlternativeCarrierRecord) {
 					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
@@ -1264,7 +1500,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				
 				NdefRecordModelRecord parent = (NdefRecordModelRecord) ndefRecordModelParentProperty.getParent();
 				
-				Record record = parent.getRecord();
+				record = parent.getRecord();
 				
 				if(record instanceof GcTargetRecord) {
 					GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
@@ -1397,7 +1633,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 									listener.set(ndefRecordModelParentProperty, null);
 								} else {
 									listener.set(ndefRecordModelParentProperty, ErrorRecord.class);
-	
 								}
 								
 								change = true;
@@ -1405,35 +1640,32 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 					}
 				}
-				
-				
 			}
-			
-			if(change) {
-				Activator.info("Model change");
-				if(listener != null) {
-					// find root
-					NdefRecordModelParent p = ndefRecordModelNode.getParent();
-					while(p.hasParent()) {
-						p = p.getParent();
-					}
-					// notify listener
-					listener.update(p);
-				}			
-	
-				
-				// update all but the root node
-				NdefRecordModelNode node = (NdefRecordModelNode) element;
-	
-				do {
-					treeViewer.update(node, null);
-					
-					node = node.getParent();
-				} while(node != null && node.hasParent());
-	
-				
-			}	
 		}
+		
+		if(change) {
+			Activator.info("Model change");
+			if(listener != null) {
+				// find root
+				NdefRecordModelParent p = ndefRecordModelNode.getParent();
+				while(p.hasParent()) {
+					p = p.getParent();
+				}
+				// notify listener
+				listener.update(p);
+			}			
+
+			// update all but the root node
+			NdefRecordModelNode node = (NdefRecordModelNode) element;
+
+			do {
+				treeViewer.update(node, null);
+				
+				node = node.getParent();
+			} while(node != null && node.hasParent());
+
+			
+		}			
 		
 	}
 }

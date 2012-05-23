@@ -62,6 +62,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.EditorPart;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
@@ -129,6 +130,14 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		form.update();
 		
 		setDirty(true);
+		
+		updateActions();
+	}
+	
+	private void updateActions() {
+		getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.UNDO.getId()).setEnabled(operator.canUndo());
+		getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.REDO.getId()).setEnabled(operator.canRedo());
+		//hexEditor.getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.PASTE.getId()).setEnabled(canPaste());
 	}
 	
 	@Override
@@ -478,11 +487,15 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 
 	public void undo() {
+		operator.undo();
 		
+		modified();
 	}
 
 	public void redo() {
+		operator.redo();
 		
+		modified();
 	}
 
 	@Override

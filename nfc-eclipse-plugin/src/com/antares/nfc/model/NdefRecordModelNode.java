@@ -28,7 +28,7 @@ package com.antares.nfc.model;
 
 import org.nfctools.ndef.Record;
 
-public class NdefRecordModelNode {
+public class NdefRecordModelNode implements Cloneable {
 	
 	protected NdefRecordModelParent parent;
 
@@ -133,5 +133,42 @@ public class NdefRecordModelNode {
 
 	public int getParentIndex() {
 		return parent.indexOf(this);
+	}
+
+	public int getRecordLevel() {
+		return getRecordLevel(0);
+	}
+	
+	public int getRecordLevel(int level) {
+		if(parent != null) {
+			if(parent instanceof NdefRecordModelRecord) {
+				return level + 1;
+			}
+			return parent.getRecordLevel(level + 1);
+		}
+		
+		return -1;
+	}
+
+	public NdefRecordModelRecord getRecordNode() {
+		NdefRecordModelNode p = this;
+		
+		do {
+			if(p instanceof NdefRecordModelRecord) {
+				return (NdefRecordModelRecord) p;
+			}
+			
+			p = p.getParent();
+		} while(p.hasParent());
+		
+		return null;
+	}
+
+	public NdefRecordModelNode clone() {
+		NdefRecordModelNode ndefRecordModelNode = new NdefRecordModelNode();
+		
+		ndefRecordModelNode.setParent(parent); 
+		
+		return ndefRecordModelNode;
 	}
 }

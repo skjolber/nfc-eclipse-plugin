@@ -90,8 +90,18 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 	
 	@Override
-	public void update(NdefRecordModelParent model) {
-		operator.update(model);
+	public void update(NdefRecordModelNode ndefRecordModelNode, byte[] encoded) {
+		operator.update(ndefRecordModelNode, encoded);
+
+		/*
+		// find root
+		NdefRecordModelParent p = ndefRecordModelNode.getParent();
+		while(p.hasParent()) {
+			p = p.getParent();
+		}
+		// notify listener
+		listener.update(p);
+*/
 		
 		modified();
 	}

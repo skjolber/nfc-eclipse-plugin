@@ -33,13 +33,13 @@ import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
+import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
+import org.nfctools.ndef.mime.MimeRecord;
+import org.nfctools.ndef.wkt.records.UriRecord;
 
 public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 
-		
-		private static final String JAVA_PACKAGE_CONVENSION = "^[a-z]+(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$"; // http://checkstyle.sourceforge.net/config_naming.html
-	
 		private NdefMessageEncoder encoder = NdefContext.getNdefMessageEncoder();
 
 		@Override
@@ -66,30 +66,63 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 					}
 				}
 				
-				
-				if(record instanceof AndroidApplicationRecord) {
-					if(element instanceof NdefRecordModelRecord) {
-						// do nothing
-						
+				if(element instanceof NdefRecordModelRecord) {
+					// do nothing
+				} else {
+					if(record instanceof AndroidApplicationRecord) {						
 						// http://developer.android.com/guide/topics/nfc/nfc.html#aar
-					} else {
 						AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord)record;
 						
 						if(androidApplicationRecord.hasPackageName()) {
 			
-							// ^[a-z]+(\.[a-zA-Z_][a-zA-Z0-9_]*)*$
-
-							if(!androidApplicationRecord.getPackageName().matches(JAVA_PACKAGE_CONVENSION)) {
+							if(!androidApplicationRecord.matchesNamingConvension()) {
 								return "Package convension violated";
 							}
 						} else {
 							return "Enter package name of application";
 						}
+					
+					} else if(record instanceof MimeRecord) {
+						MimeRecord mimeRecord = (MimeRecord)record;
+						
+						if(mimeRecord.hasContentType()) {
+							String contentType = mimeRecord.getContentType();
+							
+							int index = contentType.indexOf('/');
+							if(index == -1) {
+								return "MIME type convension violated";
+							}
+						}
+					} else if(record instanceof UriRecord) {
+						UriRecord uriRecord = (UriRecord)record;
+						
+						if(uriRecord.hasUri()) {
+							int index = getAbbreviateIndex(uriRecord.getUri());
+							
+							if(index == 0) {
+								return "Uri prefix not in preset list";
+							}
+						}			
 					}
 				}
 			}
 			
 			return null;
+		}
+		
+		private int getAbbreviateIndex(String uri) {
+			int maxLength = 0;
+			int abbreviateIndex = 0;
+			for (int x = 1; x < UriRecord.abbreviableUris.length; x++) {
+
+				String abbreviablePrefix = UriRecord.abbreviableUris[x];
+
+				if (uri.startsWith(abbreviablePrefix) && abbreviablePrefix.length() > maxLength) {
+					abbreviateIndex = x;
+					maxLength = abbreviablePrefix.length();
+				}
+			}
+			return abbreviateIndex;
 		}
 		
 		@Override
@@ -114,22 +147,43 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 						// do nothing
 					}
 				}
-								
-				if(record instanceof AndroidApplicationRecord) {
-					if(element instanceof NdefRecordModelRecord) {
-						 
-					} else {
+				if(element instanceof NdefRecordModelRecord) {
+					
+				} else {								
+					if(record instanceof AndroidApplicationRecord) {
+							 
 						AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord)record;
 						
 						if(androidApplicationRecord.hasPackageName()) {
 			
-							// ^[a-z]+(\.[a-zA-Z_][a-zA-Z0-9_]*)*$
-							if(!androidApplicationRecord.getPackageName().matches(JAVA_PACKAGE_CONVENSION)) {
+							if(!androidApplicationRecord.matchesNamingConvension()) {
 								return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
 							}
 						}
+					} else if(record instanceof MimeRecord) {
+						MimeRecord mimeRecord = (MimeRecord)record;
+						
+						if(mimeRecord.hasContentType()) {
+							String contentType = mimeRecord.getContentType();
+							
+							int index = contentType.indexOf('/');
+							if(index == -1) {
+								return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+							}
+						}
+					} else if(record instanceof UriRecord) {
+						UriRecord uriRecord = (UriRecord)record;
+						
+						if(uriRecord.hasUri()) {
+							int index = getAbbreviateIndex(uriRecord.getUri());
+							
+							if(index == 0) {
+								return new Color(Display.getCurrent(), 0x00, 0x00, 0x00); 
+							}
+						}			
+										
 					}
-				}
+				}				
 			}
 			return super.getForeground(element);
 		}

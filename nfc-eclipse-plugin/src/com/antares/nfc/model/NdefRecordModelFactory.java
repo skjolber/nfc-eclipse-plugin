@@ -88,7 +88,7 @@ public class NdefRecordModelFactory {
 		} else if(record instanceof UnsupportedExternalTypeRecord) {
 			UnsupportedExternalTypeRecord externalTypeRecord = (UnsupportedExternalTypeRecord)record;
 			
-			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, "ExternalTypeRecord", ndefRecordModelParent);
 
 			if(externalTypeRecord.hasNamespace()) {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Namespace", externalTypeRecord.getNamespace(), ndefRecordModelRecord));
@@ -172,7 +172,7 @@ public class NdefRecordModelFactory {
 			} else {
 				binaryMimeRecord = new BinaryMimeRecord(mimeMediaRecord.getContentType(), mimeMediaRecord.getContentAsBytes());
 			}
-			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(binaryMimeRecord, ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(binaryMimeRecord, "MimeRecord", ndefRecordModelParent);
 
 			if(binaryMimeRecord.hasContentType()) {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mimetype", binaryMimeRecord.getContentType(), ndefRecordModelRecord));

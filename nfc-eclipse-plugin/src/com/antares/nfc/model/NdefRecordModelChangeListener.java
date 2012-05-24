@@ -29,14 +29,14 @@ package com.antares.nfc.model;
 
 public interface NdefRecordModelChangeListener {
 
-	void update(NdefRecordModelParent node);
-	
 	void insert(NdefRecordModelParent node, int index, Class recordType);
 
 	void add(NdefRecordModelParent node, Class recordType);
 
 	void remove(NdefRecordModelNode node);
 	
-	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class type);
+	void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class type);
+
+	void update(NdefRecordModelNode ndefRecordModelNode, byte[] encoded);
 
 }

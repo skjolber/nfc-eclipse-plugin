@@ -96,6 +96,34 @@ import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
 
 public class NdefModelOperator implements NdefRecordModelChangeListener {
 
+	private interface EditorCommand {
+		
+	}
+
+	private class EditorInsertCommand implements EditorCommand {
+		private NdefRecordModelParent parent;
+		private int index;
+		private Class type;
+		
+		public EditorInsertCommand(NdefRecordModelParent parent, int index, Class type) {
+			this.parent = parent;
+			this.index = index;
+			this.type = type;
+		}		
+		
+	}
+	
+	private class EditorUpdateCommand implements EditorCommand {
+		
+		private NdefRecordModelRecord recordNode;
+		private byte[] encoded;
+		
+		public EditorUpdateCommand(NdefRecordModelRecord recordNode, byte[] encoded) {
+			this.recordNode = recordNode;
+			this.encoded = encoded;
+		}
+	}
+	
 	// IEditorInput input = getEditorInput();
 	
 	public static File getProjectPath(IEditorInput input) {
@@ -220,18 +248,24 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	}
 
 	@Override
-	public void update(NdefRecordModelParent model) {
+	public void update(NdefRecordModelNode ndefRecordModelNode, byte[] encoded) {
 		Activator.info("Update model");
+
+		NdefRecordModelRecord recordNode = ndefRecordModelNode.getRecordNode();
 		
-		addUndoStep();
+		addRecordUpdateStep(recordNode, encoded);
 	}
 	
 	@Override
 	public void insert(NdefRecordModelParent parent, int index, Class type) {
 		Activator.info("Insert " + type.getSimpleName() + " at " + index);
 		
-		addUndoStep();
+		addRecordInsertStep(parent, index, type);
 		
+		insertImpl(parent, index, type);
+	}
+
+	private void insertImpl(NdefRecordModelParent parent, int index, Class type) {
 		if(Record.class.isAssignableFrom(type)) {
 		
 			Record child = createRecord(type);
@@ -568,6 +602,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void remove(NdefRecordModelNode node) {
 		Activator.info("Remove record at " + node.getParentIndex());
 		
+		removeImpl(node);
+	}
+
+	private void removeImpl(NdefRecordModelNode node) {
 		int index = node.getParentIndex();
 		
 		NdefRecordModelParent parent = node.getParent();
@@ -793,8 +831,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	/**
 	 * We use two stacks to store undo & redo information 
 	 */
-	private Stack<NdefRecordModelParent> undolist = new Stack<NdefRecordModelParent>();
-	private Stack<NdefRecordModelParent> redolist = new Stack<NdefRecordModelParent>();
+	private Stack<EditorCommand> undolist = new Stack<EditorCommand>();
+	private Stack<EditorCommand> redolist = new Stack<EditorCommand>();
 
 	private int maxUndoSteps = 100;
 	
@@ -806,11 +844,21 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if(undolist.empty())
 			return;
 		
-		NdefRecordModelParent comm = (NdefRecordModelParent)undolist.pop();
+		EditorCommand comm = (EditorCommand)undolist.pop();
 		if (comm == null)
 			return;
 
-		this.model = comm;
+		// edit
+		if(comm instanceof EditorUpdateCommand) {
+			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
+			
+		} else if(comm instanceof EditorInsertCommand) {
+			EditorInsertCommand editorInsertCommand = (EditorInsertCommand)comm;
+			
+			removeImpl(editorInsertCommand.parent.getChild(editorInsertCommand.index));
+		}
+
+		// this.model = comm;
 		
 		redolist.push(comm);
 	}
@@ -823,11 +871,12 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if(redolist.empty())
 			return;
 		
-		NdefRecordModelParent comm = (NdefRecordModelParent)redolist.pop();
+		EditorCommand comm = (EditorCommand)redolist.pop();
 		if (comm == null)
 			return;
 		
-		this.model = comm;
+		// edit
+		//this.model = comm;
 		
 		undolist.push(comm);
 	}
@@ -839,17 +888,29 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public boolean canRedo() {
 		return !redolist.isEmpty();
 	}
+
+	private void addRecordInsertStep(NdefRecordModelParent parent, int index, Class type) {
+		addStep(new EditorInsertCommand(parent, index, type));
+	}
+
 	
 	/**
 	 * Executes the command and adds a command to undolist, then redolist is cleared.
 	 * undolist.size() will always be less than PROPERTY_MAX_UNDO_STEPS 
+	 * @param encoded 
+	 * @param recordNode 
 	 * @param comm
 	 */
-	private void addUndoStep(){
-		undolist.push(model);
+	
+	private void addRecordUpdateStep(NdefRecordModelRecord recordNode, byte[] encoded) {
+		addStep(new EditorUpdateCommand(recordNode, encoded));
+	}
+
+	private void addStep(EditorCommand step) {
+		undolist.push(step);
 		redolist.clear();
 		
-		if(maxUndoSteps >0 && undolist.size()>maxUndoSteps){
+		if(maxUndoSteps > 0 && undolist.size() > maxUndoSteps){
 			undolist.remove(0);
 		}
 	}

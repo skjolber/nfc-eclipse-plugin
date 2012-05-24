@@ -39,4 +39,9 @@ public class NdefRecordModelValue extends NdefRecordModelNode {
 	public String toString() {
 		return value;
 	}
+	
+	@Override
+	public NdefRecordModelNode clone() {
+		return new NdefRecordModelValue(value, parent);
+	}
 }

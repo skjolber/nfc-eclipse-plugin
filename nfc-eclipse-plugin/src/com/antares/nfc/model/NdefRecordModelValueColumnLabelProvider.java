@@ -30,6 +30,7 @@ import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.nfctools.ndef.Record;
+import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
@@ -49,6 +50,12 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					GcActionRecord gcActionRecord = (GcActionRecord)record;
 					if(!gcActionRecord.hasAction()) {
 						return "Select action ..";
+					}
+				} else if(record instanceof ErrorRecord) {
+					int parentIndex = ndefRecordModelProperty.getParentIndex();
+					if(parentIndex == 1) {
+						ErrorRecord errorRecord = (ErrorRecord)record;
+						return "0x" + Long.toHexString(errorRecord.getErrorData().longValue());
 					}
 				}
 				
@@ -109,9 +116,9 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 						
 						if(ndefRecordModelParentProperty.getParentIndex() == 3) {
 							if(handoverSelectRecord.hasError()) {
-								return "On";
+								return NdefRecordModelEditingSupport.PRESENT_OR_NOT[0];
 							} else {
-								return "Off";
+								return NdefRecordModelEditingSupport.PRESENT_OR_NOT[1];
 							}
 						}
 					}

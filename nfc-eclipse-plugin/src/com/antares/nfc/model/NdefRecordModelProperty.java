@@ -58,5 +58,9 @@ public class NdefRecordModelProperty extends NdefRecordModelNode {
 		this.value = value;
 	}
 	
+	@Override
+	public NdefRecordModelNode clone() {
+		return new NdefRecordModelProperty(name, value, parent);
+	}
 	
 }

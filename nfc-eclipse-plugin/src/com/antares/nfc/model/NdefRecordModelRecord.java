@@ -26,6 +26,7 @@
 
 package com.antares.nfc.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.nfctools.ndef.Record;
@@ -33,10 +34,16 @@ import org.nfctools.ndef.Record;
 public class NdefRecordModelRecord extends NdefRecordModelParent {
 	
 	private Record record;
+	private String name;
 
 	public NdefRecordModelRecord(Record record, List<NdefRecordModelNode> children, NdefRecordModelParent parent) {
 		super(children, parent);
 		this.record = record;
+	}
+
+	public NdefRecordModelRecord(Record record, String name, List<NdefRecordModelNode> children, NdefRecordModelParent parent) {
+		this(record, children, parent);
+		this.name = name;
 	}
 
 	public NdefRecordModelRecord(Record record, NdefRecordModelParent parent) {
@@ -44,17 +51,27 @@ public class NdefRecordModelRecord extends NdefRecordModelParent {
 		this.record = record;
 	}
 
+	public NdefRecordModelRecord(Record record, String name, NdefRecordModelParent parent) {
+		this(record, parent);
+		this.name = name;
+	}
+	
 	public Record getRecord() {
 		return record;
 	}
 
 	@Override
 	public String toString() {
-		return record.getClass().getSimpleName();
+		return name != null ? name : record.getClass().getSimpleName();
 	}
 
-
-
-	
+	public NdefRecordModelNode clone() {
+		List<NdefRecordModelNode> children = new ArrayList<NdefRecordModelNode>();
+		for(NdefRecordModelNode child : this.children) {
+			children.add(child.clone());
+		}
+		
+		return new NdefRecordModelRecord(record, name, children, parent);
+	}
 	
 }

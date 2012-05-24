@@ -26,6 +26,7 @@
 
 package com.antares.nfc.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -55,4 +56,14 @@ public class NdefRecordModelParentProperty extends NdefRecordModelParent {
 	public String toString() {
 		return name;
 	}
+	
+	public NdefRecordModelNode clone() {
+		List<NdefRecordModelNode> children = new ArrayList<NdefRecordModelNode>();
+		for(NdefRecordModelNode child : this.children) {
+			children.add(child.clone());
+		}
+		
+		return new NdefRecordModelParentProperty(name, children, parent);
+	}
+	
 }

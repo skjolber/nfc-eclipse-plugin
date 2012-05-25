@@ -76,6 +76,7 @@ import com.antares.nfc.model.NdefRecordModelParentProperty;
 import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.model.NdefRecordModelSizeColumnLabelProvider;
 import com.antares.nfc.model.NdefRecordModelValueColumnLabelProvider;
+import com.antares.nfc.plugin.operation.NdefModelOperation;
 
 public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeListener {
 
@@ -90,25 +91,15 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 	
 	@Override
-	public void update(NdefRecordModelNode ndefRecordModelNode, byte[] encoded) {
-		operator.update(ndefRecordModelNode, encoded);
-
-		/*
-		// find root
-		NdefRecordModelParent p = ndefRecordModelNode.getParent();
-		while(p.hasParent()) {
-			p = p.getParent();
-		}
-		// notify listener
-		listener.update(p);
-*/
+	public void update(NdefRecordModelNode ndefRecordModelNode, NdefModelOperation operation) {
+		operator.update(ndefRecordModelNode, operation);
 		
 		modified();
 	}
 	
 	@Override
-	public void insert(NdefRecordModelParent parent, int index, Class type) {
-		operator.insert(parent, index, type);
+	public void add(NdefRecordModelParent parent, int index, Class type) {
+		operator.add(parent, index, type);
 		
 		modified();
 	}
@@ -238,7 +229,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		column.getColumn().setMoveable(true);
 		column.getColumn().setText("Value");
 		column.setLabelProvider(new NdefRecordModelValueColumnLabelProvider());
-		column.setEditingSupport(new NdefRecordModelEditingSupport(treeViewer, this));		
+		column.setEditingSupport(new NdefRecordModelEditingSupport(treeViewer, this, operator.getNdefRecordModelFactory(), operator.getNdefRecordFactory()));		
 		
 		column = new TreeViewerColumn(treeViewer, SWT.NONE);
 		column.getColumn().setWidth(50);

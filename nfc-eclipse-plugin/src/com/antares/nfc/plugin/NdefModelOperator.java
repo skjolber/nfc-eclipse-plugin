@@ -90,6 +90,7 @@ import com.antares.nfc.model.NdefRecordModelParentProperty;
 import com.antares.nfc.model.NdefRecordModelPropertyList;
 import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 import com.antares.nfc.model.NdefRecordModelRecord;
+import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
@@ -116,11 +117,11 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	private class EditorUpdateCommand implements EditorCommand {
 		
 		private NdefRecordModelRecord recordNode;
-		private byte[] encoded;
+		private NdefModelOperation operation;
 		
-		public EditorUpdateCommand(NdefRecordModelRecord recordNode, byte[] encoded) {
+		public EditorUpdateCommand(NdefRecordModelRecord recordNode, NdefModelOperation operation) {
 			this.recordNode = recordNode;
-			this.encoded = encoded;
+			this.operation = operation;
 		}
 	}
 	
@@ -154,10 +155,18 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 	private NdefRecordModelParent model;
 	
-	private File projectPath;
+	private NdefRecordFactory ndefRecordFactory;
+	
+	public NdefRecordModelFactory getNdefRecordModelFactory() {
+		return ndefRecordModelFactory;
+	}
 
-	public NdefModelOperator(File projectPath) {
-		this.projectPath = projectPath;
+	public NdefRecordFactory getNdefRecordFactory() {
+		return ndefRecordFactory;
+	}
+
+	public NdefModelOperator( NdefRecordFactory ndefRecordFactory) {
+		this.ndefRecordFactory = ndefRecordFactory;
 	}
 	
 	public void setModel(NdefRecordModelParent model) {
@@ -248,41 +257,38 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	}
 
 	@Override
-	public void update(NdefRecordModelNode ndefRecordModelNode, byte[] encoded) {
+	public void update(NdefRecordModelNode ndefRecordModelNode, NdefModelOperation operation) {
 		Activator.info("Update model");
 
 		NdefRecordModelRecord recordNode = ndefRecordModelNode.getRecordNode();
 		
-		addRecordUpdateStep(recordNode, encoded);
+		addRecordUpdateStep(recordNode, operation);
+		
+		operation.execute();
 	}
 	
 	@Override
-	public void insert(NdefRecordModelParent parent, int index, Class type) {
+	public void add(NdefRecordModelParent parent, int index, Class type) {
 		Activator.info("Insert " + type.getSimpleName() + " at " + index);
 		
 		addRecordInsertStep(parent, index, type);
 		
-		insertImpl(parent, index, type);
+		addImpl(parent, index, type);
 	}
 
-	private void insertImpl(NdefRecordModelParent parent, int index, Class type) {
+	private void addImpl(NdefRecordModelParent parent, int index, Class type) {
 		if(Record.class.isAssignableFrom(type)) {
 		
-			Record child = createRecord(type);
+			Record child = ndefRecordFactory.createRecord(type);
 			
 			if(child != null) {
-				int parentIndex = -1;
 				if(parent instanceof NdefRecordModelRecord) {
 					NdefRecordModelRecord ndefRecordModelRecordParent = (NdefRecordModelRecord)parent;
 					
-					parentIndex = connect(ndefRecordModelRecordParent.getRecord(), child);
+					ndefRecordFactory.connect(ndefRecordModelRecordParent.getRecord(), child);
 				}
 				
-				if(parentIndex != -1) {
-					parent.insert(ndefRecordModelFactory.getNode(child, parent), parentIndex);
-				} else {
-					parent.insert(ndefRecordModelFactory.getNode(child, parent), index);
-				}
+				parent.insert(ndefRecordModelFactory.getNode(child, parent), index);
 			}
 		} else if(type == String.class) {
 			
@@ -304,299 +310,9 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		}
 	}
 
-	private Record createRecord(Class<?> recordType) {
-		Record child = null;
-		if(recordType == AbsoluteUriRecord.class) {
-			AbsoluteUriRecord record = new AbsoluteUriRecord();
-			record.setUri("");
-			
-			child = record;
-		} else if(recordType == ActionRecord.class) {
-			ActionRecord actionRecord = new ActionRecord();
-			//actionRecord.setAction(Action.DEFAULT_ACTION);
-			
-			child = actionRecord;
-		} else if(recordType == AndroidApplicationRecord.class) {
-			AndroidApplicationRecord androidApplicationRecord = new AndroidApplicationRecord();
-			
-			String packageName = getAndroidProjectPackageName();
-			if(packageName != null) {
-				androidApplicationRecord.setPackageName(packageName);
-			}
-			
-			child = androidApplicationRecord;
-		} else if(recordType == UnsupportedExternalTypeRecord.class) {
-			UnsupportedExternalTypeRecord externalTypeRecord = new UnsupportedExternalTypeRecord();
-			
-			child = externalTypeRecord;
-		} else if(recordType == EmptyRecord.class) {
-			EmptyRecord emptyRecord = new EmptyRecord();
-			
-			child = emptyRecord;
-		} else if(recordType == MimeRecord.class) {
-			BinaryMimeRecord mimeMediaRecord = new BinaryMimeRecord();
-			
-			mimeMediaRecord.setContent(new byte[]{});
-			mimeMediaRecord.setContentType("");
-			
-			child = mimeMediaRecord;
-		} else if(recordType == SmartPosterRecord.class) {
-			SmartPosterRecord smartPosterRecord = new SmartPosterRecord();
-
-			ActionRecord actionRecord = new ActionRecord();
-			smartPosterRecord.setAction(actionRecord);
-			
-			TextRecord textRecord = new TextRecord();
-			textRecord.setEncoding(Charset.forName("UTF-8"));
-			textRecord.setLocale(new Locale(Locale.getDefault().getCountry()));
-			textRecord.setText("");
-			smartPosterRecord.setTitle(textRecord);
-
-			UriRecord uriRecord = new UriRecord("");
-			smartPosterRecord.setUri(uriRecord);
-
-			child = smartPosterRecord;
-		} else if(recordType == TextRecord.class) {
-			
-			TextRecord textRecord = new TextRecord();
-			textRecord.setEncoding(Charset.forName("UTF-8"));
-			textRecord.setLocale(new Locale(Locale.getDefault().getCountry()));
-			textRecord.setText("");
-
-			child = textRecord;
-		} else if(recordType == UnknownRecord.class) {
-			UnknownRecord unknownRecord = new UnknownRecord();
-
-			unknownRecord.setPayload(NdefConstants.EMPTY_BYTE_ARRAY);
-			
-			child = unknownRecord;
-		} else if(recordType == UriRecord.class) {
-			UriRecord uriRecord = new UriRecord("");
-
-			child = uriRecord;
-		} else if(recordType == AlternativeCarrierRecord.class) {
-			AlternativeCarrierRecord alternativeCarrierRecord = new AlternativeCarrierRecord();
-
-			child = alternativeCarrierRecord;
-		} else if(recordType == HandoverSelectRecord.class) {
-			HandoverSelectRecord handoverSelectRecord = new HandoverSelectRecord();
-			
-			child = handoverSelectRecord;
-		} else if(recordType == HandoverCarrierRecord.class) {
-			HandoverCarrierRecord handoverCarrierRecord = new HandoverCarrierRecord();
-			
-			child = handoverCarrierRecord;
-		} else if(recordType == HandoverRequestRecord.class) {
-			HandoverRequestRecord handoverRequestRecord = new HandoverRequestRecord();
-			
-			// add collision
-			CollisionResolutionRecord collisionResolutionRecord = new CollisionResolutionRecord();
-			Random random = new Random();
-			int nextInt = random.nextInt(65536);
-			collisionResolutionRecord.setRandomNumber(nextInt);
-			handoverRequestRecord.setCollisionResolution(collisionResolutionRecord);
-			
-			// add alternative carrier record (one is required)
-			AlternativeCarrierRecord alternativeCarrierRecord = new AlternativeCarrierRecord();
-			handoverRequestRecord.add(alternativeCarrierRecord);
-			
-			child = handoverRequestRecord;
-		} else if(recordType == ErrorRecord.class) {
-			ErrorRecord errorRecord = new ErrorRecord();
-			
-			errorRecord.setErrorReason(null);
-			errorRecord.setErrorData(null);
-			
-			child = errorRecord;
-		} else if(recordType == CollisionResolutionRecord.class) {
-			CollisionResolutionRecord collisionResolutionRecord = new CollisionResolutionRecord();
-			
-			Random random = new Random();
-			
-			int nextInt = random.nextInt(65536);
-
-			collisionResolutionRecord.setRandomNumber(nextInt);
-			
-			child = collisionResolutionRecord;
-		} else if(recordType == GenericControlRecord.class) {
-			GenericControlRecord genericControlRecord = new GenericControlRecord();
-
-			/**
-			 * A Generic Control record MAY contain one Action record. Generic Control records MUST NOT
-			 * contain more than one Action record. When the Action record is omitted, the default action of the
-			 * function may be applied. The default action is up to each function.
-			 */
-			
-			GcActionRecord actionRecord = new GcActionRecord();
-			actionRecord.setAction(Action.DEFAULT_ACTION);
-			genericControlRecord.setAction(actionRecord);
-			
-			/**
-			 * A Data record MAY contain any type of data. The data of records contained in the Data record
-			 * SHOULD simply be passed to the target function.
-			 * Interpretations of content in a data record are up to the target function.
-			 */
-			
-			GcDataRecord gcDataRecord = new GcDataRecord();
-			genericControlRecord.setData(gcDataRecord);
-
-			/** 
-			 * A Generic Control record MUST contain one and only one Target record.
-			 */
-			
-			GcTargetRecord gcTargetRecord = new GcTargetRecord();
-			genericControlRecord.setTarget(gcTargetRecord);
-		
-			child = genericControlRecord;
-		} else if(recordType == GcActionRecord.class) {
-			GcActionRecord gcActionRecord = new GcActionRecord();
-			gcActionRecord.setAction(Action.DEFAULT_ACTION);
-			
-			child = gcActionRecord;
-		} else if(recordType == GcDataRecord.class) {
-			GcDataRecord gcDataRecord = new GcDataRecord();
-			
-			child = gcDataRecord;
-		}
-		return child;
-	}
-	
-	/**
-	 * 
-	 * Add parent/child relationships between records
-	 * 
-	 * @param parent
-	 * @param child
-	 * @return index of index of child is determined in parent, -1 otherwise
-	 */
-	
-	private int connect(Record parent, Record child) {
-		Activator.info("Connect " + parent.getClass().getSimpleName() + " to " + child.getClass().getSimpleName());
-		if(parent instanceof GcDataRecord) {
-			GcDataRecord gcDataRecord = (GcDataRecord)parent;
-			
-			gcDataRecord.add(child);
-		} else if(parent instanceof GcTargetRecord) {
-			GcTargetRecord gcTargetRecord = (GcTargetRecord)parent;
-			
-			gcTargetRecord.setTargetIdentifier(child);
-		} else if(parent instanceof GcActionRecord) {
-			GcActionRecord gcActionRecord = (GcActionRecord)parent;
-			
-			gcActionRecord.setActionRecord(child);
-		} else if(parent instanceof GenericControlRecord) {
-			if(child instanceof GcActionRecord) {
-				GenericControlRecord genericControlRecord = (GenericControlRecord)parent;
-				genericControlRecord.setAction((GcActionRecord) child);
-
-				return 1 + 1;
-			} else if(child instanceof GcDataRecord) {
-				GenericControlRecord genericControlRecord = (GenericControlRecord)parent;
-				genericControlRecord.setData((GcDataRecord) child);
-				
-				if(genericControlRecord.hasAction()) {
-					return 2 + 1;
-				}
-				return 1 + 1;
-			}
-		} else if(parent instanceof HandoverCarrierRecord) {
-			HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)parent;
-			
-			handoverCarrierRecord.setCarrierType(child);
-		} else if(parent instanceof HandoverSelectRecord) {
-			HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)parent;
-			
-			if(child instanceof ErrorRecord) {
-				handoverSelectRecord.setError((ErrorRecord)child);
-			}
-		}
-		return -1;
-	}
-
-	/**
-	 * 
-	 * Remove parent/child relationships between records
-	 * 
-	 * @param parent
-	 * @param child
-	 */
 
 	
-	private void disconnect(Record parent, Record child) {
-		Activator.info("Disconnect child " + child.getClass().getSimpleName() + " from " + parent.getClass().getSimpleName());
-		
-		if(parent instanceof GcDataRecord) {
-			GcDataRecord gcDataRecord = (GcDataRecord)parent;
-			
-			gcDataRecord.remove(child);
-		} else if(parent instanceof GcTargetRecord) {
-			GcTargetRecord gcTargetRecord = (GcTargetRecord)parent;
-			
-			gcTargetRecord.setTargetIdentifier(null);
-		} else if(parent instanceof GcActionRecord) {
-			GcActionRecord gcActionRecord = (GcActionRecord)parent;
-			
-			gcActionRecord.setActionRecord(null);
-		} else if(parent instanceof GenericControlRecord) {
-			if(child instanceof GcActionRecord) {
-				GenericControlRecord genericControlRecord = (GenericControlRecord)parent;
-				genericControlRecord.setAction(null);
-			} else if(child instanceof GcDataRecord) {
-				GenericControlRecord genericControlRecord = (GenericControlRecord)parent;
-				genericControlRecord.setData(null);
-			}
-		} else if(parent instanceof HandoverCarrierRecord) {
-			HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)parent;
-			
-			handoverCarrierRecord.setCarrierType(null);
-		} else if(parent instanceof HandoverSelectRecord) {
-			HandoverSelectRecord handoverSelectRecord = (HandoverSelectRecord)parent;
-			
-			if(child instanceof ErrorRecord) {
-				handoverSelectRecord.setError(null);
-			}
-		}
-	}
 
-	private String getAndroidProjectPackageName() {
-		if(projectPath != null) {
-			File android = new File(projectPath, "AndroidManifest.xml");
-			
-			if(android.exists()) {
-				
-				XMLInputFactory factory = XMLInputFactory.newInstance();
-				
-				InputStream in = null;
-				
-				try {
-					in = new FileInputStream(android);
-					XMLStreamReader reader = factory.createXMLStreamReader(in);
-					
-					int event = reader.nextTag();
-					if(event == XMLStreamConstants.START_ELEMENT) {
-						String localName = reader.getLocalName();
-						if(localName.equals("manifest")) {
-							return reader.getAttributeValue(null, "package");
-						}
-					}
-				} catch(IOException e) {
-					// ignore
-				} catch (XMLStreamException e) {
-					// ignore
-				} finally {
-					if(in != null) {
-						try {
-							in.close();
-						} catch (IOException e) {
-							// ignore
-						}
-					}
-				}
-			}
-		}
-		
-		return null;
-	}
 
 	@Override
 	public void remove(NdefRecordModelNode node) {
@@ -615,7 +331,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			NdefRecordModelRecord parentRecordNode = (NdefRecordModelRecord)parent;
 			NdefRecordModelRecord childRecordNode = (NdefRecordModelRecord)node;
 
-			disconnect(parentRecordNode.getRecord(), childRecordNode.getRecord());
+			ndefRecordFactory.disconnect(parentRecordNode.getRecord(), childRecordNode.getRecord());
 		} else if(parent instanceof NdefRecordModelPropertyList) {
 			NdefRecordModelPropertyList ndefRecordModelPropertyList = (NdefRecordModelPropertyList)parent;
 			
@@ -634,13 +350,13 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
 
 				if(gcTargetRecord.hasTargetIdentifier()) {
-					disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
+					ndefRecordFactory.disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
 				}
 			} else if(record instanceof GcActionRecord) {
 				GcActionRecord gcActionRecord = (GcActionRecord)record;
 				
 				if(gcActionRecord.hasActionRecord()) {
-					disconnect(gcActionRecord, gcActionRecord.getActionRecord());
+					ndefRecordFactory.disconnect(gcActionRecord, gcActionRecord.getActionRecord());
 				}
 			}
 		}
@@ -665,7 +381,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			NdefRecordModelRecord parentRecordNode = (NdefRecordModelRecord)currentParent;
 			NdefRecordModelRecord childRecordNode = (NdefRecordModelRecord)node;
 
-			disconnect(parentRecordNode.getRecord(), childRecordNode.getRecord());
+			ndefRecordFactory.disconnect(parentRecordNode.getRecord(), childRecordNode.getRecord());
 		}
 		
 		nextParent.insert(node, nextIndex);
@@ -674,7 +390,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			NdefRecordModelRecord parentRecordNode = (NdefRecordModelRecord)nextParent;
 			NdefRecordModelRecord childRecordNode = (NdefRecordModelRecord)node;
 
-			connect(parentRecordNode.getRecord(), childRecordNode.getRecord());
+			ndefRecordFactory.connect(parentRecordNode.getRecord(), childRecordNode.getRecord());
 		}
 	}
 
@@ -682,7 +398,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void add(NdefRecordModelParent node, Class type) {
 		Activator.info("Add " + type.getSimpleName());
 		
-		insert(node, node.getSize(), type);
+		add(node, node.getSize(), type);
 	}
 
 	public NdefRecordModelParent getModel() {
@@ -742,14 +458,14 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
 				
 				if(gcTargetRecord.hasTargetIdentifier()) {
-					disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
+					ndefRecordFactory.disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
 					
 					ndefRecordModelParentProperty.remove(0);
 				}
 				
-				Record child = createRecord(type);
+				Record child = ndefRecordFactory.createRecord(type);
 				
-				connect(record, child); // ignore index, only one child
+				ndefRecordFactory.connect(record, child); // ignore index, only one child
 				
 				ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
 
@@ -758,14 +474,14 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				GcActionRecord gcActionRecord = (GcActionRecord)record;
 				
 				if(gcActionRecord.hasActionRecord()) {
-					disconnect(gcActionRecord, gcActionRecord.getActionRecord());
+					ndefRecordFactory.disconnect(gcActionRecord, gcActionRecord.getActionRecord());
 					
 					ndefRecordModelParentProperty.remove(0);
 				}
 				
-				Record child = createRecord(type);
+				Record child = ndefRecordFactory.createRecord(type);
 
-				connect(record, child);
+				ndefRecordFactory.connect(record, child);
 				
 				ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
 
@@ -776,7 +492,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				if(handoverCarrierRecord.hasCarrierType()) {
 					Object carrierType = handoverCarrierRecord.getCarrierType();
 					if(carrierType instanceof Record) {
-						disconnect(handoverCarrierRecord, (Record)carrierType);
+						ndefRecordFactory.disconnect(handoverCarrierRecord, (Record)carrierType);
 					} else {
 						handoverCarrierRecord.setCarrierType(null);
 					}
@@ -791,9 +507,9 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	
 					} else {
 						
-						Record child = createRecord(type);
+						Record child = ndefRecordFactory.createRecord(type);
 	
-						connect(record, child);
+						ndefRecordFactory.connect(record, child);
 						
 						ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
 					}
@@ -804,7 +520,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				if(ndefRecordModelParentProperty.getParentIndex() == 3) {
 					
 					if(handoverSelectRecord.hasError()) {
-						disconnect(handoverSelectRecord, handoverSelectRecord.getError());
+						ndefRecordFactory.disconnect(handoverSelectRecord, handoverSelectRecord.getError());
 						
 						ndefRecordModelParentProperty.remove(0);
 					}
@@ -813,9 +529,9 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 						handoverSelectRecord.setError(null);
 					} else if(type == ErrorRecord.class) {
 
-						Record child = createRecord(type);
+						Record child = ndefRecordFactory.createRecord(type);
 						
-						connect(record, child);
+						ndefRecordFactory.connect(record, child);
 						
 						ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(child, ndefRecordModelParentProperty));
 
@@ -858,7 +574,12 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			removeImpl(editorInsertCommand.parent.getChild(editorInsertCommand.index));
 		}
 
-		// this.model = comm;
+		if(comm instanceof EditorUpdateCommand) {
+			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
+			
+			editorUpdateCommand.operation.revoke();
+		}
+
 		
 		redolist.push(comm);
 	}
@@ -875,8 +596,11 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if (comm == null)
 			return;
 		
-		// edit
-		//this.model = comm;
+		if(comm instanceof EditorUpdateCommand) {
+			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
+			
+			editorUpdateCommand.operation.execute();
+		}
 		
 		undolist.push(comm);
 	}
@@ -902,8 +626,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 * @param comm
 	 */
 	
-	private void addRecordUpdateStep(NdefRecordModelRecord recordNode, byte[] encoded) {
-		addStep(new EditorUpdateCommand(recordNode, encoded));
+	private void addRecordUpdateStep(NdefRecordModelRecord recordNode, NdefModelOperation operation) {
+		addStep(new EditorUpdateCommand(recordNode, operation));
 	}
 
 	private void addStep(EditorCommand step) {
@@ -922,4 +646,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	}
 	*/
 	
+	public void addOperation(NdefModelOperation operation) {
+		
+	}
 }

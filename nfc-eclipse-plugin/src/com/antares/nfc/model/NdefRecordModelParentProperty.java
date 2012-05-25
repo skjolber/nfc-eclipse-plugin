@@ -65,5 +65,7 @@ public class NdefRecordModelParentProperty extends NdefRecordModelParent {
 		
 		return new NdefRecordModelParentProperty(name, children, parent);
 	}
+
+
 	
 }

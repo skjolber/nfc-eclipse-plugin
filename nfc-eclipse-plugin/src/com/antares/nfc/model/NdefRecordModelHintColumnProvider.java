@@ -85,12 +85,14 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 					} else if(record instanceof MimeRecord) {
 						MimeRecord mimeRecord = (MimeRecord)record;
 						
-						if(mimeRecord.hasContentType()) {
-							String contentType = mimeRecord.getContentType();
-							
-							int index = contentType.indexOf('/');
-							if(index == -1) {
-								return "MIME type convension violated";
+						if(ndefRecordModelNode.getParentIndex() == 1) {
+							if(mimeRecord.hasContentType()) {
+								String contentType = mimeRecord.getContentType();
+								
+								int index = contentType.indexOf('/');
+								if(index == -1) {
+									return "MIME type convension violated";
+								}
 							}
 						}
 					} else if(record instanceof UriRecord) {
@@ -163,12 +165,14 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 					} else if(record instanceof MimeRecord) {
 						MimeRecord mimeRecord = (MimeRecord)record;
 						
-						if(mimeRecord.hasContentType()) {
-							String contentType = mimeRecord.getContentType();
-							
-							int index = contentType.indexOf('/');
-							if(index == -1) {
-								return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+						if(ndefRecordModelNode.getParentIndex() == 1) {
+							if(mimeRecord.hasContentType()) {
+								String contentType = mimeRecord.getContentType();
+								
+								int index = contentType.indexOf('/');
+								if(index == -1) {
+									return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+								}
 							}
 						}
 					} else if(record instanceof UriRecord) {

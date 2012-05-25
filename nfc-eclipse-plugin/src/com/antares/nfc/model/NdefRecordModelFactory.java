@@ -55,7 +55,7 @@ import org.nfctools.ndef.wkt.records.WellKnownRecord;
 
 public class NdefRecordModelFactory {
 
-	public NdefRecordModelParent represent(Record[] records) {
+	public static NdefRecordModelParent represent(Record[] records) {
 				
 		NdefRecordModelParent ndefRecordModelParent = new NdefRecordModelParent(null);
 
@@ -66,11 +66,11 @@ public class NdefRecordModelFactory {
 		return ndefRecordModelParent;
 		
 	}
-	public NdefRecordModelNode getNode(String name, String value, NdefRecordModelParent ndefRecordModelParent) {
+	public static NdefRecordModelNode getNode(String name, String value, NdefRecordModelParent ndefRecordModelParent) {
 		return new NdefRecordModelProperty(name, value, ndefRecordModelParent);
 	}
 	
-	public NdefRecordModelNode getNode(Record record, NdefRecordModelParent ndefRecordModelParent) {
+	public static NdefRecordModelRecord getNode(Record record, NdefRecordModelParent ndefRecordModelParent) {
 		if(record instanceof AndroidApplicationRecord) {
 			AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord)record;
 			

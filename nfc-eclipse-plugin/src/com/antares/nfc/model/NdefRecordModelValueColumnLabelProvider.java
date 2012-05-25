@@ -55,7 +55,11 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					int parentIndex = ndefRecordModelProperty.getParentIndex();
 					if(parentIndex == 1) {
 						ErrorRecord errorRecord = (ErrorRecord)record;
-						return "0x" + Long.toHexString(errorRecord.getErrorData().longValue());
+						if(errorRecord.hasErrorData()) {
+							return "0x" + Long.toHexString(errorRecord.getErrorData().longValue());
+						} else {
+							return "";
+						}
 					}
 				}
 				

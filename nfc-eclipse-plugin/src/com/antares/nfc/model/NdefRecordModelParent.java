@@ -102,4 +102,17 @@ public class NdefRecordModelParent extends NdefRecordModelNode {
 		return false;
 	}
 
+	@Override
+	public NdefRecordModelNode clone() {
+		List<NdefRecordModelNode> children = new ArrayList<NdefRecordModelNode>();
+		for(NdefRecordModelNode child : this.children) {
+			children.add(child.clone());
+		}
+		
+		return new NdefRecordModelParent(children, parent);
+	}
+	
+	public void removeAllChildren() {
+		children.clear();
+	}
 }

@@ -74,6 +74,11 @@ import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 
 import com.antares.nfc.plugin.Activator;
+import com.antares.nfc.plugin.NdefRecordFactory;
+import com.antares.nfc.plugin.operation.DefaultNdefModelListItemOperation;
+import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
+import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
+import com.antares.nfc.plugin.operation.NdefModelOperation;
 
 // TODO refactor so that each record method has its own can canEdit, getValue, setValue,
 
@@ -135,13 +140,16 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private TextCellEditor textCellEditor;
 	private TreeViewer treeViewer;
 	
+	private NdefRecordModelFactory ndefRecordModelFactory;
+	private NdefRecordFactory ndefRecordFactory;
+	
 	private Map<Class<? extends Record>, RecordEditingSupport> editing = new HashMap<Class<? extends Record>, RecordEditingSupport>();
 	
 	private static interface RecordEditingSupport {
 		
 		boolean canEdit(NdefRecordModelNode node);
 		
-		boolean setValue(NdefRecordModelNode node, Object value);
+		NdefModelOperation setValue(NdefRecordModelNode node, Object value);
 
 		Object getValue(NdefRecordModelNode node);
 		
@@ -156,21 +164,44 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		}
 		
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			if(node instanceof NdefRecordModelRecord) {
 				String stringValue = (String)value;
 
 				Record record = node.getRecord();
 				
 				if(!stringValue.equals(record.getKey())) {
-					record.setKey(stringValue);
+					return new NdefModelOperation() {
 						
-					return true;
+						private Record record;
+						private String previous;
+						private String next;
+						
+						@Override
+						public void revoke() {
+							record.setKey(previous);
+						}
+
+						@Override
+						public void execute() {
+							record.setKey(next);
+						}
+						
+						public NdefModelOperation init(Record record, String previous, String next) {
+							this.record = record;
+							
+							this.previous = previous;
+							this.next = next;
+							
+							return this;
+						}						
+						
+					}.init(record, record.getKey(), stringValue);
 				}
 			} else {
 				throw new RuntimeException(node.getClass().getSimpleName());
 			}
-			return false;
+			return null;
 		}
 		
 		@Override
@@ -197,7 +228,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class ActionRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			ActionRecord record = (ActionRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				Integer index = (Integer)value;
@@ -211,18 +242,25 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					action = null;
 				}
 				if(action != record.getAction()) {
-					record.setAction(action);
-
-					// update property as well
-					NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-					if(record.hasAction()) {
-						ndefRecordModelProperty.setValue(record.getAction().name());
-					} else {
-						ndefRecordModelProperty.setValue(null);
-					}
-					return true;
+					
+					return new DefaultNdefModelPropertyOperation<Action, ActionRecord>(record, (NdefRecordModelProperty)node, record.getAction(), action) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setAction(next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setAction(previous);
+						}
+					};
 				}
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -278,7 +316,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		}
 		
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			HandoverCarrierRecord record = (HandoverCarrierRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				
@@ -300,66 +338,81 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 						
 						if(carrierTypeFormat != handoverCarrierRecord.getCarrierTypeFormat()) {
-							handoverCarrierRecord.setCarrierTypeFormat(carrierTypeFormat);
-		
-							// update property as well
-							NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-							if(handoverCarrierRecord.hasCarrierTypeFormat()) {
-								ndefRecordModelProperty.setValue(handoverCarrierRecord.getCarrierTypeFormat().name());
-							} else {
-								ndefRecordModelProperty.setValue(null);
-							}
-	
-							if(carrierTypeFormat != null) {
-								switch(carrierTypeFormat) {
-								case WellKnown : {
-									// NFC Forum well-known type [NFC RTD]
-	
-									// clear type, select sub type later
-									listener.set((NdefRecordModelParentProperty)node.getParent().getChild(1), null);
-	
-									break;
-								}
-								case Media : {
-									
-									// Media-type as defined in RFC 2046 [RFC 2046]
-									listener.set((NdefRecordModelParentProperty)node.getParent().getChild(1), String.class);
-	
-									break;
-								}
-								case AbsoluteURI : {
-									// Absolute URI as defined in RFC 3986 [RFC 3986]
-									listener.set((NdefRecordModelParentProperty)node.getParent().getChild(1), String.class);
-	
-									break;
-								}
-								case External : {
-									// NFC Forum external type [NFC RTD]
-									listener.set((NdefRecordModelParentProperty)node.getParent().getChild(1), null);
-	
-									break;
-								}
-								default: {
-									throw new RuntimeException();
-								}
-	
-								}		
-							} else {
-								listener.set((NdefRecordModelParentProperty)node.getParent().getChild(1), null);
-							}
 							
-							return true;
+							return new DefaultNdefModelPropertyOperation<HandoverCarrierRecord.CarrierTypeFormat, HandoverCarrierRecord>(record, (NdefRecordModelProperty)node, handoverCarrierRecord.getCarrierTypeFormat(), carrierTypeFormat) {
+								
+								private Object carrierType;
+								private NdefRecordModelNode carrierTypeNode;
+								private NdefRecordModelParentProperty ndefRecordModelParentProperty;
+								
+								@Override
+								public void initialize() {
+									ndefRecordModelParentProperty = (NdefRecordModelParentProperty)ndefRecordModelProperty.getParent().getChild(1);
+
+									if(record.hasCarrierType()) {
+										carrierType = record.getCarrierType();
+										if(ndefRecordModelParentProperty.hasChildren()) {
+											carrierTypeNode = ndefRecordModelParentProperty.getChild(0);
+										}
+									}
+								}
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									// clean up
+									if(previous != null) {
+										if(carrierType instanceof Record) {
+											ndefRecordFactory.disconnect(record, (Record)carrierType);
+										}
+										ndefRecordModelParentProperty.remove(0);
+									}
+									
+									// set next value
+									record.setCarrierTypeFormat(next);
+									if(next == CarrierTypeFormat.AbsoluteURI || next == CarrierTypeFormat.Media) {
+										// Absolute URI as defined in RFC 3986 [RFC 3986]
+										// Media-type as defined in RFC 2046 [RFC 2046]
+										
+										record.setCarrierType("");
+										ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(next.name(), "", ndefRecordModelParentProperty));
+									} else {
+										// NFC Forum well-known type [NFC RTD]
+										// NFC Forum external type [NFC RTD]
+										record.setCarrierType(null);
+									}
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setCarrierTypeFormat(previous);
+									if(next == CarrierTypeFormat.AbsoluteURI || next == CarrierTypeFormat.Media) {
+										ndefRecordModelParentProperty.remove(0);
+									}
+									record.setCarrierType(carrierType);
+									if(carrierType instanceof Record) {
+										ndefRecordFactory.connect(record, (Record)carrierType);
+									}
+									if(carrierTypeNode != null) {
+										ndefRecordModelParentProperty.add(carrierTypeNode);
+									}
+								}
+							};
 						}
 					} else if(parentIndex == 2) {
 						
 						String path = (String)value;
 						
+						byte[] payload;
 						if(path != null) {
 							File file = new File(path);
 		
 							int length = (int)file.length();
 							
-							byte[] payload = new byte[length];
+							payload = new byte[length];
 							
 							InputStream in = null;
 							try {
@@ -367,16 +420,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								DataInputStream din = new DataInputStream(in);
 								
 								din.readFully(payload);
-								
-								handoverCarrierRecord.setCarrierData(payload);
-								
-								NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-								ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes data");
-		
-								return true;
 							} catch(IOException e) {
 								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 								MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+								
+								return null;
 							} finally {
 								if(in != null) {
 									try {
@@ -387,10 +435,39 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								}
 							}
 						} else {
-							handoverCarrierRecord.setCarrierData(null);
-							NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-							ndefRecordModelProperty.setValue("Zero byte data");
+							payload = null;
 						}
+						
+						return new DefaultNdefModelPropertyOperation<byte[], HandoverCarrierRecord>(record, (NdefRecordModelProperty)node, record.getCarrierData(), payload) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setCarrierData(next);
+								
+								if(next == null) {
+									ndefRecordModelProperty.setValue("Zero byte data");
+								} else {
+									ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes data");
+								}	
+
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setCarrierData(previous);
+								
+								if(previous == null) {
+									ndefRecordModelProperty.setValue("Zero byte data");
+								} else {
+									ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes data");
+								}	
+							}
+						};
+						
 					} else {
 						throw new RuntimeException();
 					}
@@ -403,13 +480,30 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							
 						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
 						ndefRecordModelProperty.setValue(handoverCarrierRecord.getCarrierType().toString());
+						
+						return new DefaultNdefModelPropertyOperation<Object, HandoverCarrierRecord>(record, (NdefRecordModelProperty)node, record.getCarrierType(), stringValue) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setCarrierType(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setCarrierType(previous);
+							}
+						};
 
-						return true;
+						
 					}
 				} else {
 					throw new RuntimeException();
 				}
-				return false;
+				return null;
 			} else if(node instanceof NdefRecordModelParentProperty) {
 				Integer index = (Integer)value;
 
@@ -453,15 +547,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 						
 						if(index.intValue() != previousIndex) {
-							listener.set((NdefRecordModelParentProperty) node, types[index]);
-
-							return true;
+							return new DefaultNdefRecordModelParentPropertyOperation<Record, HandoverCarrierRecord>(record, (NdefRecordModelParentProperty)node, (Record)record.getCarrierType(),  ndefRecordFactory.createRecord(types[index]));
 						}
-
-						
 					}
 				}
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -578,7 +668,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class GcActionRecordEditingSupport extends DefaultRecordEditingSupport  {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			GcActionRecord gcActionRecord = (GcActionRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				Integer index = (Integer)value;
@@ -592,16 +682,23 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					action = null;
 				}
 				if(action != gcActionRecord.getAction()) {
-					gcActionRecord.setAction(action);
-
-					// update property as well
-					NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-					if(gcActionRecord.hasAction()) {
-						ndefRecordModelProperty.setValue(gcActionRecord.getAction().name());
-					} else {
-						ndefRecordModelProperty.setValue(null);
-					}
-					return true;
+					return new DefaultNdefModelPropertyOperation<Action, GcActionRecord>(gcActionRecord, (NdefRecordModelProperty)node, gcActionRecord.getAction(), action) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setAction(next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setAction(previous);
+						}
+					};					
+					
 				}
 				
 			} else if(node instanceof NdefRecordModelParentProperty) {
@@ -620,22 +717,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					previousIndex++;
 
 					if(previousIndex != index.intValue()) {
+						
 						NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)node;
 						if(index.intValue() == 0)  {
 							listener.remove(ndefRecordModelParentProperty.getChild(0));
 						} else {
-							listener.set(ndefRecordModelParentProperty, recordTypes[index - 1]);
+							return new DefaultNdefRecordModelParentPropertyOperation<Record, GcActionRecord>(gcActionRecord, (NdefRecordModelParentProperty)node, gcActionRecord.getActionRecord(), ndefRecordFactory.createRecord(recordTypes[index - 1]));
 						}
-						treeViewer.update(ndefRecordModelParentProperty, null);
-
-						return true;
+						
+						return null;
 					}
 					
 				}			
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -691,7 +788,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		}
 		
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			HandoverSelectRecord record = (HandoverSelectRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				
@@ -705,13 +802,23 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							throw new NumberFormatException();
 						}
 						if(byteValue != record.getMajorVersion()) {
-							record.setMajorVersion(byteValue);
 							
-							// update property as well
-							NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-							ndefRecordModelProperty.setValue(Byte.toString(byteValue));
-							
-							return true;
+							return new DefaultNdefModelPropertyOperation<Byte, HandoverSelectRecord>(record, (NdefRecordModelProperty)node, record.getMajorVersion(), byteValue) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setMajorVersion(next);
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setMajorVersion(previous);
+								}
+							};
 							
 						}
 					} catch(Exception e) {
@@ -729,13 +836,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							throw new NumberFormatException();
 						}
 						if(byteValue != record.getMinorVersion()) {
-							record.setMinorVersion(byteValue);
-							
-							// update property as well
-							NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-							ndefRecordModelProperty.setValue(Byte.toString(byteValue));
-							
-							return true;
+							return new DefaultNdefModelPropertyOperation<Byte, HandoverSelectRecord>(record, (NdefRecordModelProperty)node, record.getMinorVersion(), byteValue) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setMinorVersion(next);
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setMinorVersion(previous);
+								}
+							};
 						}
 					} catch(Exception e) {
 						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -750,25 +866,26 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					
 					int previousIndex;
 					if(handoverSelectRecord.hasError()) {
-						previousIndex = 1;
-					} else {
 						previousIndex = 0;
+					} else {
+						previousIndex = 1;
 					}
 					
 					if(index.intValue() != previousIndex) {
-						if(index.intValue() == 0) {
-							listener.set((NdefRecordModelParentProperty) node, null);
+						ErrorRecord errorRecord;
+						if(index.intValue() == 1) {
+							errorRecord = null;
 						} else {
-							listener.set((NdefRecordModelParentProperty) node, ErrorRecord.class);
+							errorRecord = ndefRecordFactory.createRecord(ErrorRecord.class);
 						}
 						
-						return true;
+						return new DefaultNdefRecordModelParentPropertyOperation<ErrorRecord, HandoverSelectRecord>(record, (NdefRecordModelParentProperty)node, record.getError(), errorRecord);
 					}
 				}			
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 
 		}
 
@@ -786,9 +903,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				}
 			} else if(node instanceof NdefRecordModelParentProperty) {
 				if(record.hasError()) {
-					return new Integer(1);
+					return new Integer(0);
 				}
-				return new Integer(0);
+				return new Integer(1);
 			} else {
 				return super.getValue(node);
 			}
@@ -818,7 +935,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		}
 		
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			HandoverRequestRecord handoverRequestRecord = (HandoverRequestRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				
@@ -832,12 +949,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							throw new NumberFormatException();
 						}
 						if(byteValue != handoverRequestRecord.getMajorVersion()) {
-							handoverRequestRecord.setMajorVersion(byteValue);
-							
-							// update property as well
-							NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-							ndefRecordModelProperty.setValue(Byte.toString(byteValue));
-							return true;
+							return new DefaultNdefModelPropertyOperation<Byte, HandoverRequestRecord>(handoverRequestRecord, (NdefRecordModelProperty)node, handoverRequestRecord.getMajorVersion(), byteValue) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setMajorVersion(next);
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setMajorVersion(previous);
+								}
+							};
 						}
 					} catch(Exception e) {
 						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -854,12 +981,23 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							throw new NumberFormatException();
 						}
 						if(byteValue != handoverRequestRecord.getMinorVersion()) {
-							handoverRequestRecord.setMinorVersion(byteValue);
-							
-							// update property as well
-							NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-							ndefRecordModelProperty.setValue(Byte.toString(byteValue));
-							return true;
+							return new DefaultNdefModelPropertyOperation<Byte, HandoverRequestRecord>(handoverRequestRecord, (NdefRecordModelProperty)node, handoverRequestRecord.getMinorVersion(), byteValue) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setMinorVersion(next);
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setMinorVersion(previous);
+								}
+							};
+
 						}
 					} catch(Exception e) {
 						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -867,7 +1005,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					}
 				}
 
-				return false;
+				return null;
 				
 			} else {
 				return super.setValue(node, value);
@@ -907,7 +1045,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class AlternativeCarrierRecordSelectEditingSupport extends DefaultRecordEditingSupport {
 		
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			AlternativeCarrierRecord record = (AlternativeCarrierRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				
@@ -925,16 +1063,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					}
 					
 					if(carrierPowerState !=  record.getCarrierPowerState()) {
-						record.setCarrierPowerState(carrierPowerState);
-	
-						// update property as well
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						if(record.hasCarrierPowerState()) {
-							ndefRecordModelProperty.setValue(record.getCarrierPowerState().name());
-						} else {
-							ndefRecordModelProperty.setValue(null);
-						}
-						return true;
+						return new DefaultNdefModelPropertyOperation<AlternativeCarrierRecord.CarrierPowerState, AlternativeCarrierRecord>(record, (NdefRecordModelProperty)node, record.getCarrierPowerState(), carrierPowerState) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setCarrierPowerState(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setCarrierPowerState(previous);
+							}
+						};
 					}
 				
 				} else if(parentIndex == 1) {
@@ -943,19 +1087,27 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					String carrierDataReference = record.getCarrierDataReference();
 					
 					if(!stringValue.equals(carrierDataReference)) {
-						record.setCarrierDataReference(stringValue);
+
+						return new DefaultNdefModelPropertyOperation<String, AlternativeCarrierRecord>(record, (NdefRecordModelProperty)node, record.getCarrierDataReference(), stringValue) {
 							
-						// update property as well
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						if(record.hasCarrierDataReference()) {
-							ndefRecordModelProperty.setValue(record.getCarrierDataReference());
-						} else {
-							ndefRecordModelProperty.setValue("");
-						}
-						return true;
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setCarrierDataReference(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setCarrierDataReference(previous);
+							}
+						};
+						
 					}
 				}
-				return false;
+				return null;
 				
 			} else if(node instanceof NdefRecordModelPropertyListItem) {
 				NdefRecordModelPropertyListItem ndefRecordModelPropertyListItem = (NdefRecordModelPropertyListItem)node;
@@ -969,18 +1121,33 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					String auxiliaryDataReference = alternativeCarrierRecord.getAuxiliaryDataReferenceAt(index);
 					
 					if(!stringValue.equals(auxiliaryDataReference)) {
-						alternativeCarrierRecord.setAuxiliaryDataReference(index, stringValue);
+
+						return new DefaultNdefModelListItemOperation<String, AlternativeCarrierRecord>(record, ndefRecordModelPropertyListItem, auxiliaryDataReference, stringValue) {
 							
-						// update list value
+							@Override
+							public void execute() {
+								super.execute();
+								
+								int index = ndefRecordModelPropertyListItem.getParentIndex();
+
+								record.setAuxiliaryDataReference(index, next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								int index = ndefRecordModelPropertyListItem.getParentIndex();
+
+								record.setAuxiliaryDataReference(index, previous);
+							}
+						};
 						
-						ndefRecordModelPropertyListItem.setValue(stringValue);
-						
-						return true;
 					}
 
 				}				
 
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -1026,6 +1193,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				}
 			} else if(node instanceof NdefRecordModelParentProperty) {
 				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT);
+			} else if(node instanceof NdefRecordModelPropertyListItem) {
+				return textCellEditor;
 			} else {
 				return super.getCellEditor(node);
 			}
@@ -1037,23 +1206,35 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class AbsoluteUriRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			AbsoluteUriRecord absoluteUriRecord = (AbsoluteUriRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
-				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
 				String stringValue = (String)value;
 				
 				if(!stringValue.equals(absoluteUriRecord.getUri())) {
-					absoluteUriRecord.setUri(stringValue);
+					return new DefaultNdefModelPropertyOperation<String, AbsoluteUriRecord>(absoluteUriRecord, (NdefRecordModelProperty)node,absoluteUriRecord.getUri(), stringValue) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setUri(next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setUri(previous);
+						}
+					};					
 					
-					ndefRecordModelProperty.setValue(absoluteUriRecord.getUri());
 					
-					return true;
 				}
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1083,23 +1264,33 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class UriRecordEditingSuppport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			UriRecord uriRecord = (UriRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
-				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
 				String stringValue = (String)value;
 				
 				if(!stringValue.equals(uriRecord.getUri())) {
-					uriRecord.setUri(stringValue);
-					
-					ndefRecordModelProperty.setValue(uriRecord.getUri());
-					
-					return true;
+					return new DefaultNdefModelPropertyOperation<String, UriRecord>(uriRecord, (NdefRecordModelProperty)node, uriRecord.getUri(), stringValue) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setUri(next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setUri(previous);
+						}
+					};	
 				}
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1130,7 +1321,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class CollisionResolutionRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			CollisionResolutionRecord collisionResolutionRecord = (CollisionResolutionRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				String stringValue = (String)value;
@@ -1144,7 +1335,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
 						ndefRecordModelProperty.setValue(Integer.toString(collisionResolutionRecord.getRandomNumber()));
 						
-						return true;
+						return new DefaultNdefModelPropertyOperation<Integer, CollisionResolutionRecord>(collisionResolutionRecord, (NdefRecordModelProperty)node, collisionResolutionRecord.getRandomNumber(), intValue) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setRandomNumber(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setRandomNumber(previous);
+							}
+						};	
 					}
 				} catch(NumberFormatException e) {
 					Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -1153,7 +1359,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1180,11 +1386,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class ErrorRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			ErrorRecord errorRecord = (ErrorRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
-				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-
 				int parentIndex = node.getParentIndex();
 				
 				if(parentIndex == 0) {
@@ -1199,31 +1403,38 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						errorReason = null;
 					}
 					if(errorReason !=  errorRecord.getErrorReason()) {
-						errorRecord.setErrorReason(errorReason);
-	
-						// update property as well
-						if(errorRecord.hasErrorReason()) {
-							ndefRecordModelProperty.setValue(errorRecord.getErrorReason().name());
-						} else {
-							ndefRecordModelProperty.setValue(null);
-						}
-						return true;
+
+						return new DefaultNdefModelPropertyOperation<ErrorRecord.ErrorReason, ErrorRecord>(errorRecord, (NdefRecordModelProperty)node, errorRecord.getErrorReason(), errorReason) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setErrorReason(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setErrorReason(previous);
+							}
+						};		
+						
 					}
 				} else if(parentIndex == 1) {
 					String stringValue = (String)value;
 							
+					Long longValue;
 					if(stringValue != null && stringValue.length() > 0) {
 
 						try {
-							
-							Long longValue;
 							if(stringValue.startsWith("0x")) {
 								longValue = Long.parseLong(stringValue.substring(2), 16);
 							} else {
 								longValue = Long.parseLong(stringValue);
 							}
 							
-							System.out.println("Long value is " + longValue.longValue());
 							if(errorRecord.hasErrorReason()) {
 								switch(errorRecord.getErrorReason()) {
 								
@@ -1252,29 +1463,43 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								}
 							}
 							
-							errorRecord.setErrorData(longValue);
-							
-							ndefRecordModelProperty.setValue(longValue.toString());
-							
-							return true;
 						} catch(NumberFormatException e) {
 							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 							MessageDialog.openError(shell, "Error", "Could not set value '" + stringValue + "', reverting to previous value.");
+							
+							return null;
 						} catch(IllegalArgumentException e) {
 							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 							MessageDialog.openError(shell, "Error", e.getMessage() + "', reverting to previous value.");
+							
+							return null;
 						}
-					} else {
-						errorRecord.setErrorData(null);
-						ndefRecordModelProperty.setValue("");
-						
-						return true;
+					
+						if(!longValue.equals(errorRecord.getErrorData())) {
+							return new DefaultNdefModelPropertyOperation<Number, ErrorRecord>(errorRecord, (NdefRecordModelProperty)node, errorRecord.getErrorData(), longValue) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setErrorData(next);
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setErrorData(previous);
+								}
+							};		
+							
+						}
 					}
 				}
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1323,7 +1548,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class TextRecordEditingSuppport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			TextRecord textRecord = (TextRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
@@ -1332,11 +1557,25 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					String stringValue = (String)value;
 					
 					if(!stringValue.equals(textRecord.getText())) {
-						textRecord.setText(stringValue);
+					
+						return new DefaultNdefModelPropertyOperation<String, TextRecord>(textRecord, (NdefRecordModelProperty)node, textRecord.getText(), stringValue) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setText(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setText(previous);
+							}
+						};	
 						
-						ndefRecordModelProperty.setValue(textRecord.getText());
 						
-						return true;
 					}
 				} else if(propertyIndex == 1) {
 					if(value instanceof Integer) {
@@ -1347,11 +1586,24 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		
 							Locale locale = new Locale(values[index.intValue()]);
 							if(!locale.equals(textRecord.getLocale())) {
-								textRecord.setLocale(locale);
-			
-								ndefRecordModelProperty.setValue(textRecord.getLocale().getLanguage());
+								return new DefaultNdefModelPropertyOperation<Locale, TextRecord>(textRecord, (NdefRecordModelProperty)node, textRecord.getLocale(), locale) {
+									
+									@Override
+									public void execute() {
+										ndefRecordModelProperty.setValue(next.getLanguage());
+										
+										record.setLocale(next);
+									}
+									
+									@Override
+									public void revoke() {
+										ndefRecordModelProperty.setValue(previous.getLanguage());
+										
+										record.setLocale(previous);
+									}
+								};	
 								
-								return true;
+								
 							}
 						}
 					} else {
@@ -1388,11 +1640,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							
 						if(charset != null) {
 							if(!charset.equals(textRecord.getEncoding())) {
-								textRecord.setEncoding(charset);
-								
-								ndefRecordModelProperty.setValue(textRecord.getEncoding().displayName());
-							
-								return true;
+								return new DefaultNdefModelPropertyOperation<Charset, TextRecord>(textRecord, (NdefRecordModelProperty)node, textRecord.getEncoding(), charset) {
+									
+									@Override
+									public void execute() {
+										ndefRecordModelProperty.setValue(next.displayName());
+										
+										record.setEncoding(next);
+									}
+									
+									@Override
+									public void revoke() {
+										ndefRecordModelProperty.setValue(previous.displayName());
+										
+										record.setEncoding(previous);
+									}
+								};	
 
 							}
 						}
@@ -1416,7 +1679,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1537,20 +1800,31 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class AndroidApplicationRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			AndroidApplicationRecord androidApplicationRecord = (AndroidApplicationRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				String stringValue = (String)value;
 				
 				if(!stringValue.equals(androidApplicationRecord.getPackageName())) {
-					androidApplicationRecord.setPackageName(stringValue);
-					
-					NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-					ndefRecordModelProperty.setValue(androidApplicationRecord.getPackageName());
-					
-					return true;
+					return new DefaultNdefModelPropertyOperation<String, AndroidApplicationRecord>(androidApplicationRecord, (NdefRecordModelProperty)node, androidApplicationRecord.getPackageName(), stringValue) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setPackageName(next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setPackageName(previous);
+						}
+					};	
+
 				}
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -1583,7 +1857,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				String stringValue = (String)value;
@@ -1591,25 +1865,46 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				int parentIndex = node.getParentIndex();
 				if(parentIndex == 0) {
 					if(!stringValue.equals(unsupportedExternalTypeRecord.getNamespace())) {
-						unsupportedExternalTypeRecord.setNamespace(stringValue);
+						return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getNamespace(), stringValue) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setNamespace(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setNamespace(previous);
+							}
+						};
 						
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						ndefRecordModelProperty.setValue(unsupportedExternalTypeRecord.getNamespace());
-						
-						return true;
 					}
 				} else if(parentIndex == 1) {
 					if(!stringValue.equals(unsupportedExternalTypeRecord.getContent())) {
-						unsupportedExternalTypeRecord.setContent(stringValue);
-						
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						ndefRecordModelProperty.setValue(unsupportedExternalTypeRecord.getContent());
-						
-						return true;
+						return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getContent(), stringValue) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setContent(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setContent(previous);
+							}
+						};
 					}
 				}
 				
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -1654,7 +1949,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class MimeRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			MimeRecord mimeRecord = (MimeRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				String stringValue = (String)value;
@@ -1662,12 +1957,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				int parentIndex = node.getParentIndex();
 				if(parentIndex == 0) {
 					if(!stringValue.equals(mimeRecord.getContentType())) {
-						mimeRecord.setContentType(stringValue);
-						
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						ndefRecordModelProperty.setValue(mimeRecord.getContentType());
-						
-						return true;
+						return new DefaultNdefModelPropertyOperation<String, MimeRecord>(mimeRecord, (NdefRecordModelProperty)node, mimeRecord.getContentType(), stringValue) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setContentType(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setContentType(previous);
+							}
+						};
 					}
 				} else if(parentIndex == 1) {
 					if(mimeRecord instanceof BinaryMimeRecord) {
@@ -1677,7 +1982,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							String path = (String)value;
 							
 							File file = new File(path);
-		
+			
 							int length = (int)file.length();
 							
 							byte[] payload = new byte[length];
@@ -1688,16 +1993,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								DataInputStream din = new DataInputStream(in);
 								
 								din.readFully(payload);
-								
-								binaryMimeRecord.setContent(payload);
-								
-								NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-								ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes binary payload");
-		
-								return true;
 							} catch(IOException e) {
 								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 								MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+								
+								return null;
 							} finally {
 								if(in != null) {
 									try {
@@ -1707,13 +2007,44 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 									}
 								}
 							}
+							
+							return new DefaultNdefModelPropertyOperation<byte[], BinaryMimeRecord>(binaryMimeRecord, (NdefRecordModelProperty)node, binaryMimeRecord.getContent(), payload) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setContent(next);
+									
+									if(next == null) {
+										ndefRecordModelProperty.setValue("Zero byte data");
+									} else {
+										ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes binary payload");
+									}	
+
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setContent(previous);
+									
+									if(previous == null) {
+										ndefRecordModelProperty.setValue("Zero byte data");
+									} else {
+										ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes binary payload");
+									}	
+								}
+							};
+							
 						}
 					} else {
 						throw new RuntimeException();
 					}
 				}
 				
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -1756,7 +2087,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class UnknownRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			UnknownRecord unknownRecord = (UnknownRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 
@@ -1765,7 +2096,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					String path = (String)value;
 					
 					File file = new File(path);
-
+	
 					int length = (int)file.length();
 					
 					byte[] payload = new byte[length];
@@ -1776,16 +2107,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						DataInputStream din = new DataInputStream(in);
 						
 						din.readFully(payload);
-						
-						unknownRecord.setPayload(payload);
-						
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						ndefRecordModelProperty.setValue(Integer.toString(length) + " bytes binary payload");
-
-						return true;
 					} catch(IOException e) {
 						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 						MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+						
+						return null;
 					} finally {
 						if(in != null) {
 							try {
@@ -1795,8 +2121,38 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							}
 						}
 					}
+					
+					return new DefaultNdefModelPropertyOperation<byte[], UnknownRecord>(unknownRecord, (NdefRecordModelProperty)node, unknownRecord.getPayload(), payload) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setPayload(next);
+							
+							if(next == null) {
+								ndefRecordModelProperty.setValue("Zero byte data");
+							} else {
+								ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes binary payload");
+							}	
+
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setPayload(previous);
+							
+							if(previous == null) {
+								ndefRecordModelProperty.setValue("Zero byte data");
+							} else {
+								ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes binary payload");
+							}	
+						}
+					};
 				}				
-				return false;
+				return null;
 			} else {
 				return super.setValue(node, value);
 			}
@@ -1825,7 +2181,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class GcTargetEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			GcTargetRecord gcTargetRecord = (GcTargetRecord) node.getRecord();
 
 			if(node instanceof NdefRecordModelParentProperty) {
@@ -1844,18 +2200,14 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					}
 
 					if(previousIndex != index.intValue()) {
-						listener.set(ndefRecordModelParentProperty, genericControlRecordTargetRecordTypes[index]);
-						
-						treeViewer.update(ndefRecordModelParentProperty, null);
-
-						return true;
+						return new DefaultNdefRecordModelParentPropertyOperation<Record, GcTargetRecord>(gcTargetRecord, (NdefRecordModelParentProperty)node, gcTargetRecord.getTargetIdentifier(), ndefRecordFactory.createRecord(genericControlRecordTargetRecordTypes[index]));
 					}
 				}
 			
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1884,7 +2236,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private class GenericControlRecordEditingSupport extends DefaultRecordEditingSupport {
 
 		@Override
-		public boolean setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			GenericControlRecord genericControlRecord = (GenericControlRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				String stringValue = (String)value;
@@ -1898,13 +2250,22 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					}
 					
 					if(b != genericControlRecord.getConfigurationByte()) {
-						genericControlRecord.setConfigurationByte(b);
-						
-						// update property as well
-						NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
-						ndefRecordModelProperty.setValue(Byte.toString(genericControlRecord.getConfigurationByte()));
-
-						return true;
+						return new DefaultNdefModelPropertyOperation<Byte, GenericControlRecord>(genericControlRecord, (NdefRecordModelProperty)node, genericControlRecord.getConfigurationByte(), b) {
+							
+							@Override
+							public void execute() {
+								super.execute();
+								
+								record.setConfigurationByte(next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
+								
+								record.setConfigurationByte(previous);
+							}
+						};
 					}
 				} catch(Exception e) {
 					Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -1913,7 +2274,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else {
 				return super.setValue(node, value);
 			}
-			return false;
+			return null;
 		}
 
 		@Override
@@ -1936,10 +2297,12 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		}
 	}
 		
-	public NdefRecordModelEditingSupport(TreeViewer viewer, NdefRecordModelChangeListener listener) {
+	public NdefRecordModelEditingSupport(TreeViewer viewer, NdefRecordModelChangeListener listener, NdefRecordModelFactory ndefRecordModelFactory, NdefRecordFactory ndefRecordFactory) {
 		super(viewer);
 		this.listener = listener;
 		this.treeViewer = viewer;
+		this.ndefRecordModelFactory = ndefRecordModelFactory;
+		this.ndefRecordFactory = ndefRecordFactory;
 		
 		this.textCellEditor = new TextCellEditor(viewer.getTree());
 		
@@ -2094,16 +2457,12 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
 		Record record = ndefRecordModelNode.getRecord();
 		if(record != null) {
-			
-			NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
-			
-			byte[] encoded = ndefMessageEncoder.encodeSingle(record);
+			NdefModelOperation setValue = editing.get(record.getClass()).setValue(ndefRecordModelNode, value);
 
-			if(editing.get(record.getClass()).setValue(ndefRecordModelNode, value)) {
-
-				Activator.info("Model change");
+			if(setValue != null) {
+				Activator.info("Model operation " + setValue.getClass().getSimpleName());
 				if(listener != null) {
-					listener.update(ndefRecordModelNode, encoded);
+					listener.update(ndefRecordModelNode, setValue);
 				}			
 
 				// update all but the root node

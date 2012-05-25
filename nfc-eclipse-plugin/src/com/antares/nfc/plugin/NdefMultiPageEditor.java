@@ -75,6 +75,8 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	
 	private NdefModelOperator modelOperator;
 	
+	private NdefRecordFactory ndefRecordFactory = new NdefRecordFactory();
+	
 	public NdefMultiPageEditor() {
 		super();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
@@ -308,10 +310,10 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		}
 		
 		if(projectPath != null) {
-			modelOperator = new NdefModelOperator(projectPath);
-		} else {
-			modelOperator = new NdefModelOperator(null);
+			ndefRecordFactory.setProjectPath(projectPath);
 		}
+		modelOperator = new NdefModelOperator(ndefRecordFactory);
+		
 		if(file.exists()) {
 			try {
 				if(!modelOperator.load(file)) {

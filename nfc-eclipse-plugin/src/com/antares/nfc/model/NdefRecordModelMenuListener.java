@@ -172,7 +172,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.insert(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, recordType);
+				listener.add(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, recordType);
 			}
 		}
 	}
@@ -227,7 +227,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.insert(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, String.class);
+				listener.add(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, String.class);
 			}
 		}
 	}
@@ -450,8 +450,11 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 							menuManager.add(addAlternativeCarrierRecordChildRecord);
 						}
 					} else if(record instanceof HandoverSelectRecord) {
+						
 						if(selectedNode instanceof NdefRecordModelParentProperty) {
-							menuManager.add(addAlternativeCarrierRecordChildRecord);
+							if(selectedNode.getRecordBranchIndex() == 2) {
+								menuManager.add(addAlternativeCarrierRecordChildRecord);
+							}
 						}
 					}
 				}

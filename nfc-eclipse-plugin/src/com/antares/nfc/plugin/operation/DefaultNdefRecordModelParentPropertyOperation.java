@@ -3,7 +3,6 @@ package com.antares.nfc.plugin.operation;
 import org.nfctools.ndef.Record;
 
 import com.antares.nfc.model.NdefRecordModelFactory;
-import com.antares.nfc.model.NdefRecordModelParent;
 import com.antares.nfc.model.NdefRecordModelParentProperty;
 import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.plugin.NdefRecordFactory;
@@ -13,13 +12,12 @@ public class DefaultNdefRecordModelParentPropertyOperation<V extends Record, R e
 	protected NdefRecordModelParentProperty ndefRecordModelParentProperty;
 
 	protected V previous;
+	protected NdefRecordModelRecord previousNode;
 	
 	protected V next;
+	protected NdefRecordModelRecord nextNode;
 	
 	protected R record;
-	protected NdefRecordModelRecord recordNode;
-
-	protected NdefRecordModelRecord ndefRecordModelRecord;
 
 	public DefaultNdefRecordModelParentPropertyOperation(R record, NdefRecordModelParentProperty ndefRecordModelParentProperty, V previous, V next) {
 		this.record = record;
@@ -32,10 +30,10 @@ public class DefaultNdefRecordModelParentPropertyOperation<V extends Record, R e
 	
 	public void initialize() {
 		if(ndefRecordModelParentProperty.hasChildren()) {
-			ndefRecordModelRecord = (NdefRecordModelRecord) ndefRecordModelParentProperty.getChild(0);
+			previousNode = (NdefRecordModelRecord) ndefRecordModelParentProperty.getChild(0);
 		}
 		
-		recordNode = NdefRecordModelFactory.getNode(next, ndefRecordModelParentProperty);
+		nextNode = NdefRecordModelFactory.getNode(next, ndefRecordModelParentProperty);
 	}							
 	
 	@Override
@@ -48,7 +46,7 @@ public class DefaultNdefRecordModelParentPropertyOperation<V extends Record, R e
 		
 		NdefRecordFactory.connect(record, next);
 		
-		ndefRecordModelParentProperty.add(recordNode);
+		ndefRecordModelParentProperty.add(nextNode);
 
 	}
 	
@@ -61,8 +59,8 @@ public class DefaultNdefRecordModelParentPropertyOperation<V extends Record, R e
 			NdefRecordFactory.connect(record, previous);
 		}
 		
-		if(ndefRecordModelRecord != null) {
-			ndefRecordModelParentProperty.add(ndefRecordModelRecord);
+		if(previousNode != null) {
+			ndefRecordModelParentProperty.add(previousNode);
 		}
 		
 	}

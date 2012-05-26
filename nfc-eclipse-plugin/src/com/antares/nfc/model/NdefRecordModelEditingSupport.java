@@ -46,8 +46,6 @@ import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
-import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
@@ -194,7 +192,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							this.next = next;
 							
 							return this;
-						}						
+						}
 						
 					}.init(record, record.getKey(), stringValue);
 				}
@@ -1112,41 +1110,37 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else if(node instanceof NdefRecordModelPropertyListItem) {
 				NdefRecordModelPropertyListItem ndefRecordModelPropertyListItem = (NdefRecordModelPropertyListItem)node;
 				
-				if(record instanceof AlternativeCarrierRecord) {
-					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
-					
-					String stringValue = (String)value;
-					int index = ndefRecordModelPropertyListItem.getParentIndex();
+				AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
+				
+				String stringValue = (String)value;
+				int index = ndefRecordModelPropertyListItem.getParentIndex();
 
-					String auxiliaryDataReference = alternativeCarrierRecord.getAuxiliaryDataReferenceAt(index);
-					
-					if(!stringValue.equals(auxiliaryDataReference)) {
+				String auxiliaryDataReference = alternativeCarrierRecord.getAuxiliaryDataReferenceAt(index);
+				
+				if(!stringValue.equals(auxiliaryDataReference)) {
 
-						return new DefaultNdefModelListItemOperation<String, AlternativeCarrierRecord>(record, ndefRecordModelPropertyListItem, auxiliaryDataReference, stringValue) {
-							
-							@Override
-							public void execute() {
-								super.execute();
-								
-								int index = ndefRecordModelPropertyListItem.getParentIndex();
-
-								record.setAuxiliaryDataReference(index, next);
-							}
-							
-							@Override
-							public void revoke() {
-								super.revoke();
-								
-								int index = ndefRecordModelPropertyListItem.getParentIndex();
-
-								record.setAuxiliaryDataReference(index, previous);
-							}
-						};
+					return new DefaultNdefModelListItemOperation<String, AlternativeCarrierRecord>(record, ndefRecordModelPropertyListItem, auxiliaryDataReference, stringValue) {
 						
-					}
+						@Override
+						public void execute() {
+							super.execute();
+							
+							int index = ndefRecordModelPropertyListItem.getParentIndex();
 
-				}				
+							record.setAuxiliaryDataReference(index, next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							int index = ndefRecordModelPropertyListItem.getParentIndex();
 
+							record.setAuxiliaryDataReference(index, previous);
+						}
+					};
+					
+				}
 				return null;
 			} else {
 				return super.setValue(node, value);
@@ -1173,6 +1167,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				} else {
 					throw new RuntimeException();
 				}
+			} else if(node instanceof NdefRecordModelPropertyListItem) {
+				return record.getAuxiliaryDataReferenceAt(node.getParentIndex());
 			} else {
 				return super.getValue(node);
 			}

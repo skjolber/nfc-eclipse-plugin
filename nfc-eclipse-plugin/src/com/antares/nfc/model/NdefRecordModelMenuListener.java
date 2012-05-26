@@ -190,7 +190,11 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.add((NdefRecordModelParent)selectedNode, recordType);
+				if(selectedNode != null) {
+					listener.add((NdefRecordModelParent)selectedNode, recordType);
+				} else {
+					listener.add((NdefRecordModelParent)root, recordType);
+				}
 			}
 		}
 	}
@@ -461,8 +465,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			}
 		} else {
 			// force select of root node
-			selectedNode = root;
-			
 			menuManager.add(addRootChildRecord);
 		}
 	}

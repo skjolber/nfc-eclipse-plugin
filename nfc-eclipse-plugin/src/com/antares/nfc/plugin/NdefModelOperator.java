@@ -90,7 +90,11 @@ import com.antares.nfc.model.NdefRecordModelParentProperty;
 import com.antares.nfc.model.NdefRecordModelPropertyList;
 import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 import com.antares.nfc.model.NdefRecordModelRecord;
+import com.antares.nfc.plugin.operation.NdefModelAddListItemOperation;
+import com.antares.nfc.plugin.operation.NdefModelAddRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
+import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
+import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
@@ -101,26 +105,13 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		
 	}
 
-	private class EditorInsertCommand implements EditorCommand {
-		private NdefRecordModelParent parent;
-		private int index;
-		private Class type;
-		
-		public EditorInsertCommand(NdefRecordModelParent parent, int index, Class type) {
-			this.parent = parent;
-			this.index = index;
-			this.type = type;
-		}		
-		
-	}
-	
 	private class EditorUpdateCommand implements EditorCommand {
 		
-		private NdefRecordModelRecord recordNode;
+		private NdefRecordModelNode node;
 		private NdefModelOperation operation;
 		
-		public EditorUpdateCommand(NdefRecordModelRecord recordNode, NdefModelOperation operation) {
-			this.recordNode = recordNode;
+		public EditorUpdateCommand(NdefRecordModelNode node, NdefModelOperation operation) {
+			this.node = node;
 			this.operation = operation;
 		}
 	}
@@ -262,7 +253,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 		NdefRecordModelRecord recordNode = ndefRecordModelNode.getRecordNode();
 		
-		addRecordUpdateStep(recordNode, operation);
+		addOperationStep(recordNode, operation);
 		
 		operation.execute();
 	}
@@ -271,48 +262,26 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void add(NdefRecordModelParent parent, int index, Class type) {
 		Activator.info("Insert " + type.getSimpleName() + " at " + index);
 		
-		addRecordInsertStep(parent, index, type);
-		
 		addImpl(parent, index, type);
 	}
 
 	private void addImpl(NdefRecordModelParent parent, int index, Class type) {
 		if(Record.class.isAssignableFrom(type)) {
-		
-			Record child = ndefRecordFactory.createRecord(type);
+			NdefModelAddRecordOperation ndefModelAddRecordOperation = new NdefModelAddRecordOperation(parent, ndefRecordFactory.createRecord(type), index);
 			
-			if(child != null) {
-				if(parent instanceof NdefRecordModelRecord) {
-					NdefRecordModelRecord ndefRecordModelRecordParent = (NdefRecordModelRecord)parent;
-					
-					ndefRecordFactory.connect(ndefRecordModelRecordParent.getRecord(), child);
-				}
-				
-				parent.insert(ndefRecordModelFactory.getNode(child, parent), index);
-			}
+			addOperationStep(parent, ndefModelAddRecordOperation);
+			
+			ndefModelAddRecordOperation.execute();
+			
 		} else if(type == String.class) {
+
+			NdefModelAddListItemOperation ndefModelAddListItemOperation = new NdefModelAddListItemOperation((NdefRecordModelPropertyList)parent, index, "");
 			
-			if(parent instanceof NdefRecordModelPropertyList) {
-				NdefRecordModelPropertyList ndefRecordModelPropertyList = (NdefRecordModelPropertyList)parent;
-				
-				NdefRecordModelRecord recordParent = (NdefRecordModelRecord) ndefRecordModelPropertyList.getParent();
-				
-				Record record = recordParent.getRecord();
-				if(record instanceof AlternativeCarrierRecord) {
-					AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
-					
-					alternativeCarrierRecord.insertAuxiliaryDataReference("", index);
-					
-					ndefRecordModelPropertyList.insert(new NdefRecordModelPropertyListItem("", ndefRecordModelPropertyList), index);
-				}
-			}
+			addOperationStep(parent, ndefModelAddListItemOperation);
 			
+			ndefModelAddListItemOperation.execute();
 		}
 	}
-
-
-	
-
 
 	@Override
 	public void remove(NdefRecordModelNode node) {
@@ -322,43 +291,21 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	}
 
 	private void removeImpl(NdefRecordModelNode node) {
-		int index = node.getParentIndex();
-		
-		NdefRecordModelParent parent = node.getParent();
-		parent.remove(index);
-
-		if(parent instanceof NdefRecordModelRecord) {
-			NdefRecordModelRecord parentRecordNode = (NdefRecordModelRecord)parent;
-			NdefRecordModelRecord childRecordNode = (NdefRecordModelRecord)node;
-
-			ndefRecordFactory.disconnect(parentRecordNode.getRecord(), childRecordNode.getRecord());
-		} else if(parent instanceof NdefRecordModelPropertyList) {
-			NdefRecordModelPropertyList ndefRecordModelPropertyList = (NdefRecordModelPropertyList)parent;
+		if(node instanceof NdefRecordModelPropertyListItem) {
+			NdefModelRemoveListItemOperation ndefModelRemoveListItemOperation = new NdefModelRemoveListItemOperation((NdefRecordModelPropertyList)node.getParent(), (NdefRecordModelPropertyListItem) node);
 			
-			NdefRecordModelRecord recordParent = (NdefRecordModelRecord) ndefRecordModelPropertyList.getParent();
+			addOperationStep(node, ndefModelRemoveListItemOperation);
 			
-			Record record = recordParent.getRecord();
+			ndefModelRemoveListItemOperation.execute();
+		} else if(node instanceof NdefRecordModelRecord) {
 			
-			if(record instanceof AlternativeCarrierRecord) {
-				AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
-				
-				alternativeCarrierRecord.removeAuxiliaryDataReference(index);
-			}				
-		} else if(parent instanceof NdefRecordModelParentProperty) {
-			Record record = parent.getRecord();
-			if(record instanceof GcTargetRecord) {
-				GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
-
-				if(gcTargetRecord.hasTargetIdentifier()) {
-					ndefRecordFactory.disconnect(gcTargetRecord, gcTargetRecord.getTargetIdentifier());
-				}
-			} else if(record instanceof GcActionRecord) {
-				GcActionRecord gcActionRecord = (GcActionRecord)record;
-				
-				if(gcActionRecord.hasActionRecord()) {
-					ndefRecordFactory.disconnect(gcActionRecord, gcActionRecord.getActionRecord());
-				}
-			}
+			NdefModelRemoveRecordOperation ndefModelRemoveRecordOperation = new NdefModelRemoveRecordOperation(node.getParent(), (NdefRecordModelRecord) node);
+			
+			addOperationStep(node, ndefModelRemoveRecordOperation);
+			
+			ndefModelRemoveRecordOperation.execute();
+		} else {
+			throw new RuntimeException();
 		}
 	}
 	
@@ -567,11 +514,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		// edit
 		if(comm instanceof EditorUpdateCommand) {
 			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
-			
-		} else if(comm instanceof EditorInsertCommand) {
-			EditorInsertCommand editorInsertCommand = (EditorInsertCommand)comm;
-			
-			removeImpl(editorInsertCommand.parent.getChild(editorInsertCommand.index));
 		}
 
 		if(comm instanceof EditorUpdateCommand) {
@@ -613,11 +555,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		return !redolist.isEmpty();
 	}
 
-	private void addRecordInsertStep(NdefRecordModelParent parent, int index, Class type) {
-		addStep(new EditorInsertCommand(parent, index, type));
-	}
-
-	
 	/**
 	 * Executes the command and adds a command to undolist, then redolist is cleared.
 	 * undolist.size() will always be less than PROPERTY_MAX_UNDO_STEPS 
@@ -626,8 +563,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 * @param comm
 	 */
 	
-	private void addRecordUpdateStep(NdefRecordModelRecord recordNode, NdefModelOperation operation) {
-		addStep(new EditorUpdateCommand(recordNode, operation));
+	private void addOperationStep(NdefRecordModelNode node, NdefModelOperation operation) {
+		addStep(new EditorUpdateCommand(node, operation));
 	}
 
 	private void addStep(EditorCommand step) {

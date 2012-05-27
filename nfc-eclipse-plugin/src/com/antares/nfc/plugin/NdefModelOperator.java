@@ -32,17 +32,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Random;
 import java.util.Stack;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.swt.graphics.Image;
@@ -52,35 +44,16 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
-import org.eclipse.ui.actions.ActionFactory;
-import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
-import org.nfctools.ndef.auri.AbsoluteUriRecord;
-import org.nfctools.ndef.empty.EmptyRecord;
-import org.nfctools.ndef.ext.AndroidApplicationRecord;
-import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
-import org.nfctools.ndef.mime.BinaryMimeRecord;
-import org.nfctools.ndef.mime.MimeRecord;
-import org.nfctools.ndef.unknown.UnknownRecord;
-import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
-import org.nfctools.ndef.wkt.handover.records.CollisionResolutionRecord;
 import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.handover.records.HandoverRequestRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
-import org.nfctools.ndef.wkt.records.Action;
-import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
-import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
-import org.nfctools.ndef.wkt.records.GenericControlRecord;
-import org.nfctools.ndef.wkt.records.SmartPosterRecord;
-import org.nfctools.ndef.wkt.records.TextRecord;
-import org.nfctools.ndef.wkt.records.UriRecord;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
 import com.antares.nfc.model.NdefRecordModelFactory;
@@ -93,6 +66,7 @@ import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.plugin.operation.NdefModelAddListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelAddRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
+import com.antares.nfc.plugin.operation.NdefModelRecordMoveOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
 import com.google.zxing.WriterException;
@@ -100,21 +74,6 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
 
 public class NdefModelOperator implements NdefRecordModelChangeListener {
-
-	private interface EditorCommand {
-		
-	}
-
-	private class EditorUpdateCommand implements EditorCommand {
-		
-		private NdefRecordModelNode node;
-		private NdefModelOperation operation;
-		
-		public EditorUpdateCommand(NdefRecordModelNode node, NdefModelOperation operation) {
-			this.node = node;
-			this.operation = operation;
-		}
-	}
 	
 	// IEditorInput input = getEditorInput();
 	
@@ -147,6 +106,14 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	private NdefRecordModelParent model;
 	
 	private NdefRecordFactory ndefRecordFactory;
+	
+	/**
+	 * We use two stacks to store undo & redo information 
+	 */
+	private Stack<NdefModelOperation> undolist = new Stack<NdefModelOperation>();
+	private Stack<NdefModelOperation> redolist = new Stack<NdefModelOperation>();
+
+	private int maxUndoSteps = 100;
 	
 	public NdefRecordModelFactory getNdefRecordModelFactory() {
 		return ndefRecordModelFactory;
@@ -312,33 +279,11 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void move(NdefRecordModelNode node, NdefRecordModelParent nextParent, int nextIndex) {
 		Activator.info("Move record at " + node.getParent().indexOf(node));
 		
-		NdefRecordModelParent currentParent = node.getParent();
+		NdefModelRecordMoveOperation ndefModelRecordMoveOperation = new NdefModelRecordMoveOperation(node, nextParent, nextIndex);
 		
-		if(currentParent == nextParent) { // check if remove affects insert index
-			int currentIndex = node.getParentIndex();
-
-			if(currentIndex < nextIndex) {
-				nextIndex--;
-			}
-		}
+		addOperationStep(node, ndefModelRecordMoveOperation);
 		
-		currentParent.remove(node);
-
-		if(currentParent instanceof NdefRecordModelRecord) {
-			NdefRecordModelRecord parentRecordNode = (NdefRecordModelRecord)currentParent;
-			NdefRecordModelRecord childRecordNode = (NdefRecordModelRecord)node;
-
-			ndefRecordFactory.disconnect(parentRecordNode.getRecord(), childRecordNode.getRecord());
-		}
-		
-		nextParent.insert(node, nextIndex);
-
-		if(nextParent instanceof NdefRecordModelRecord) {
-			NdefRecordModelRecord parentRecordNode = (NdefRecordModelRecord)nextParent;
-			NdefRecordModelRecord childRecordNode = (NdefRecordModelRecord)node;
-
-			ndefRecordFactory.connect(parentRecordNode.getRecord(), childRecordNode.getRecord());
-		}
+		ndefModelRecordMoveOperation.execute();
 	}
 
 	@Override
@@ -491,13 +436,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 	}
 	
-	/**
-	 * We use two stacks to store undo & redo information 
-	 */
-	private Stack<EditorCommand> undolist = new Stack<EditorCommand>();
-	private Stack<EditorCommand> redolist = new Stack<EditorCommand>();
-
-	private int maxUndoSteps = 100;
 	
 	/** 
 	 * Undo a command stored in undolist, and move this command 
@@ -507,23 +445,15 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if(undolist.empty())
 			return;
 		
-		EditorCommand comm = (EditorCommand)undolist.pop();
-		if (comm == null)
+		NdefModelOperation operation = (NdefModelOperation)undolist.pop();
+		if (operation == null)
 			return;
 
 		// edit
-		if(comm instanceof EditorUpdateCommand) {
-			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
-		}
-
-		if(comm instanceof EditorUpdateCommand) {
-			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
-			
-			editorUpdateCommand.operation.revoke();
-		}
+		operation.revoke();
 
 		
-		redolist.push(comm);
+		redolist.push(operation);
 	}
 	
 	/** 
@@ -534,17 +464,13 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		if(redolist.empty())
 			return;
 		
-		EditorCommand comm = (EditorCommand)redolist.pop();
-		if (comm == null)
+		NdefModelOperation operation = (NdefModelOperation)redolist.pop();
+		if (operation == null)
 			return;
 		
-		if(comm instanceof EditorUpdateCommand) {
-			EditorUpdateCommand editorUpdateCommand = (EditorUpdateCommand)comm;
-			
-			editorUpdateCommand.operation.execute();
-		}
+		operation.execute();
 		
-		undolist.push(comm);
+		undolist.push(operation);
 	}
 	
 	public boolean canUndo() {
@@ -564,10 +490,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 */
 	
 	private void addOperationStep(NdefRecordModelNode node, NdefModelOperation operation) {
-		addStep(new EditorUpdateCommand(node, operation));
+		addStep(operation);
 	}
 
-	private void addStep(EditorCommand step) {
+	private void addStep(NdefModelOperation step) {
 		undolist.push(step);
 		redolist.clear();
 		
@@ -582,8 +508,5 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				getClipboard().getContents(TextTransfer.getInstance()) instanceof String;
 	}
 	*/
-	
-	public void addOperation(NdefModelOperation operation) {
-		
-	}
+
 }

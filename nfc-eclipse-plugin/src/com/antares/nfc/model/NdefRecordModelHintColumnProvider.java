@@ -33,7 +33,6 @@ import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
-import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;

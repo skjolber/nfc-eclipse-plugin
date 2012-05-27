@@ -2,7 +2,6 @@ package com.antares.nfc.plugin.operation;
 
 import org.nfctools.ndef.Record;
 
-import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 
 public class DefaultNdefModelListItemOperation<V, R extends Record> implements NdefModelOperation {

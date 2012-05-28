@@ -722,7 +722,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						
 						NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)node;
 						if(index.intValue() == 0)  {
-							listener.remove(ndefRecordModelParentProperty.getChild(0));
+							listener.removeRecord((NdefRecordModelRecord) ndefRecordModelParentProperty.getChild(0));
 						} else {
 							return new DefaultNdefRecordModelParentPropertyOperation<Record, GcActionRecord>(gcActionRecord, (NdefRecordModelParentProperty)node, gcActionRecord.getActionRecord(), ndefRecordFactory.createRecord(recordTypes[index - 1]));
 						}

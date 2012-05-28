@@ -259,29 +259,22 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 
 	@Override
-	public void remove(NdefRecordModelNode node) {
+	public void removeRecord(NdefRecordModelRecord node) {
 		Activator.info("Remove record at " + node.getParentIndex());
 		
-		removeImpl(node);
+		NdefModelRemoveRecordOperation ndefModelRemoveRecordOperation = new NdefModelRemoveRecordOperation(node.getParent(), (NdefRecordModelRecord) node);
+		
+		addOperationStep(node, ndefModelRemoveRecordOperation);
+		
+		ndefModelRemoveRecordOperation.execute();
 	}
 
-	private void removeImpl(NdefRecordModelNode node) {
-		if(node instanceof NdefRecordModelPropertyListItem) {
-			NdefModelRemoveListItemOperation ndefModelRemoveListItemOperation = new NdefModelRemoveListItemOperation((NdefRecordModelPropertyList)node.getParent(), (NdefRecordModelPropertyListItem) node);
-			
-			addOperationStep(node, ndefModelRemoveListItemOperation);
-			
-			ndefModelRemoveListItemOperation.execute();
-		} else if(node instanceof NdefRecordModelRecord) {
-			
-			NdefModelRemoveRecordOperation ndefModelRemoveRecordOperation = new NdefModelRemoveRecordOperation(node.getParent(), (NdefRecordModelRecord) node);
-			
-			addOperationStep(node, ndefModelRemoveRecordOperation);
-			
-			ndefModelRemoveRecordOperation.execute();
-		} else {
-			throw new RuntimeException();
-		}
+	public void removeListItem(NdefRecordModelPropertyListItem node) {
+		NdefModelRemoveListItemOperation ndefModelRemoveListItemOperation = new NdefModelRemoveListItemOperation((NdefRecordModelPropertyList)node.getParent(), (NdefRecordModelPropertyListItem) node);
+		
+		addOperationStep(node, ndefModelRemoveListItemOperation);
+		
+		ndefModelRemoveListItemOperation.execute();
 	}
 	
 	public void move(NdefRecordModelNode node, NdefRecordModelParent nextParent, int nextIndex) {
@@ -338,7 +331,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	      return display;		
 	   }
 
-	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type) {
+	public void setRecord(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type) {
 		
 		NdefRecordModelParent parent = ndefRecordModelParentProperty.getParent();
 		

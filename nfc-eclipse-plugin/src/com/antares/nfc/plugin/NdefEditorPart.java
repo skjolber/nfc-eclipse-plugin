@@ -74,6 +74,7 @@ import com.antares.nfc.model.NdefRecordModelMenuListener;
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelParent;
 import com.antares.nfc.model.NdefRecordModelParentProperty;
+import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.model.NdefRecordModelSizeColumnLabelProvider;
 import com.antares.nfc.model.NdefRecordModelValueColumnLabelProvider;
@@ -113,20 +114,26 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 	
 	@Override
-	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type) {
-		operator.set(ndefRecordModelParentProperty, type);
+	public void setRecord(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type) {
+		operator.setRecord(ndefRecordModelParentProperty, type);
 		
 		modified();
 	}
 	
 	@Override
-	public void remove(NdefRecordModelNode node) {
-		operator.remove(node);
+	public void removeRecord(NdefRecordModelRecord node) {
+		operator.removeRecord(node);
 		
 		modified();
 	}
 
-	
+	@Override
+	public void removeListItem(NdefRecordModelPropertyListItem node) {
+		operator.removeListItem(node);
+		
+		modified();
+	}
+		
 	protected void modified() {
 		treeViewer.refresh(operator.getModel());
 

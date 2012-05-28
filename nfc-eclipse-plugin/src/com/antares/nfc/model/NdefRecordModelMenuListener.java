@@ -58,7 +58,7 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	private Class<? extends Record>[] rootRecordTypes = new Class[]{
 			AbsoluteUriRecord.class,
 			ActionRecord.class,
@@ -79,7 +79,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			
 	};
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	private Class<? extends Record>[] genericControlRecordTargetRecordTypes = new Class[]{
 			TextRecord.class,
 			UriRecord.class,
@@ -88,7 +88,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	@SuppressWarnings("rawtypes")
 	private Class[] genericControlRecordDataChildRecordTypes = rootRecordTypes;
 
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({ "unused" })
 	private Class<? extends Record>[] genericControlRecordActionRecordTypes = rootRecordTypes;
 
 	private TreeViewer treeViewer;
@@ -216,7 +216,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.set((NdefRecordModelParentProperty)selectedNode, recordType);
+				listener.setRecord((NdefRecordModelParentProperty)selectedNode, recordType);
 			}
 		}
 	}
@@ -264,7 +264,26 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			if(listener != null) {
 				if(selectedNode != null) {
-					listener.remove(selectedNode);
+					listener.removeRecord((NdefRecordModelRecord)selectedNode);
+					
+					selectedNode = null;
+				}
+			}
+		}
+
+	}
+	
+	private class RemoveListItemAction extends Action {
+
+		public RemoveListItemAction(String name) {
+			super(name);
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				if(selectedNode != null) {
+					listener.removeListItem((NdefRecordModelPropertyListItem)selectedNode);
 					
 					selectedNode = null;
 				}
@@ -300,20 +319,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         for(Class<? extends Record> recordType: rootRecordTypes) {
         	addRootChildRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
         }
-
-		removeRecord = new Action("Remove record") {
-			@Override
-			public void run() {
-				if(listener != null) {
-					if(selectedNode != null) {
-						listener.remove(selectedNode);
-						
-						selectedNode = null;
-					}
-				}
-			}
-		};
-
+		
 		// generic control
 		// insert before
 		insertGenericControlDataSiblingRecordBefore = new MenuManager("Insert record before", null);
@@ -380,7 +386,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         addListItem = new AddListItemAction("Add item");
         insertListItemSiblingBefore = new InsertListItemAction("Insert item before", 0);
         insertListItemSiblingAfter = new InsertListItemAction("Insert item after", 1);
-        removeListItem = new RemoveAction("Remove item");
+        removeListItem = new RemoveListItemAction("Remove item");
         
 		manager.setRemoveAllWhenShown(true);
 		

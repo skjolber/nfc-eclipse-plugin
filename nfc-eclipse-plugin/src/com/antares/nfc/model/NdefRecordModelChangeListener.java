@@ -37,10 +37,13 @@ public interface NdefRecordModelChangeListener {
 
 	void addListItem(NdefRecordModelParent node, int index);
 
-	void remove(NdefRecordModelNode node);
+	void removeListItem(NdefRecordModelPropertyListItem selectedNode);
+
+	void removeRecord(NdefRecordModelRecord node);
 	
-	void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type);
+	void setRecord(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type);
 
 	void update(NdefRecordModelNode ndefRecordModelNode, NdefModelOperation operation);
+
 
 }

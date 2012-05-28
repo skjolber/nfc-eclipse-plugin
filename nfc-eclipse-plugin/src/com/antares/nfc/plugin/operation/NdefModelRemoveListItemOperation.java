@@ -41,7 +41,7 @@ public class NdefModelRemoveListItemOperation implements NdefModelOperation {
 		if(record instanceof AlternativeCarrierRecord) {
 			AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
 			
-			value = alternativeCarrierRecord.removeAuxiliaryDataReference(index);
+			alternativeCarrierRecord.removeAuxiliaryDataReference(index);
 		}	
 
 		parent.remove(index);

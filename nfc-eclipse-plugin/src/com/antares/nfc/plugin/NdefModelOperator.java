@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Stack;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jface.action.Action;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
@@ -50,9 +49,7 @@ import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
-import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 
@@ -61,7 +58,6 @@ import com.antares.nfc.model.NdefRecordModelFactory;
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelParent;
 import com.antares.nfc.model.NdefRecordModelParentProperty;
-import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.model.NdefRecordModelPropertyList;
 import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 import com.antares.nfc.model.NdefRecordModelRecord;

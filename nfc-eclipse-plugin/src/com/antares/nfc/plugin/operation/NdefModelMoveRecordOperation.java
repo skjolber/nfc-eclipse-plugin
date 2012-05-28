@@ -6,7 +6,7 @@ import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelParent;
 import com.antares.nfc.plugin.NdefRecordFactory;
 
-public class NdefModelRecordMoveOperation implements NdefModelOperation {
+public class NdefModelMoveRecordOperation implements NdefModelOperation {
 
 	private NdefRecordModelNode node;
 	
@@ -16,7 +16,7 @@ public class NdefModelRecordMoveOperation implements NdefModelOperation {
 	private NdefRecordModelParent previousParent;
 	private int previousIndex;
 	
-	public NdefModelRecordMoveOperation(NdefRecordModelNode node, NdefRecordModelParent nextParent, int nextIndex) {
+	public NdefModelMoveRecordOperation(NdefRecordModelNode node, NdefRecordModelParent nextParent, int nextIndex) {
 		this.node = node;
 		this.nextParent = nextParent;
 		this.nextIndex = nextIndex;

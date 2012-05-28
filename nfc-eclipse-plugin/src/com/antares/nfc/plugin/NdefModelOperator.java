@@ -65,7 +65,7 @@ import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOper
 import com.antares.nfc.plugin.operation.NdefModelAddListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelAddRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
-import com.antares.nfc.plugin.operation.NdefModelRecordMoveOperation;
+import com.antares.nfc.plugin.operation.NdefModelMoveRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
 import com.google.zxing.WriterException;
@@ -276,7 +276,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void move(NdefRecordModelNode node, NdefRecordModelParent nextParent, int nextIndex) {
 		Activator.info("Move record at " + node.getParent().indexOf(node));
 		
-		NdefModelRecordMoveOperation ndefModelRecordMoveOperation = new NdefModelRecordMoveOperation(node, nextParent, nextIndex);
+		NdefModelMoveRecordOperation ndefModelRecordMoveOperation = new NdefModelMoveRecordOperation(node, nextParent, nextIndex);
 		
 		addOperationStep(node, ndefModelRecordMoveOperation);
 		

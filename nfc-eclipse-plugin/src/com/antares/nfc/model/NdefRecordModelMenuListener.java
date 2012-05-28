@@ -26,16 +26,26 @@
 
 package com.antares.nfc.model;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
@@ -55,6 +65,8 @@ import org.nfctools.ndef.wkt.records.GenericControlRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
+
+import com.antares.nfc.plugin.Activator;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 
@@ -161,6 +173,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private MenuManager setHandoverCarrierExternalType;
 	private MenuManager setHandoverCarrierWellKnownType;
 
+	// mime content
+	private Action viewContent;
+	private Action saveContent;
+
 	private class InsertSiblingAction extends Action {
 
 		private Class<? extends Record> recordType;
@@ -202,6 +218,119 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			}
 		}
 	}
+	
+	private class ViewContentAction extends Action {
+
+		public ViewContentAction(String name) {
+			super(name);
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				
+				byte[] payload;
+				String mimeType;
+				Record record = selectedNode.getRecord();
+				if(record instanceof MimeRecord) {
+					MimeRecord mimeRecord = (MimeRecord) record;
+
+					mimeType = mimeRecord.getContentType();
+					payload = mimeRecord.getContentAsBytes();
+				} else if(record instanceof UnknownRecord) {
+					UnknownRecord unknownRecord = (UnknownRecord) record;
+					
+					mimeType = null;
+					payload = unknownRecord.getPayload();
+				} else {
+					throw new RuntimeException();
+				}
+
+				Activator.info("View " + payload.length + " bytes");
+				
+				
+				//listener.viewBinaryContent((NdefRecordModelParentProperty)selectedNode);
+			}
+		}
+	}
+	
+	private class SaveContentAction extends Action {
+
+		public SaveContentAction(String name) {
+			super(name);
+		}
+		
+		@Override
+		public void run() {
+			if(listener != null) {
+				
+				// File standard dialog
+				FileDialog fileDialog = new FileDialog(treeViewer.getTree().getShell());
+				// Set the text
+				fileDialog.setText("Save mime media");
+				// Set filter
+				
+				final String fileString = fileDialog.open();
+				
+				if(fileString != null) {
+					Activator.info("Save to " + fileString);
+
+					File file = new File(fileString);
+					
+					OutputStream outputStream = null;
+					try {
+						outputStream = new FileOutputStream(file);
+
+						byte[] payload;
+						Record record = selectedNode.getRecord();
+						if(record instanceof MimeRecord) {
+							MimeRecord mimeRecord = (MimeRecord) record;
+							
+							payload = mimeRecord.getContentAsBytes();
+						} else if(record instanceof UnknownRecord) {
+							UnknownRecord unknownRecord = (UnknownRecord) record;
+							
+							payload = unknownRecord.getPayload();
+						} else {
+							throw new RuntimeException();
+						}
+
+						Activator.info("Save " + payload.length + " bytes");
+
+
+						outputStream.write(payload);
+					} catch(IOException e) {
+						
+						Activator.warn("Unable to save to file " + fileString, e);
+						
+				    	Display.getCurrent().asyncExec(
+				                new Runnable()
+				                {
+				                    public void run()
+				                    {
+										// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+										Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+										MessageDialog.openError(shell, "Error", "Unable to save to file " + fileString);
+				                    }
+				                }
+				            );
+
+					} finally {
+						try {
+							if(outputStream != null) {
+								outputStream.close();
+							}
+						} catch(Exception e) {
+							// ignore
+						}
+					}
+				} else {
+					Activator.info("No save");
+				}
+			}
+		}
+	}
+	
 	
 	private class SetChildAction extends Action {
 
@@ -388,6 +517,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         insertListItemSiblingAfter = new InsertListItemAction("Insert item after", 1);
         removeListItem = new RemoveListItemAction("Remove item");
         
+        // mime interaction
+        viewContent = new ViewContentAction("View content");
+        saveContent = new SaveContentAction("Save to file");
+        
 		manager.setRemoveAllWhenShown(true);
 		
 		manager.addMenuListener(this);
@@ -507,6 +640,22 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 									}
 								}
 							}
+						}
+					} else if(record instanceof MimeRecord) {
+
+						if(selectedNode.getRecordBranchIndex() == 1) {
+							MimeRecord mimeRecord = (MimeRecord)record;
+							if(mimeRecord.hasContentType()) {
+								//menuManager.add(viewContent);
+								menuManager.add(saveContent);
+							}
+						}
+					} else if(record instanceof UnknownRecord) {
+
+						UnknownRecord unknownRecord = (UnknownRecord)record;
+						if(unknownRecord.hasPayload()) {
+							//menuManager.add(viewContent);
+							menuManager.add(saveContent);
 						}
 					}
 				}

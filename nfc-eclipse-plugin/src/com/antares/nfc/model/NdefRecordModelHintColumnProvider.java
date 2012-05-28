@@ -84,13 +84,17 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 					} else if(record instanceof MimeRecord) {
 						MimeRecord mimeRecord = (MimeRecord)record;
 						
-						if(ndefRecordModelNode.getParentIndex() == 1) {
+						if(ndefRecordModelNode.getParentIndex() == 0) {
 							if(mimeRecord.hasContentType()) {
 								String contentType = mimeRecord.getContentType();
 								
-								int index = contentType.indexOf('/');
-								if(index == -1) {
-									return "MIME type convension violated";
+								if(contentType.length() > 0) {
+									int index = contentType.indexOf('/');
+									if(index == -1) {
+										return "MIME type convension violated";
+									}
+								} else {
+									return "Enter mime type";
 								}
 							}
 						}
@@ -164,13 +168,17 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 					} else if(record instanceof MimeRecord) {
 						MimeRecord mimeRecord = (MimeRecord)record;
 						
-						if(ndefRecordModelNode.getParentIndex() == 1) {
+						if(ndefRecordModelNode.getParentIndex() == 0) {
 							if(mimeRecord.hasContentType()) {
 								String contentType = mimeRecord.getContentType();
 								
-								int index = contentType.indexOf('/');
-								if(index == -1) {
-									return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+								if(contentType.length() > 0) {
+									int index = contentType.indexOf('/');
+									if(index == -1) {
+										return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+									}
+								} else {
+									return new Color(Display.getCurrent(), 0x00, 0x00, 0x00); 
 								}
 							}
 						}

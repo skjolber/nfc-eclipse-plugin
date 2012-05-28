@@ -35,7 +35,7 @@ public class NdefModelAddRecordOperation implements NdefModelOperation {
 			NdefRecordFactory.connect(ndefRecordModelRecordParent.getRecord(), child);
 		}
 		
-		if(index == -1) {
+		if(index != -1) {
 			parent.insert(childNode, index);
 		} else {
 			parent.add(childNode);

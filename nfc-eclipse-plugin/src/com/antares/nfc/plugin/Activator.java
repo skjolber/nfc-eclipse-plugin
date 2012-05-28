@@ -90,6 +90,10 @@ public class Activator extends AbstractUIPlugin {
 	public static void warn(String message) {
 		log(IStatus.WARNING, message);
 	}
+	
+	public static void warn(String message, Throwable e) {
+		log(IStatus.WARNING, message, e);
+	}
 
 	public static void error(String message) {
 		log(IStatus.ERROR, message);

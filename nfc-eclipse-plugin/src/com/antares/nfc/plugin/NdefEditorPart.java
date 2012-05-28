@@ -33,6 +33,8 @@ import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
+import org.eclipse.jface.viewers.ITreeViewerListener;
+import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
@@ -97,6 +99,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		operator.update(ndefRecordModelNode, operation);
 		
 		modified();
+		
+		treeViewer.expandToLevel(ndefRecordModelNode, TreeViewer.ALL_LEVELS);
 	}
 	
 	@Override
@@ -104,13 +108,25 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		operator.addRecord(parent, index, type);
 		
 		modified();
+		
+		if(index == -1) {
+			treeViewer.expandToLevel(parent.getChild(parent.getSize() - 1), TreeViewer.ALL_LEVELS);
+		} else {
+			treeViewer.expandToLevel(parent.getChild(index), TreeViewer.ALL_LEVELS);
+		}
 	}
 	
 	@Override
-	public void addListItem(NdefRecordModelParent node, int index) {
-		operator.addListItem(node, index);
+	public void addListItem(NdefRecordModelParent parent, int index) {
+		operator.addListItem(parent, index);
 		
 		modified();
+		
+		if(index == -1) {
+			treeViewer.expandToLevel(parent.getChild(parent.getSize() - 1), TreeViewer.ALL_LEVELS);
+		} else {
+			treeViewer.expandToLevel(parent.getChild(index), TreeViewer.ALL_LEVELS);
+		}
 	}
 	
 	@Override
@@ -118,6 +134,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		operator.setRecord(ndefRecordModelParentProperty, type);
 		
 		modified();
+		
+		treeViewer.expandToLevel(ndefRecordModelParentProperty, TreeViewer.ALL_LEVELS);
 	}
 	
 	@Override
@@ -135,7 +153,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 		
 	protected void modified() {
-		treeViewer.refresh(operator.getModel());
+		treeViewer.refresh();
 
 		form.update();
 		
@@ -498,14 +516,18 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 
 	public void undo() {
 		operator.undo();
-		
+
 		modified();
+		
+		treeViewer.expandAll();
 	}
 
 	public void redo() {
 		operator.redo();
 		
 		modified();
+		
+		treeViewer.expandAll();
 	}
 
 	@Override

@@ -2330,7 +2330,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 		editing.put(UnknownRecord.class, new UnknownRecordEditingSupport());
 		
-		
 	}
 
 	@Override
@@ -2339,46 +2338,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
 		Record record = ndefRecordModelNode.getRecord();
 		if(record != null) {
-			RecordEditingSupport recordEditingSupport = editing.get(record.getClass());
-			if(recordEditingSupport != null) {
-				return recordEditingSupport.canEdit(ndefRecordModelNode);
-			}
+			return editing.get(record.getClass()).canEdit(ndefRecordModelNode);
 		}
-		
-		if(element instanceof NdefRecordModelParentProperty) {
-			NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)element;
-			
-			int recordIndex = ndefRecordModelParentProperty.getRecordBranchIndex();
-			
-			if(record instanceof HandoverSelectRecord) {
-				if(recordIndex == 3) {
-					return true;
-				}
-				return false;
-			} else if(record instanceof HandoverCarrierRecord) {
-				HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
-				if(recordIndex == 1) {
-					if(handoverCarrierRecord.hasCarrierTypeFormat()) {
-						
-						CarrierTypeFormat carrierTypeFormat = handoverCarrierRecord.getCarrierTypeFormat();
-						if(carrierTypeFormat == CarrierTypeFormat.External || carrierTypeFormat == CarrierTypeFormat.WellKnown) {
-							return true;
-						}
-					}
-					
-					return false;
-				}
-			} else if(record instanceof HandoverRequestRecord) {
-				return false;
-			} else if(record instanceof GcActionRecord) {
-				return true;
-			} else if(record instanceof GcTargetRecord) {
-				return true;
-			}
-
-		}
-		
-		return element instanceof NdefRecordModelProperty || element instanceof NdefRecordModelRecord || element instanceof NdefRecordModelPropertyListItem;
+		throw new RuntimeException();
 	}
 	
 	protected ComboBoxCellEditor getComboBoxCellEditor(Object[] values, boolean nullable) {
@@ -2411,7 +2373,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		
 		return getComboBoxCellEditor(strings, nullable);
 	}
-
 	
 	@Override
 	protected CellEditor getCellEditor(Object element) {

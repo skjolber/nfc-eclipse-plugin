@@ -58,8 +58,8 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 
-	@SuppressWarnings("rawtypes")
-	private Class[] rootRecordTypes = new Class[]{
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Class<? extends Record>[] rootRecordTypes = new Class[]{
 			AbsoluteUriRecord.class,
 			ActionRecord.class,
 			AndroidApplicationRecord.class,
@@ -79,8 +79,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			
 	};
 	
-	@SuppressWarnings("rawtypes")
-	private Class[] genericControlRecordTargetRecordTypes = new Class[]{
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Class<? extends Record>[] genericControlRecordTargetRecordTypes = new Class[]{
 			TextRecord.class,
 			UriRecord.class,
 	};
@@ -89,7 +89,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private Class[] genericControlRecordDataChildRecordTypes = rootRecordTypes;
 
 	@SuppressWarnings({ "rawtypes", "unused" })
-	private Class[] genericControlRecordActionRecordTypes = rootRecordTypes;
+	private Class<? extends Record>[] genericControlRecordActionRecordTypes = rootRecordTypes;
 
 	private TreeViewer treeViewer;
 	private MenuManager manager = new MenuManager();
@@ -157,6 +157,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private Action insertAlternativeCarrierRecordSiblingRecordAfter;
 	private Action addAlternativeCarrierRecordChildRecord;
 
+	// HandoverCarrierRecord Action Record
+	private MenuManager setHandoverCarrierExternalType;
+	private MenuManager setHandoverCarrierWellKnownType;
+
 	private class InsertSiblingAction extends Action {
 
 		private Class<? extends Record> recordType;
@@ -172,7 +176,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.add(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, recordType);
+				listener.addRecord(selectedNode.getParent(), selectedNode.getParentIndex() + offset, recordType);
 			}
 		}
 	}
@@ -191,9 +195,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			if(listener != null) {
 				if(selectedNode != null) {
-					listener.add((NdefRecordModelParent)selectedNode, recordType);
+					listener.addRecord((NdefRecordModelParent)selectedNode, -1, recordType);
 				} else {
-					listener.add((NdefRecordModelParent)root, recordType);
+					listener.addRecord((NdefRecordModelParent)root, -1, recordType);
 				}
 			}
 		}
@@ -231,7 +235,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.add(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset, String.class);
+				listener.addListItem(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset);
 			}
 		}
 	}
@@ -245,7 +249,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		@Override
 		public void run() {
 			if(listener != null) {
-				listener.add((NdefRecordModelParent)selectedNode, String.class);
+				listener.addListItem((NdefRecordModelParent)selectedNode, -1);
 			}
 		}
 	}
@@ -353,12 +357,25 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         for(Class<? extends Record> recordType: rootRecordTypes) {
         	setGenericControlActionRecord.add(new SetChildAction(recordType.getSimpleName(), recordType));
         }
-        
+                
         // HandoverRequestRecord
     	insertAlternativeCarrierRecordSiblingRecordBefore = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " before", AlternativeCarrierRecord.class, 0);
     	insertAlternativeCarrierRecordSiblingRecordAfter = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " after", AlternativeCarrierRecord.class, 1);
     	addAlternativeCarrierRecordChildRecord = new AddChildAction("Add " + AlternativeCarrierRecord.class.getSimpleName(), AlternativeCarrierRecord.class);
 
+    	// HandoverCarrierRecord
+    	// well known type
+        setHandoverCarrierWellKnownType = new MenuManager("Set carrier type", null);
+        for(Class<? extends Record> recordType: NdefRecordModelEditingSupport.wellKnownRecordTypes) {
+        	setHandoverCarrierWellKnownType.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        }
+        
+        // external type
+        setHandoverCarrierExternalType = new MenuManager("Set carrier type", null);
+        for(Class<? extends Record> recordType: NdefRecordModelEditingSupport.externalRecordTypes) {
+        	setHandoverCarrierExternalType.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        }
+    	
         // list
         addListItem = new AddListItemAction("Add item");
         insertListItemSiblingBefore = new InsertListItemAction("Insert item before", 0);
@@ -458,6 +475,31 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 						if(selectedNode instanceof NdefRecordModelParentProperty) {
 							if(selectedNode.getRecordBranchIndex() == 2) {
 								menuManager.add(addAlternativeCarrierRecordChildRecord);
+							}
+						}
+					} else if(record instanceof HandoverCarrierRecord) {
+
+						if(selectedNode instanceof NdefRecordModelParentProperty) {
+							if(selectedNode.getRecordBranchIndex() == 1) {
+								HandoverCarrierRecord handoverCarrierRecord = (HandoverCarrierRecord)record;
+							
+								if(handoverCarrierRecord.hasCarrierTypeFormat()) {
+									HandoverCarrierRecord.CarrierTypeFormat carrierTypeFormat = handoverCarrierRecord.getCarrierTypeFormat();
+								
+									switch(carrierTypeFormat) {
+										case WellKnown : {
+											// NFC Forum well-known type [NFC RTD]
+											menuManager.add(setHandoverCarrierWellKnownType);
+											break;
+										}
+										
+										case External : {
+											// NFC Forum external type [NFC RTD]
+											menuManager.add(setHandoverCarrierWellKnownType);
+											break;
+										}
+									}
+								}
 							}
 						}
 					}

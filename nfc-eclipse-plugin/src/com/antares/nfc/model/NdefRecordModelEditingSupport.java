@@ -78,7 +78,12 @@ import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-// TODO refactor so that each record method has its own can canEdit, getValue, setValue,
+/**
+ * Main editing (as in changing property values) class.
+ * 
+ * @author trs
+ *
+ */
 
 public class NdefRecordModelEditingSupport extends EditingSupport {
 
@@ -86,8 +91,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 	public static final String[] PRESENT_OR_NOT = new String[]{"Present", "Not present"};
 
-	@SuppressWarnings("rawtypes")
-	private static Class[] recordTypes = new Class[]{
+	@SuppressWarnings({ "unchecked" })
+	private static Class<? extends Record>[] recordTypes = new Class[]{
 			AbsoluteUriRecord.class,
 			ActionRecord.class,
 			AndroidApplicationRecord.class,
@@ -105,8 +110,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			GenericControlRecord.class
 	};
 	
-	@SuppressWarnings("rawtypes")
-	private static Class[] wellKnownRecordTypes = new Class[]{
+	@SuppressWarnings({ "unchecked" })
+	public static Class<? extends Record>[] wellKnownRecordTypes = new Class[]{
 			ActionRecord.class,
 			SmartPosterRecord.class,
 			TextRecord.class,
@@ -120,14 +125,14 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			GenericControlRecord.class
 	};
 	
-	@SuppressWarnings("rawtypes")
-	private static Class[] externalRecordTypes = new Class[]{
+	@SuppressWarnings({ "unchecked" })
+	public static Class<? extends Record>[] externalRecordTypes = new Class[]{
 			AndroidApplicationRecord.class,
 			UnsupportedExternalTypeRecord.class,
 	};
 	
-	@SuppressWarnings("rawtypes")
-	private Class[] genericControlRecordTargetRecordTypes = new Class[]{
+	@SuppressWarnings({"unchecked" })
+	private Class<? extends Record>[] genericControlRecordTargetRecordTypes = new Class[]{
 			TextRecord.class,
 			UriRecord.class,
 	};
@@ -138,7 +143,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	private TextCellEditor textCellEditor;
 	private TreeViewer treeViewer;
 	
-	private NdefRecordModelFactory ndefRecordModelFactory;
 	private NdefRecordFactory ndefRecordFactory;
 	
 	private Map<Class<? extends Record>, RecordEditingSupport> editing = new HashMap<Class<? extends Record>, RecordEditingSupport>();
@@ -362,7 +366,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 									// clean up
 									if(previous != null) {
 										if(carrierType instanceof Record) {
-											ndefRecordFactory.disconnect(record, (Record)carrierType);
+											NdefRecordFactory.disconnect(record, (Record)carrierType);
 										}
 										ndefRecordModelParentProperty.remove(0);
 									}
@@ -374,7 +378,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 										// Media-type as defined in RFC 2046 [RFC 2046]
 										
 										record.setCarrierType("");
-										ndefRecordModelParentProperty.add(ndefRecordModelFactory.getNode(next.name(), "", ndefRecordModelParentProperty));
+										ndefRecordModelParentProperty.add(NdefRecordModelFactory.getNode(next.name(), "", ndefRecordModelParentProperty));
 									} else {
 										// NFC Forum well-known type [NFC RTD]
 										// NFC Forum external type [NFC RTD]
@@ -392,7 +396,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 									}
 									record.setCarrierType(carrierType);
 									if(carrierType instanceof Record) {
-										ndefRecordFactory.connect(record, (Record)carrierType);
+										NdefRecordFactory.connect(record, (Record)carrierType);
 									}
 									if(carrierTypeNode != null) {
 										ndefRecordModelParentProperty.add(carrierTypeNode);
@@ -510,7 +514,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					if(record.hasCarrierTypeFormat()) {
 						HandoverCarrierRecord.CarrierTypeFormat carrierTypeFormat = record.getCarrierTypeFormat();
 					
-						Class[] types;
+						Class<? extends Record>[] types;
 						switch(carrierTypeFormat) {
 							case WellKnown : {
 								// NFC Forum well-known type [NFC RTD]
@@ -532,7 +536,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						
 						int previousIndex = -1;
 						if(record.hasCarrierType()) {
-							Class c = record.getCarrierType().getClass();
+							Class<?> c = record.getCarrierType().getClass();
 							
 							for(int i = 0; i < types.length; i++) {
 								if(c ==  types[i]) {
@@ -1547,7 +1551,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
 			TextRecord textRecord = (TextRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
-				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)node;
 				int propertyIndex  = node.getParentIndex();
 				if(propertyIndex == 0) {
 					String stringValue = (String)value;
@@ -2181,8 +2184,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			GcTargetRecord gcTargetRecord = (GcTargetRecord) node.getRecord();
 
 			if(node instanceof NdefRecordModelParentProperty) {
-				NdefRecordModelParentProperty ndefRecordModelParentProperty = (NdefRecordModelParentProperty)node;
-				
 				Integer index = (Integer)value;
 
 				if(index.intValue() != -1) {
@@ -2293,11 +2294,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		}
 	}
 		
-	public NdefRecordModelEditingSupport(TreeViewer viewer, NdefRecordModelChangeListener listener, NdefRecordModelFactory ndefRecordModelFactory, NdefRecordFactory ndefRecordFactory) {
+	public NdefRecordModelEditingSupport(TreeViewer viewer, NdefRecordModelChangeListener listener, NdefRecordFactory ndefRecordFactory) {
 		super(viewer);
 		this.listener = listener;
 		this.treeViewer = viewer;
-		this.ndefRecordModelFactory = ndefRecordModelFactory;
 		this.ndefRecordFactory = ndefRecordFactory;
 		
 		this.textCellEditor = new TextCellEditor(viewer.getTree());
@@ -2402,7 +2402,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		return new ComboBoxCellEditor(treeViewer.getTree(), strings);
 	}
 
-	protected ComboBoxCellEditor getComboBoxCellEditor(Class[] values, boolean nullable) {
+	protected ComboBoxCellEditor getComboBoxCellEditor(Class<? extends Record>[] values, boolean nullable) {
 		
 		String[] strings = new String[values.length];
 		for(int i = 0; i < values.length; i++) {

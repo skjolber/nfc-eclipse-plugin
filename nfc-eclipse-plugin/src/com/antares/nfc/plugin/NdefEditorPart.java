@@ -64,6 +64,7 @@ import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.EditorPart;
+import org.nfctools.ndef.Record;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
 import com.antares.nfc.model.NdefRecordModelContentProvider;
@@ -98,14 +99,21 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 	
 	@Override
-	public void add(NdefRecordModelParent parent, int index, Class type) {
-		operator.add(parent, index, type);
+	public void addRecord(NdefRecordModelParent parent, int index, Class<? extends Record> type) {
+		operator.addRecord(parent, index, type);
 		
 		modified();
 	}
 	
 	@Override
-	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class type) {
+	public void addListItem(NdefRecordModelParent node, int index) {
+		operator.addListItem(node, index);
+		
+		modified();
+	}
+	
+	@Override
+	public void set(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type) {
 		operator.set(ndefRecordModelParentProperty, type);
 		
 		modified();
@@ -118,13 +126,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		modified();
 	}
 
-	@Override
-	public void add(NdefRecordModelParent node, Class type) {
-		operator.add(node, type);
-
-		modified();
-	}
-
+	
 	protected void modified() {
 		treeViewer.refresh(operator.getModel());
 
@@ -229,7 +231,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		column.getColumn().setMoveable(true);
 		column.getColumn().setText("Value");
 		column.setLabelProvider(new NdefRecordModelValueColumnLabelProvider());
-		column.setEditingSupport(new NdefRecordModelEditingSupport(treeViewer, this, operator.getNdefRecordModelFactory(), operator.getNdefRecordFactory()));		
+		column.setEditingSupport(new NdefRecordModelEditingSupport(treeViewer, this, operator.getNdefRecordFactory()));		
 		
 		column = new TreeViewerColumn(treeViewer, SWT.NONE);
 		column.getColumn().setWidth(50);
@@ -507,6 +509,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void refresh() {
 		treeViewer.refresh();
 	}
+
+	
 
 	
 

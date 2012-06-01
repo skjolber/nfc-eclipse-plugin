@@ -27,6 +27,7 @@ import com.google.zxing.common.GridSampler;
 import com.google.zxing.common.PerspectiveTransform;
 import com.google.zxing.qrcode.decoder.Version;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -59,6 +60,11 @@ public class Detector {
    * @throws NotFoundException if no QR Code can be found
    */
   public DetectorResult detect() throws NotFoundException, FormatException {
+	  
+	  // add try harder
+	  Map hints = new HashMap();
+	  hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
+	  
     return detect(null);
   }
 

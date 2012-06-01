@@ -8,8 +8,6 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.util.Log;
 
-import com.antares.nfc.client.AndroidNfcActivity;
-
 /**
  * 
  * NFC detector for backing of activities.

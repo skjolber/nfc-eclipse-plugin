@@ -9,8 +9,6 @@ import android.nfc.tech.Ndef;
 import android.nfc.tech.NdefFormatable;
 import android.util.Log;
 
-import com.antares.nfc.client.AndroidNfcActivity;
-
 /**
  * 
  * NFC tag writer.

@@ -302,7 +302,7 @@ public class NdefRecordAdapter extends ArrayAdapter<Record> {
 			}
 
 		} else if(record instanceof EmptyRecord) {
-			EmptyRecord emptyRecord = (EmptyRecord)record;
+			// EmptyRecord emptyRecord = (EmptyRecord)record;
 				
 			view = inflater.inflate(R.layout.ndef_record_empty, parent, false);
 		} else if(record instanceof UriRecord) {

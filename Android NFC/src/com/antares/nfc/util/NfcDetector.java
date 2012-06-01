@@ -50,7 +50,8 @@ public class NfcDetector {
         	
 	        IntentFilter tagDetected = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
 	        IntentFilter ndefDetected = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-	        writeTagFilters = new IntentFilter[] {ndefDetected, tagDetected};
+	        IntentFilter techDetected = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+	        writeTagFilters = new IntentFilter[] {ndefDetected, tagDetected, techDetected};
 	        nfcAdapter.enableForegroundDispatch(context, nfcPendingIntent, writeTagFilters, null);
 	        
 	    	foreground = true;
@@ -78,6 +79,10 @@ public class NfcDetector {
         	Log.d(TAG, "Process TAG discovered action");
 
         	listener.nfcIntentDetected(intent, NfcAdapter.ACTION_TAG_DISCOVERED);
+        } else  if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction())) {
+        	Log.d(TAG, "Process TECH discovered action");
+
+        	listener.nfcIntentDetected(intent, NfcAdapter.ACTION_TECH_DISCOVERED);
         } else {
         	Log.d(TAG, "Ignore action " + intent.getAction());
         }

@@ -87,7 +87,7 @@ public class NdefRecordFactory {
 			EmptyRecord emptyRecord = new EmptyRecord();
 			
 			child = emptyRecord;
-		} else if(recordType == MimeRecord.class) {
+		} else if(recordType == BinaryMimeRecord.class) {
 			BinaryMimeRecord mimeMediaRecord = new BinaryMimeRecord();
 			
 			mimeMediaRecord.setContent(new byte[]{});

@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,9 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IPathEditorInput;
+import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -66,7 +68,7 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 
-public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener {
+public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener, IPersistableElement {
 
 	private NdefEditorPart ndefEditor;
 	private NdefQREditorPart ndefQREditor;
@@ -237,6 +239,9 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		
 		Activator.info("Initialize");
 		
+		IPersistableElement persistable = editorInput.getPersistable();
+		
+		
 	}
 	
 	public void setInput(IEditorInput input) {
@@ -392,5 +397,15 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		return ndefEditor.isDirty() || ndefQREditor.isDirty();
 	}
 
+	@Override
+	public void saveState(IMemento iMemento) {
+		
+	}
+
+	@Override
+	public String getFactoryId() {
+		return null;
+	}
+	
 	
 }

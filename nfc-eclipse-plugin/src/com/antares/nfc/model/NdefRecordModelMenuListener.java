@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +51,7 @@ import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
+import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
@@ -69,39 +70,36 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 import com.antares.nfc.plugin.Activator;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
+	
+	private NdefRecordType[] rootRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(AbsoluteUriRecord.class),
+			NdefRecordType.getType(ActionRecord.class),
+			NdefRecordType.getType(AndroidApplicationRecord.class),
+			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
+			NdefRecordType.getType(EmptyRecord.class),
+			NdefRecordType.getType(GenericControlRecord.class),
+		
+			NdefRecordType.getType(HandoverSelectRecord.class),
+			NdefRecordType.getType(HandoverCarrierRecord.class),
+			NdefRecordType.getType(HandoverRequestRecord.class),
 
-	@SuppressWarnings({ "unchecked" })
-	private Class<? extends Record>[] rootRecordTypes = new Class[]{
-			AbsoluteUriRecord.class,
-			ActionRecord.class,
-			AndroidApplicationRecord.class,
-			UnsupportedExternalTypeRecord.class,
-			EmptyRecord.class,
-			GenericControlRecord.class,
-			
-			HandoverSelectRecord.class,
-			HandoverCarrierRecord.class,
-			HandoverRequestRecord.class,
-
-			MimeRecord.class,
-			SmartPosterRecord.class,
-			TextRecord.class,
-			UnknownRecord.class,
-			UriRecord.class
-			
+			NdefRecordType.getType(BinaryMimeRecord.class),
+			NdefRecordType.getType(SmartPosterRecord.class),
+			NdefRecordType.getType(TextRecord.class),
+			NdefRecordType.getType(UnknownRecord.class),
+			NdefRecordType.getType(UriRecord.class)
 	};
 	
 	@SuppressWarnings({ "unchecked" })
-	private Class<? extends Record>[] genericControlRecordTargetRecordTypes = new Class[]{
-			TextRecord.class,
-			UriRecord.class,
+	private NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(TextRecord.class),
+			NdefRecordType.getType(UriRecord.class)
 	};
 
-	@SuppressWarnings("rawtypes")
-	private Class[] genericControlRecordDataChildRecordTypes = rootRecordTypes;
+	private NdefRecordType[] genericControlRecordDataChildRecordTypes = rootRecordTypes;
 
-	@SuppressWarnings({ "unused" })
-	private Class<? extends Record>[] genericControlRecordActionRecordTypes = rootRecordTypes;
+	@SuppressWarnings("unused")
+	private NdefRecordType[] genericControlRecordActionRecordTypes = rootRecordTypes;
 
 	private TreeViewer treeViewer;
 	private MenuManager manager = new MenuManager();
@@ -431,44 +429,44 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		// insert before
 		insertRootSiblingRecordBefore = new MenuManager("Insert record before", null);
         
-        for(Class<? extends Record> recordType: rootRecordTypes) {
-        	insertRootSiblingRecordBefore.add(new InsertSiblingAction(recordType.getSimpleName(), recordType, 0));
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	insertRootSiblingRecordBefore.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
         }
 		
 		// insert after
         insertRootSiblingRecordAfter = new MenuManager("Insert record after", null);
         
-        for(Class<? extends Record> recordType: rootRecordTypes) {
-        	insertRootSiblingRecordAfter.add(new InsertSiblingAction(recordType.getSimpleName(), recordType, 1));
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	insertRootSiblingRecordAfter.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
         }
 
 		// just insert
         addRootChildRecord = new MenuManager("Add record", null);
         
-        for(Class<? extends Record> recordType: rootRecordTypes) {
-        	addRootChildRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	addRootChildRecord.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
 		
 		// generic control
 		// insert before
 		insertGenericControlDataSiblingRecordBefore = new MenuManager("Insert record before", null);
         
-        for(Class<? extends Record> recordType: genericControlRecordDataChildRecordTypes) {
-        	insertGenericControlDataSiblingRecordBefore.add(new InsertSiblingAction(recordType.getSimpleName(), recordType, 0));
+        for(NdefRecordType recordType: genericControlRecordDataChildRecordTypes) {
+        	insertGenericControlDataSiblingRecordBefore.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
         }
 		
 		// insert after
         insertGenericControlDataSiblingRecordAfter = new MenuManager("Insert record after", null);
         
-        for(Class<? extends Record> recordType: genericControlRecordDataChildRecordTypes) {
-        	insertGenericControlDataSiblingRecordAfter.add(new InsertSiblingAction(recordType.getSimpleName(), recordType, 1));
+        for(NdefRecordType recordType: genericControlRecordDataChildRecordTypes) {
+        	insertGenericControlDataSiblingRecordAfter.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
         }
 
 		// just insert
         addGenericControlDataChildRecord = new MenuManager("Add record", null);
         
-        for(Class<? extends Record> recordType: genericControlRecordDataChildRecordTypes) {
-        	addGenericControlDataChildRecord.add(new AddChildAction(recordType.getSimpleName(), recordType));
+        for(NdefRecordType recordType: genericControlRecordDataChildRecordTypes) {
+        	addGenericControlDataChildRecord.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
 
         addGenericControlActionRecord = new MenuManager("Add record", null);
@@ -484,13 +482,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		removeRecord = new RemoveAction("Remove record");
 
 		setGenericControlTargetRecord = new MenuManager("Set target identifier", null);
-        for(Class<? extends Record> recordType: genericControlRecordTargetRecordTypes) {
-        	setGenericControlTargetRecord.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        for(NdefRecordType recordType: genericControlRecordTargetRecordTypes) {
+        	setGenericControlTargetRecord.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
         
         setGenericControlActionRecord = new MenuManager("Set action record", null);
-        for(Class<? extends Record> recordType: rootRecordTypes) {
-        	setGenericControlActionRecord.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	setGenericControlActionRecord.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
                 
         // HandoverRequestRecord
@@ -501,14 +499,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
     	// HandoverCarrierRecord
     	// well known type
         setHandoverCarrierWellKnownType = new MenuManager("Set carrier type", null);
-        for(Class<? extends Record> recordType: NdefRecordModelEditingSupport.wellKnownRecordTypes) {
-        	setHandoverCarrierWellKnownType.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        for(NdefRecordType recordType: NdefRecordModelEditingSupport.wellKnownRecordTypes) {
+        	setHandoverCarrierWellKnownType.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
         
         // external type
         setHandoverCarrierExternalType = new MenuManager("Set carrier type", null);
-        for(Class<? extends Record> recordType: NdefRecordModelEditingSupport.externalRecordTypes) {
-        	setHandoverCarrierExternalType.add(new SetChildAction(recordType.getSimpleName(), recordType));
+        for(NdefRecordType recordType: NdefRecordModelEditingSupport.externalRecordTypes) {
+        	setHandoverCarrierExternalType.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
     	
         // list

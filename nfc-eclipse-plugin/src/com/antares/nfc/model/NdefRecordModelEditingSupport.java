@@ -92,49 +92,49 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	public static final String[] PRESENT_OR_NOT = new String[]{"Present", "Not present"};
 
 	@SuppressWarnings({ "unchecked" })
-	private static Class<? extends Record>[] recordTypes = new Class[]{
-			AbsoluteUriRecord.class,
-			ActionRecord.class,
-			AndroidApplicationRecord.class,
-			UnsupportedExternalTypeRecord.class,
-			EmptyRecord.class,
-			MimeRecord.class,
-			SmartPosterRecord.class,
-			TextRecord.class,
-			UnknownRecord.class,
-			UriRecord.class,
-			HandoverSelectRecord.class,
-			HandoverCarrierRecord.class,
-			HandoverRequestRecord.class,
+	private static NdefRecordType[] recordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(AbsoluteUriRecord.class),
+			NdefRecordType.getType(ActionRecord.class),
+			NdefRecordType.getType(AndroidApplicationRecord.class),
+			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
+			NdefRecordType.getType(EmptyRecord.class),
+			NdefRecordType.getType(BinaryMimeRecord.class),
+			NdefRecordType.getType(SmartPosterRecord.class),
+			NdefRecordType.getType(TextRecord.class),
+			NdefRecordType.getType(UnknownRecord.class),
+			NdefRecordType.getType(UriRecord.class),
+			NdefRecordType.getType(HandoverSelectRecord.class),
+			NdefRecordType.getType(HandoverCarrierRecord.class),
+			NdefRecordType.getType(HandoverRequestRecord.class),
 			
-			GenericControlRecord.class
+			NdefRecordType.getType(GenericControlRecord.class)
 	};
 	
 	@SuppressWarnings({ "unchecked" })
-	public static Class<? extends Record>[] wellKnownRecordTypes = new Class[]{
-			ActionRecord.class,
-			SmartPosterRecord.class,
-			TextRecord.class,
-			UriRecord.class,
+	public static NdefRecordType[] wellKnownRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(ActionRecord.class),
+			NdefRecordType.getType(SmartPosterRecord.class),
+			NdefRecordType.getType(TextRecord.class),
+			NdefRecordType.getType(UriRecord.class),
 			
-			AlternativeCarrierRecord.class,
-			HandoverSelectRecord.class,
-			HandoverCarrierRecord.class,
-			HandoverRequestRecord.class,
+			NdefRecordType.getType(AlternativeCarrierRecord.class),
+			NdefRecordType.getType(HandoverSelectRecord.class),
+			NdefRecordType.getType(HandoverCarrierRecord.class),
+			NdefRecordType.getType(HandoverRequestRecord.class),
 			
-			GenericControlRecord.class
+			NdefRecordType.getType(GenericControlRecord.class)
 	};
 	
 	@SuppressWarnings({ "unchecked" })
-	public static Class<? extends Record>[] externalRecordTypes = new Class[]{
-			AndroidApplicationRecord.class,
-			UnsupportedExternalTypeRecord.class,
+	public static NdefRecordType[] externalRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(AndroidApplicationRecord.class),
+			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
 	};
 	
 	@SuppressWarnings({"unchecked" })
-	private Class<? extends Record>[] genericControlRecordTargetRecordTypes = new Class[]{
-			TextRecord.class,
-			UriRecord.class,
+	private NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(TextRecord.class),
+			NdefRecordType.getType(UriRecord.class),
 	};
 
 	
@@ -516,7 +516,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					if(record.hasCarrierTypeFormat()) {
 						HandoverCarrierRecord.CarrierTypeFormat carrierTypeFormat = record.getCarrierTypeFormat();
 					
-						Class<? extends Record>[] types;
+						NdefRecordType[] types;
 						switch(carrierTypeFormat) {
 							case WellKnown : {
 								// NFC Forum well-known type [NFC RTD]
@@ -541,7 +541,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							Class<?> c = record.getCarrierType().getClass();
 							
 							for(int i = 0; i < types.length; i++) {
-								if(c ==  types[i]) {
+								if(c ==  types[i].getRecordClass()) {
 									previousIndex = i;
 									
 									break;
@@ -551,7 +551,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						}
 						
 						if(index.intValue() != previousIndex) {
-							return new DefaultNdefRecordModelParentPropertyOperation<Record, HandoverCarrierRecord>(record, (NdefRecordModelParentProperty)node, (Record)record.getCarrierType(),  ndefRecordFactory.createRecord(types[index]));
+							return new DefaultNdefRecordModelParentPropertyOperation<Record, HandoverCarrierRecord>(record, (NdefRecordModelParentProperty)node, (Record)record.getCarrierType(),  ndefRecordFactory.createRecord(types[index].getRecordClass()));
 						}
 					}
 				}
@@ -712,7 +712,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					int previousIndex = -1;
 					if(gcActionRecord.hasActionRecord()) {
 						for(int i = 0; i < recordTypes.length; i++) {
-							if(gcActionRecord.getActionRecord().getClass() == recordTypes[i]) {
+							if(gcActionRecord.getActionRecord().getClass() == recordTypes[i].getRecordClass()) {
 								previousIndex = i;
 							}
 						}
@@ -726,7 +726,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						if(index.intValue() == 0)  {
 							listener.removeRecord((NdefRecordModelRecord) ndefRecordModelParentProperty.getChild(0));
 						} else {
-							return new DefaultNdefRecordModelParentPropertyOperation<Record, GcActionRecord>(gcActionRecord, (NdefRecordModelParentProperty)node, gcActionRecord.getActionRecord(), ndefRecordFactory.createRecord(recordTypes[index - 1]));
+							return new DefaultNdefRecordModelParentPropertyOperation<Record, GcActionRecord>(gcActionRecord, (NdefRecordModelParentProperty)node, gcActionRecord.getActionRecord(), ndefRecordFactory.createRecord(recordTypes[index - 1].getRecordClass()));
 						}
 						
 						return null;
@@ -920,7 +920,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			if(node instanceof NdefRecordModelProperty) {
 				return textCellEditor;
 			} else if(node instanceof NdefRecordModelParentProperty) {
-				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT);
+				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION);
 			} else {
 				return super.getCellEditor(node);
 			}
@@ -1038,7 +1038,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			if(node instanceof NdefRecordModelProperty) {
 				return textCellEditor;
 			} else if(node instanceof NdefRecordModelParentProperty) {
-				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT);
+				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION);
 			} else {
 				return super.getCellEditor(node);
 			}
@@ -1194,7 +1194,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					throw new RuntimeException();
 				}
 			} else if(node instanceof NdefRecordModelParentProperty) {
-				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT);
+				return new ComboBoxCellEditor(treeViewer.getTree(), PRESENT_OR_NOT, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION);
 			} else if(node instanceof NdefRecordModelPropertyListItem) {
 				return textCellEditor;
 			} else {
@@ -1734,7 +1734,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					
 					final String[] isoLanguages = Locale.getISOLanguages();
 					
-					return new ComboBoxCellEditor(treeViewer.getTree(), isoLanguages) {
+					return new ComboBoxCellEditor(treeViewer.getTree(), isoLanguages, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION) {
 						// subclass to allow typing of language value, if it is the list of iso languages
 						protected Object doGetValue() {
 							Integer integer =  (Integer) super.doGetValue();
@@ -1759,7 +1759,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					
 					final String[] encodings = new String[]{TextRecord.UTF8.name(), TextRecord.UTF16.name()};
 					
-					return new ComboBoxCellEditor(treeViewer.getTree(), encodings) {
+					return new ComboBoxCellEditor(treeViewer.getTree(), encodings, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION) {
 						// subclass to allow typing of language value, if it is the list of iso languages
 						protected Object doGetValue() {
 							Integer integer =  (Integer) super.doGetValue();
@@ -2192,14 +2192,14 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					int previousIndex = -1;
 					if(gcTargetRecord.hasTargetIdentifier()) {
 						for(int i = 0; i < genericControlRecordTargetRecordTypes.length; i++) {
-							if(gcTargetRecord.getTargetIdentifier().getClass() == genericControlRecordTargetRecordTypes[i]) {
+							if(gcTargetRecord.getTargetIdentifier().getClass() == genericControlRecordTargetRecordTypes[i].getRecordClass()) {
 								previousIndex = i;
 							}
 						}
 					}
 
 					if(previousIndex != index.intValue()) {
-						return new DefaultNdefRecordModelParentPropertyOperation<Record, GcTargetRecord>(gcTargetRecord, (NdefRecordModelParentProperty)node, gcTargetRecord.getTargetIdentifier(), ndefRecordFactory.createRecord(genericControlRecordTargetRecordTypes[index]));
+						return new DefaultNdefRecordModelParentPropertyOperation<Record, GcTargetRecord>(gcTargetRecord, (NdefRecordModelParentProperty)node, gcTargetRecord.getTargetIdentifier(), ndefRecordFactory.createRecord(genericControlRecordTargetRecordTypes[index].getRecordClass()));
 					}
 				}
 			
@@ -2340,7 +2340,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		NdefRecordModelNode ndefRecordModelNode = (NdefRecordModelNode)element;
 		Record record = ndefRecordModelNode.getRecord();
 		if(record != null) {
-			return editing.get(record.getClass()).canEdit(ndefRecordModelNode);
+			boolean edit = editing.get(record.getClass()).canEdit(ndefRecordModelNode);
+			
+			Activator.info("Cell can be edited");
+			
+			return edit;
 		}
 		throw new RuntimeException();
 	}
@@ -2363,14 +2367,16 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			}
 		}
 		
-		return new ComboBoxCellEditor(treeViewer.getTree(), strings);
+		return new ComboBoxCellEditor(treeViewer.getTree(), strings, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION) {
+			
+		};
 	}
 
-	protected ComboBoxCellEditor getComboBoxCellEditor(Class<? extends Record>[] values, boolean nullable) {
+	protected ComboBoxCellEditor getComboBoxCellEditor(NdefRecordType[] values, boolean nullable) {
 		
 		String[] strings = new String[values.length];
 		for(int i = 0; i < values.length; i++) {
-			strings[i] = values[i].getSimpleName();
+			strings[i] = values[i].getRecordLabel();
 		}
 		
 		return getComboBoxCellEditor(strings, nullable);
@@ -2438,4 +2444,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		
 		
 	}
+	
+	
 }

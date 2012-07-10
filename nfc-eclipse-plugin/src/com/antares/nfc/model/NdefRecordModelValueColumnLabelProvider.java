@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,15 +29,20 @@ package com.antares.nfc.model;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
+import org.nfctools.ndef.NdefConstants;
+import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.Record;
+import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
+import org.nfctools.ndef.wkt.records.WellKnownRecord;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public String getText(Object element) {
 			if(element instanceof NdefRecordModelProperty) {
@@ -104,7 +109,8 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 						
 						if(handoverCarrierRecord.hasCarrierType()) {
 							if(handoverCarrierRecord.getCarrierType() instanceof Record) {
-								return handoverCarrierRecord.getCarrierType().getClass().getSimpleName();
+								
+								return NdefRecordType.getType((Class<? extends Record>) handoverCarrierRecord.getCarrierType().getClass()).getRecordLabel();
 							} else {
 								return "-";
 							}
@@ -112,7 +118,22 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 							if(!handoverCarrierRecord.hasCarrierTypeFormat()) {
 								return "Select carrier type format..";
 							} else {
-								return "Select carrier type..";
+								
+								
+								switch (handoverCarrierRecord.getCarrierTypeFormat()) {
+									case WellKnown: {
+										// NFC Forum well-known type [NFC RTD]
+										
+										return "Select well-known record..";
+									}
+									case External: {
+										// NFC Forum external type [NFC RTD]
+										return "Select external type record..";
+									}
+									default: {
+										throw new IllegalArgumentException();
+									}
+								}
 							}
 						}
 					} else if(record instanceof HandoverSelectRecord) {

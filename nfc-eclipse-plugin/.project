@@ -27,49 +27,49 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>fork-nfctools-api</name>
+			<name>nfctools-api</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfctools-fork2/nfctools-api/src/main/java</location>
+			<location>/home/thomas/git/nfctools-fork/nfctools-api/src/main/java</location>
 		</link>
 		<link>
-			<name>fork-nfctools-core</name>
+			<name>nfctools-core</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfctools-fork2/nfctools-core/src/main/java</location>
+			<location>/home/thomas/git/nfctools-fork/nfctools-core/src/main/java</location>
 		</link>
 		<link>
-			<name>fork-nfctools-ndef</name>
+			<name>nfctools-ndef</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfctools-fork2/nfctools-ndef/src/main/java</location>
+			<location>/home/thomas/git/nfctools-fork/nfctools-ndef/src/main/java</location>
 		</link>
 		<link>
-			<name>fork-nfctools-ndef-test</name>
+			<name>nfctools-ndef-test</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfctools-fork2/nfctools-ndef/src/test/java</location>
+			<location>/home/thomas/git/nfctools-fork/nfctools-ndef/src/test/java</location>
 		</link>
 		<link>
-			<name>fork-nfctools-p2p</name>
+			<name>nfctools-p2p</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfctools-fork2/nfctools-p2p/src/main/java</location>
+			<location>/home/thomas/git/nfctools-fork/nfctools-p2p/src/main/java</location>
 		</link>
 		<link>
 			<name>nfctools-ndef-test-resources</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfctools-fork2/nfctools-ndef/src/test/resources</location>
+			<location>/home/thomas/git/nfctools-fork/nfctools-ndef/src/test/resources</location>
 		</link>
 		<link>
 			<name>src-zxing-javase</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfc-eclipse-plugin/zxing/zxing-javase/src</location>
+			<location>/home/thomas/git/nfc-eclipse-plugin/zxing/zxing-javase/src</location>
 		</link>
 		<link>
 			<name>zxing-binaryqr</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfc-eclipse-plugin/zxing/zxing-binaryqr/src</location>
+			<location>/home/thomas/git/nfc-eclipse-plugin/zxing/zxing-binaryqr/src</location>
 		</link>
 		<link>
 			<name>zxing-core</name>
 			<type>2</type>
-			<location>C:/Users/trs/git/nfc-eclipse-plugin/zxing/zxing-core/src</location>
+			<location>/home/thomas/git/nfc-eclipse-plugin/zxing/zxing-core/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>

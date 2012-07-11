@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,9 @@
 package com.antares.nfc.plugin;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.action.IContributionItem;
+import org.eclipse.jface.action.IStatusLineManager;
+import org.eclipse.jface.action.StatusLineContributionItem;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
@@ -55,17 +58,20 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Widget;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.EditorPart;
+import org.nfctools.ndef.NdefException;
 import org.nfctools.ndef.Record;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
@@ -166,6 +172,53 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.UNDO.getId()).setEnabled(operator.canUndo());
 		getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.REDO.getId()).setEnabled(operator.canRedo());
 		//hexEditor.getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.PASTE.getId()).setEnabled(canPaste());
+		
+		refreshStatusLine();
+	}
+	
+	public void refreshStatusLine() {
+		final Display display = Display.getDefault();
+
+		new Thread() {
+
+			public void run() {
+
+				display.syncExec(new Runnable() {
+					public void run() {
+
+						IActionBars actionBars = getEditorSite().getActionBars(); 
+
+						if( actionBars == null ) {
+							return ;
+						}
+
+						IStatusLineManager statusLineManager = actionBars.getStatusLineManager();
+
+						if( statusLineManager == null ) {
+							return ;
+						}
+
+						IContributionItem[] items = statusLineManager.getItems();
+						
+						for(IContributionItem item : items) {
+							if(item.getId().equals(NdefMultiPageEditorContributor.class.getName()+".size")) {
+								
+								StatusLineContributionItem size = (StatusLineContributionItem)item;
+								
+								try {
+									size.setText(operator.toNdefMessage().length + " bytes ");
+								} catch(NdefException e) {
+									size.setText("-");
+								}
+							}
+						}
+						
+						// set global message using
+						// statusLineManager.setMessage( ..);
+					}
+				});
+			}
+		}.start();	
 	}
 	
 	@Override

@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@
 package com.antares.nfc.plugin;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IStatusLineManager;
+import org.eclipse.jface.action.StatusLineContributionItem;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.actions.ActionFactory;
@@ -36,10 +38,30 @@ public class NdefMultiPageEditorContributor extends MultiPageEditorActionBarCont
 	
 	private IEditorPart activeEditorPart;
 	
+	private StatusLineContributionItem statusLineContributionItem;
+	
 	public NdefMultiPageEditorContributor() {
 		super();
 	}
+	
+	@Override
+	public void init(IActionBars bars) {
+		super.init(bars);
+	}
 
+	@Override
+	public void contributeToStatusLine(IStatusLineManager statusLineManager) {
+		super.contributeToStatusLine(statusLineManager);
+
+		Activator.info("Contribute to status line");
+
+		if(statusLineContributionItem == null) {
+			StatusLineContributionItem statusLineContributionItem = new StatusLineContributionItem(getClass().getName()+".size");
+
+			statusLineManager.add(statusLineContributionItem);
+		}
+	}
+	
 	public void setActivePage(IEditorPart part) {
 		if (activeEditorPart != part) {
 			activeEditorPart = part;

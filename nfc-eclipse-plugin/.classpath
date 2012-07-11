@@ -3,13 +3,15 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry excluding="org/nfctools/scio/" kind="src" path="fork-nfctools-api"/>
-	<classpathentry kind="src" path="fork-nfctools-ndef"/>
-	<classpathentry kind="src" path="fork-nfctools-ndef-test"/>
+	<classpathentry excluding="org/nfctools/scio/|org/nfctools/api/|org/nfctools/llcp/" kind="src" path="nfctools-api"/>
+	<classpathentry kind="src" path="nfctools-ndef"/>
+	<classpathentry kind="src" path="nfctools-ndef-test"/>
 	<classpathentry kind="src" path="src-zxing-javase"/>
 	<classpathentry kind="src" path="zxing-binaryqr"/>
 	<classpathentry kind="src" path="zxing-core"/>
 	<classpathentry kind="src" path="nfctools-ndef-test-resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/binaryqr.jar"/>
+	<classpathentry kind="lib" path="lib/nfctools.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

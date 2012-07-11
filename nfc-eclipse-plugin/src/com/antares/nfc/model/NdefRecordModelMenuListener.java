@@ -90,7 +90,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(UriRecord.class)
 	};
 	
-	@SuppressWarnings({ "unchecked" })
 	private NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(TextRecord.class),
 			NdefRecordType.getType(UriRecord.class)

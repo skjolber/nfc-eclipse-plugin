@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,9 @@
 
 package com.antares.nfc.plugin;
 
+import org.eclipse.jface.action.IContributionItem;
+import org.eclipse.jface.action.IStatusLineManager;
+import org.eclipse.jface.action.StatusLineContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -33,7 +36,17 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.EditorSite;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
 
@@ -91,6 +104,8 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 			binaryQRLabel.setImage(null);
 		}
 	}
+	
+	
 
 	@Override
 	protected void modified() {

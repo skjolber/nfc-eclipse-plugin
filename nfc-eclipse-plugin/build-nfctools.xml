@@ -5,7 +5,7 @@
 	  </classpath>
 	</taskdef>
 	
-	<property name="git.dir"     value="./../../nfctools-fork"/>
+	<property name="git.dir"     value="./../../nfctools"/>
 
 	<property name="src.api.dir"     value="${git.dir}/nfctools-api/src/main/java"/>
 	<property name="src.ndef.dir"     value="${git.dir}/nfctools-ndef/src/main/java"/>

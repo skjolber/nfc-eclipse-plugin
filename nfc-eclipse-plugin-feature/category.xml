@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/com.antares.nfc.plugin.feature_1.2.0.qualifier.jar" id="com.antares.nfc.plugin.feature" version="1.2.0.qualifier">
+   <feature url="features/com.antares.nfc.plugin.feature_1.2.1.qualifier.jar" id="com.antares.nfc.plugin.feature" version="1.2.1.qualifier">
       <category name="NFC"/>
    </feature>
    <category-def name="NFC" label="Near Field Communications">

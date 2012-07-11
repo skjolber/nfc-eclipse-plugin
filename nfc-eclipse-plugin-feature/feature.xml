@@ -2,7 +2,7 @@
 <feature
       id="com.antares.nfc.plugin.feature"
       label="NDEF Editor"
-      version="1.2.0.qualifier"
+      version="1.2.1.qualifier"
       provider-name="Antares Gruppen">
 
    <description url="http://code.google.com/p/nfc-eclipse-plugin/">
@@ -27,11 +27,18 @@ THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRES
       <update label="NFC Eclipse Plugin Google code update site" url="http://nfc-eclipse-plugin.googlecode.com/git/nfc-eclipse-plugin-feature/update-site/"/>
    </url>
 
+   <requires>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.ui.ide" version="3.7.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.resources" version="3.7.101" match="greaterOrEqual"/>
+   </requires>
+
    <plugin
          id="com.antares.nfc.plugin"
          download-size="0"
          install-size="0"
-         version="1.2.0.qualifier"
+         version="1.2.1.qualifier"
          unpack="false"/>
 
 </feature>

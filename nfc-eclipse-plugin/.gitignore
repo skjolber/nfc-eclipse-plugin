@@ -32,3 +32,6 @@
 /fork-nfctools-p2p
 /zxing-binaryqr
 /nfctools-ndef-test-resources
+/nfctools-api
+/nfctools-ndef
+/nfctools-ndef-test

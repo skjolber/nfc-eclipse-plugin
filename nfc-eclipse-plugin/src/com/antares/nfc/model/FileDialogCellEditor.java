@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,13 +46,21 @@ public class FileDialogCellEditor extends CellEditor {
 	protected String openDialogBox(Control cellEditorWindow) {
 		
 		// File standard dialog
-		FileDialog fileDialog = new FileDialog(cellEditorWindow.getShell());
+		FileDialog fileDialog = new FileDialog(cellEditorWindow.getShell(), SWT.OPEN);
 		// Set the text
 		fileDialog.setText("Select File");
 		// Set filter
-		//fileDialog.setFilterExtensions(new String[] { "*.*" });
-		// Put in a readable name for the filter
-		//fileDialog.setFilterNames(new String[] { "All files" });
+		String [] filterNames = new String [] {"NDEF Files", "All Files"};
+		String [] filterExtensions = new String [] {"*.ndef", "*"};
+		
+		String platform = SWT.getPlatform();
+		if (platform.equals("win32") || platform.equals("wpf")) {
+			filterExtensions[1] = "*.*";
+		}
+		
+		fileDialog.setFilterNames (filterNames);
+		fileDialog.setFilterExtensions (filterExtensions);
+		
 		// Open Dialog and save result of selection
 		return fileDialog.open();
 

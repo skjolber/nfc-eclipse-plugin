@@ -166,14 +166,14 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		setDirty(true);
 		
 		updateActions();
+		
+		refreshStatusLine();
 	}
 	
 	private void updateActions() {
 		getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.UNDO.getId()).setEnabled(operator.canUndo());
 		getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.REDO.getId()).setEnabled(operator.canRedo());
 		//hexEditor.getEditorSite().getActionBars().getGlobalActionHandler(ActionFactory.PASTE.getId()).setEnabled(canPaste());
-		
-		refreshStatusLine();
 	}
 	
 	public void refreshStatusLine() {
@@ -560,6 +560,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	@Override
 	public void setFocus() {
 		treeViewer.refresh();
+		
+		refreshStatusLine();
 	}
 	
 	@Override

@@ -40,6 +40,7 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.widgets.Display;
@@ -262,7 +263,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			if(listener != null) {
 				
 				// File standard dialog
-				FileDialog fileDialog = new FileDialog(treeViewer.getTree().getShell());
+				FileDialog fileDialog = new FileDialog(treeViewer.getTree().getShell(), SWT.SAVE);
 				// Set the text
 				fileDialog.setText("Save mime media");
 				// Set filter

@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@ import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
+import org.nfctools.ndef.unknown.unsupported.UnsupportedRecord;
 import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
 import org.nfctools.ndef.wkt.handover.records.CollisionResolutionRecord;
 import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
@@ -455,6 +456,14 @@ public class NdefRecordModelFactory {
 				ndefRecordModelRecord.add(getNode(dataRecord, ndefRecordModelRecord));
 			}
 
+			return ndefRecordModelRecord;
+		} else if(record instanceof UnsupportedRecord) {
+			UnsupportedRecord unsupportedRecord = (UnsupportedRecord)record;
+
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
+			
+			//ndefRecordModelRecord.add(new NdefRecordModelProperty("TNF", Integer.toString(unsupportedRecord.getTnf()), ndefRecordModelRecord));
+			
 			return ndefRecordModelRecord;
 		} else {
 			return new NdefRecordModelRecord(record, ndefRecordModelParent);

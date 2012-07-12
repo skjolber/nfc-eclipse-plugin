@@ -36,6 +36,7 @@ import org.nfctools.ndef.ext.ExternalTypeRecord;
 import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
+import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.WellKnownRecord;
@@ -48,12 +49,15 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 			if(element instanceof NdefRecordModelProperty) {
 				NdefRecordModelProperty ndefRecordModelProperty = (NdefRecordModelProperty)element;
 				
-				// System.out.println("Get element " + element + " label " + ndefRecordModelProperty.getValue());
-
 				Record record = ndefRecordModelProperty.getRecord();
 				if(record instanceof GcActionRecord) {
 					GcActionRecord gcActionRecord = (GcActionRecord)record;
 					if(!gcActionRecord.hasAction()) {
+						return "Select action ..";
+					}
+				} else if(record instanceof ActionRecord) {
+					ActionRecord actionRecord = (ActionRecord)record;
+					if(!actionRecord.hasAction()) {
 						return "Select action ..";
 					}
 				} else if(record instanceof ErrorRecord) {
@@ -171,7 +175,13 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					if(!gcActionRecord.hasAction()) {
 						return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
 					}
+				} else if(record instanceof ActionRecord) {
+					ActionRecord actionRecord = (ActionRecord)record;
+					if(!actionRecord.hasAction()) {
+						return new Color(Display.getCurrent(), 0xBB, 0xBB, 0xBB); 
+					}
 				}
+
 			} else if(element instanceof NdefRecordModelRecord) {
 				NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
 			

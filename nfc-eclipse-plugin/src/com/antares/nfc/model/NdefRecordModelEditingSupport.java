@@ -91,13 +91,12 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 	public static final String[] PRESENT_OR_NOT = new String[]{"Present", "Not present"};
 
-	@SuppressWarnings({ "unchecked" })
 	private static NdefRecordType[] recordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(AbsoluteUriRecord.class),
 			NdefRecordType.getType(ActionRecord.class),
 			NdefRecordType.getType(AndroidApplicationRecord.class),
-			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
 			NdefRecordType.getType(EmptyRecord.class),
+			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
 			NdefRecordType.getType(BinaryMimeRecord.class),
 			NdefRecordType.getType(SmartPosterRecord.class),
 			NdefRecordType.getType(TextRecord.class),
@@ -110,7 +109,6 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			NdefRecordType.getType(GenericControlRecord.class)
 	};
 	
-	@SuppressWarnings({ "unchecked" })
 	public static NdefRecordType[] wellKnownRecordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(ActionRecord.class),
 			NdefRecordType.getType(SmartPosterRecord.class),
@@ -125,13 +123,11 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			NdefRecordType.getType(GenericControlRecord.class)
 	};
 	
-	@SuppressWarnings({ "unchecked" })
 	public static NdefRecordType[] externalRecordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(AndroidApplicationRecord.class),
 			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
 	};
 	
-	@SuppressWarnings({"unchecked" })
 	private NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(TextRecord.class),
 			NdefRecordType.getType(UriRecord.class),
@@ -236,10 +232,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				Integer index = (Integer)value;
 				
 				Action action;
-				if(index.intValue() != -1) {
+				if(index.intValue() > 0) {
 					Action[] values = Action.values();
 				
-					action = values[index.intValue()];
+					action = values[index.intValue() - 1];
 				} else {
 					action = null;
 				}
@@ -273,9 +269,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			ActionRecord record = (ActionRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				if(record.hasAction()) {
-					return record.getAction().ordinal();
+					return record.getAction().ordinal() + 1;
 				}
-				return -1;
+				return 0;
 			} else {
 				return super.getValue(node);
 			}
@@ -284,7 +280,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		@Override
 		public CellEditor getCellEditor(NdefRecordModelNode node) {
 			if(node instanceof NdefRecordModelProperty) {
-				return getComboBoxCellEditor(Action.values(), false);
+				return getComboBoxCellEditor(Action.values(), true);
 			} else {
 				return super.getCellEditor(node);
 			}
@@ -678,10 +674,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				Integer index = (Integer)value;
 				
 				Action action;
-				if(index.intValue() != -1) {
+				if(index.intValue() > 0) {
 					Action[] values = Action.values();
 				
-					action = values[index.intValue()];
+					action = values[index.intValue() - 1];
 				} else {
 					action = null;
 				}
@@ -744,9 +740,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			GcActionRecord gcActionRecord = (GcActionRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				if(gcActionRecord.hasAction()) {
-					return gcActionRecord.getAction().ordinal();
+					return gcActionRecord.getAction().ordinal() + 1;
 				}
-				return -1;
+				return 0;
 			} else if(node instanceof NdefRecordModelParentProperty) {
 				if(gcActionRecord.hasActionRecord()) {
 					return 1 + getIndex(recordTypes, gcActionRecord.getActionRecord().getClass());
@@ -760,7 +756,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		@Override
 		public CellEditor getCellEditor(NdefRecordModelNode node) {
 			if(node instanceof NdefRecordModelProperty) {
-				return getComboBoxCellEditor(Action.values(), false);
+				return getComboBoxCellEditor(Action.values(), true);
 			} else if(node instanceof NdefRecordModelParentProperty) {
 				return getComboBoxCellEditor(recordTypes, true);
 			} else {

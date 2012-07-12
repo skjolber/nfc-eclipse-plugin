@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rorvik Skjolberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,7 @@ import java.util.Locale;
 import javax.imageio.ImageIO;
 
 import org.junit.Test;
+import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
@@ -48,17 +49,25 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
+import org.nfctools.ndef.ext.GeoRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.TextMimeRecord;
-import org.nfctools.ndef.reserved.ReservedRecord;
-import org.nfctools.ndef.unchanged.UnchangedRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
+import org.nfctools.ndef.unknown.unsupported.UnsupportedRecord;
+import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord.CarrierPowerState;
+import org.nfctools.ndef.wkt.handover.records.CollisionResolutionRecord;
+import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
+import org.nfctools.ndef.wkt.handover.records.ErrorRecord.ErrorReason;
+import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord.CarrierTypeFormat;
+import org.nfctools.ndef.wkt.handover.records.HandoverRequestRecord;
+import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.Action;
 import org.nfctools.ndef.wkt.records.ActionRecord;
-import org.nfctools.ndef.wkt.records.AlternativeCarrierRecord;
-import org.nfctools.ndef.wkt.records.HandoverCarrierRecord;
-import org.nfctools.ndef.wkt.records.HandoverRequestRecord;
-import org.nfctools.ndef.wkt.records.HandoverSelectRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord.CertificateFormat;
+import org.nfctools.ndef.wkt.records.SignatureRecord.SignatureType;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
@@ -77,40 +86,67 @@ public class TestNDef {
 	private static ActionRecord actionRecord = new ActionRecord(Action.SAVE_FOR_LATER);
 	private static AndroidApplicationRecord androidApplicationRecord = new AndroidApplicationRecord("com.skjolberg.nfc");
 	private static EmptyRecord emptyRecord = new EmptyRecord();
-	private static TextMimeRecord textMimeRecord = new TextMimeRecord("text/xml; charset=utf-8", "abcd...øæå");
-	private static BinaryMimeRecord binaryMimeRecord = new BinaryMimeRecord("application/binary", "abcdefg".getBytes());
-	private static SmartPosterRecord smartPosterRecord = new SmartPosterRecord(new TextRecord("Title message", Charset.forName("UTF-8"), new Locale("no")), new UriRecord("http://smartposter.uri"), new ActionRecord(Action.OPEN_FOR_EDITING));
+	private static TextMimeRecord textMimeRecord = new TextMimeRecord("text/xml; charset=utf-8", "abcd...ï¿½ï¿½ï¿½");
+	private static BinaryMimeRecord binaryMimeRecord = new BinaryMimeRecord("application/binary",
+			"<?xml version=\"1.0\" encoding=\"utf-8\"?><manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" />"
+					.getBytes());
+	private static SmartPosterRecord smartPosterRecord = new SmartPosterRecord(new TextRecord("Title message",
+			Charset.forName("UTF-8"), new Locale("no")), new UriRecord("http://smartposter.uri"), new ActionRecord(
+			Action.OPEN_FOR_EDITING));
 	private static TextRecord textRecord = new TextRecord("Text message", Charset.forName("UTF-8"), new Locale("no"));
-	private static UnknownRecord unknownRecord = new UnknownRecord();
+	private static UnknownRecord unknownRecord = new UnknownRecord(new byte[]{0x00, 0x01, 0x02, 0x03});
 	private static UriRecord uriRecord = new UriRecord("http://wellknown.url");
-	private static AlternativeCarrierRecord alternativeCarrierRecord = new AlternativeCarrierRecord();
+	
+	private static CollisionResolutionRecord collisionResolutionRecord = new CollisionResolutionRecord((short)123);
+	private static ErrorRecord errorRecord = new ErrorRecord(ErrorReason.PermanenteMemoryConstraints, new Long(321L));
+	
+	private static AlternativeCarrierRecord alternativeCarrierRecord = new AlternativeCarrierRecord(CarrierPowerState.Active, "http://blabla");
 	private static HandoverSelectRecord handoverSelectRecord = new HandoverSelectRecord();
-	private static HandoverCarrierRecord handoverCarrierRecord = new HandoverCarrierRecord();
-	private static UnchangedRecord unchangedRecord = new UnchangedRecord();
+	private static HandoverCarrierRecord handoverCarrierRecord = new HandoverCarrierRecord(CarrierTypeFormat.AbsoluteURI, "http://absolute.url", new byte[]{0x00, 0x01, 0x02, 0x03});
 
-	private static ReservedRecord reservedRecord = new ReservedRecord();
-	private static HandoverRequestRecord handoverRequestRecord = new HandoverRequestRecord();
+	private static HandoverRequestRecord handoverRequestRecord = new HandoverRequestRecord(new CollisionResolutionRecord((short)321));
 
-	public static Record[] records = new Record[]{
+	private static SignatureRecord signatureRecord = new SignatureRecord(SignatureRecord.SignatureType.NOT_PRESENT, new byte[]{0x00, 0x01, 0x10, 0x11}, CertificateFormat.X_509, "http://certificate.uri");
+	private static SignatureRecord signatureRecordMarker = new SignatureRecord(SignatureRecord.SignatureType.NOT_PRESENT);
+	
+	private static UnsupportedRecord unsupportedRecord = new UnsupportedRecord(NdefConstants.TNF_RESERVED, "abc".getBytes(), "id".getBytes(), "DEF".getBytes());
+	private static GeoRecord addressInformationGeoRecord = new GeoRecord("Oslo");
+	private static GeoRecord coordinatesGeoRecord = new GeoRecord(59.949444, 10.756389);
+	private static GeoRecord coordinatesAltitudeGeoRecord = new GeoRecord(59.949444, 10.756389, 100.0);
+	
+	public static Record[] records = new Record[] { absoluteUriRecord, actionRecord, androidApplicationRecord,
+			emptyRecord, textMimeRecord, binaryMimeRecord, smartPosterRecord, textRecord, unknownRecord, uriRecord,
+			collisionResolutionRecord, errorRecord,
+			alternativeCarrierRecord, handoverSelectRecord, handoverCarrierRecord, handoverRequestRecord,
+			
+			signatureRecordMarker, signatureRecord,
+			
+			unsupportedRecord,
+			addressInformationGeoRecord, coordinatesGeoRecord, coordinatesAltitudeGeoRecord
+			};
+
+
+	static {
+		// handover request record requires at least on alternative carrier record
+		AlternativeCarrierRecord alternativeCarrierRecord = new AlternativeCarrierRecord(CarrierPowerState.Active, "z");
+		alternativeCarrierRecord.addAuxiliaryDataReference("a");
+		alternativeCarrierRecord.addAuxiliaryDataReference("b");
+		handoverRequestRecord.add(alternativeCarrierRecord);
 		
-		absoluteUriRecord,
-		actionRecord,
-		androidApplicationRecord,
-		emptyRecord,
-		smartPosterRecord,
-		textRecord,
-		unknownRecord,
-		uriRecord,
-		alternativeCarrierRecord,
-		handoverSelectRecord,
-		handoverCarrierRecord,
-		handoverRequestRecord,
-		reservedRecord,
-		unchangedRecord,
+		alternativeCarrierRecord = new AlternativeCarrierRecord(CarrierPowerState.Active, "y");
+		alternativeCarrierRecord.addAuxiliaryDataReference("c");
+		alternativeCarrierRecord.addAuxiliaryDataReference("d");
+
+		handoverRequestRecord.add(alternativeCarrierRecord);
+
+		handoverSelectRecord.add(alternativeCarrierRecord);
+		handoverSelectRecord.setError(new ErrorRecord(ErrorReason.PermanenteMemoryConstraints, new Long(1L)));
 		
-		textMimeRecord,
-		binaryMimeRecord
-	};
+		// add some certificates to signature
+		signatureRecord.add(new byte[]{0x00, 0x10, 0x11});
+		signatureRecord.setSignatureType(SignatureType.RSASSA_PSS_SHA_1);
+		signatureRecord.setSignature(new byte[]{0x01, 0x11, 0x12});
+	}
 
 
 	@Test

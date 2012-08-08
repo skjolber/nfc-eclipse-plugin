@@ -74,8 +74,9 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 
 import com.antares.nfc.terminal.NdefTerminalInput;
+import com.antares.nfc.terminal.NdefTerminalListener;
 
-public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener {
+public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener, NdefTerminalListener {
 
 	private NdefEditorPart ndefEditor;
 	private NdefQREditorPart ndefQREditor;
@@ -470,6 +471,23 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		// Fire the "property change" event to change file's status within Eclipse IDE
 		//
 		firePropertyChange(IEditorPart.PROP_DIRTY);
+	}
+
+	@Override
+	public byte[] getNdefContent() {
+		return modelOperator.toNdefMessage();
+	}
+
+	@Override
+	public void setNdefContent(byte[] content) {
+		modelOperator.setRecords(content);
+		
+		setDirty(true);
+	}
+
+	@Override
+	public Type getType() {
+		return null;
 	}
 	
 }

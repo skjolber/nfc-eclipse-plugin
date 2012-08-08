@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
@@ -72,6 +73,7 @@ import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelMoveRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
+import com.antares.nfc.plugin.operation.NdefReplaceModelOperation;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
@@ -152,7 +154,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		
-		
 		byte[] buffer = new byte[4 * 1024];
 		
 		int read;
@@ -165,38 +166,43 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			bout.write(buffer, 0, read);
 		} while(true);
 		
-		if(bout.size() > 0) {
-			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
+		// compare input with output; would we write the same contents differently?
+		// if so, the save button should be enabled
+		byte[] inBytes = bout.toByteArray();
+		
+		this.model = loadModel(bout.toByteArray());
+		
+		try {
+			byte[] outBytes = toNdefMessage();
 			
-			boolean modified = false;
+			return !Arrays.equals(inBytes, outBytes);
+		} catch(NdefException e) {
+			return true;
+		}
+	}
+
+	private NdefRecordModelParent loadModel(byte[] ndef) throws IOException {
+		if(ndef.length > 0) {
+			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
 			
 			NdefMessage decode = null;
 			try {
-				decode = ndefMessageDecoder.decode(new ByteArrayInputStream(bout.toByteArray(), 0, bout.size()), false);
+				decode = ndefMessageDecoder.decode(new ByteArrayInputStream(ndef, 0, ndef.length), false);
 			} catch(NdefException e) {
 				if(e.getCause() instanceof EOFException) {
-					
 					// try again with more relaxed decoding
-					decode = ndefMessageDecoder.decodeFully(bout.toByteArray());
-					
-					modified = true;
+					decode = ndefMessageDecoder.decodeFully(ndef);
 				}
 			}
 			List<Record> list = ndefMessageDecoder.decodeToRecords(decode);
 			
 			Record[] records = list.toArray(new Record[list.size()]);
 			
-			this.model = NdefRecordModelFactory.represent(records);
-			
-			return modified;
+			return NdefRecordModelFactory.represent(records);
 		} else {
-			newModel();
-			
-			return false;
+			return new NdefRecordModelParent();
 		}
 	}
-	
-	
 
 	public boolean save(File file) throws IOException {
 		byte[] encode = toNdefMessage();
@@ -231,8 +237,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			records.add(record.getRecord());
 			
 		}
-		byte[] encode = ndefMessageEncoder.encode(records);
-		return encode;
+		return ndefMessageEncoder.encode(records);
 	}
 
 	@Override
@@ -461,6 +466,26 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		}
 	}
 
+	public void setRecords(byte[] content) {
+		try {
+			// set the children of the root parent so that all initialized references still point to the correct node
+			NdefRecordModelParent nextModel = loadModel(content);
+			
+			NdefReplaceModelOperation step = new NdefReplaceModelOperation(model, model.getChildren(), nextModel.getChildren());
+			
+			addStep(step);
+			
+			step.execute();
+		} catch(NdefException e) {
+			e.printStackTrace();
+			// do nothing
+		} catch (IOException e) {
+			// internal error?
+			e.printStackTrace();
+		}
+		
+	}
+	
 	/*
 	public boolean canPaste() {
 		return getClipboard().getContents(BinaryTransfer.instance) instanceof byte[] ||

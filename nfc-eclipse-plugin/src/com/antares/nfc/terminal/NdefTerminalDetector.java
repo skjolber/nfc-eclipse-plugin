@@ -1,15 +1,9 @@
 package com.antares.nfc.terminal;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Collection;
 
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -34,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.antares.nfc.plugin.Activator;
 import com.antares.nfc.plugin.NdefMultiPageEditor;
+import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
 public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperationsListener, TerminalStatusListener {
 
@@ -41,17 +36,8 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	
 	private static NdefTerminalDetector detector;
 
-	public static boolean initialize() {
-		try {
-			detector = new NdefTerminalDetector();
-			
-			return true;
-		} catch(Throwable e) {
-			e.printStackTrace();
-			
-			// ignore
-		}
-		return false;
+	public static void initialize() {
+		detector = new NdefTerminalDetector();
 	}
 	
 	public static NdefTerminalDetector getInstance() {
@@ -65,6 +51,11 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	private NfcAdapter nfcAdapter;
 	
 	private boolean close = false;
+	
+	/** did we ever see a terminal */
+	private boolean foundTerminal = false;
+	
+	private NdefTerminalListener ndefTerminalListener;
 	
 	public NdefTerminalDetector() {
 		terminalHandler = new TerminalHandler();
@@ -86,6 +77,9 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 			}
 			
 			if(terminal != null) {
+				if(!foundTerminal) {
+					foundTerminal = true;
+				}
 				startReader(terminal);
 			}
 			return true;
@@ -161,85 +155,70 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	
 	@Override
 	public void onNdefMessages(final Collection<Record> records) {
-		System.out.println("Got records");
+		
+		final byte[] encode = NdefContext.getNdefMessageEncoder().encode(records);
+
+		synchronized(this) {
+			if(ndefTerminalListener != null) {
+				Type type = ndefTerminalListener.getType();
+				switch(type) {
+				case NONE: {
+					openNewEditor(encode);
+					
+					break;
+				}
+				case READ: {
+					log("Read NDEF into open editor " + ndefTerminalListener.getClass().getSimpleName());
+					
+					ndefTerminalListener.setNdefContent(encode);
+					
+					break;
+				}
+				case WRITE: {
+					log("Write NDEF from editor " + ndefTerminalListener.getClass().getSimpleName());
+
+					byte[] ndefContent = ndefTerminalListener.getNdefContent();
+					// TODO
+					
+					break;
+				}
+				}
+			} else {
+				openNewEditor(encode);
+			}
+		}
+	}
+
+	private void openNewEditor(final byte[] encode) {
+		log("Open NDEF content in new editor");
 
 		Display.getDefault().asyncExec(new Runnable() {
-			public void run()
-			{
-				byte[] encode = NdefContext.getNdefMessageEncoder().encode(records);
-
-				System.out.println("Encoded " + encode.length + " records");
-
+			public void run() {
 				IStorage storage = new NdefTerminalStorage(encode, currentTerminal.getTerminalName()); // TODO add file name counter
 				IStorageEditorInput input = new NdefTerminalInput(storage, currentTerminal.getTerminalName());
 
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
-				if (page != null)
+				if (page != null) {
 					try {
 						page.openEditor(input, NdefMultiPageEditor.class.getName());
-
-						System.out.println("Opened");
 					} catch (PartInitException e) {
-						e.printStackTrace();
+						log(e.toString());
+
+						// do nothing more
 					}
-
-
-				/*
-						try {
-
-                    	File fileToOpen = File.createTempFile("eclipse", ".ndef");
-
-                    	FileOutputStream fout = new FileOutputStream(fileToOpen);
-                    	fout.write(encode);
-                    	fout.close();
-
-                    	System.out.println("Wrote to file " + fileToOpen);
-
-                    	IWorkspace workspace= ResourcesPlugin.getWorkspace(); 
-                    	 IPath location= Path.fromOSString(fileToOpen.getAbsolutePath()); 
-                    	 IFile inputFile= workspace.getRoot().getFileForLocation(location);
-
-                    	if (inputFile != null) {
-                    	    IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-
-                    	    IEditorPart openEditor = IDE.openEditor(page, inputFile);
-
-                    	    System.out.println("Open editor " + openEditor.getClass().getName());
-                    	} else {
-                    		System.out.println("No input file");
-                    	}
-
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-
-
-/*                    	
-                    	if (fileToOpen.exists() && fileToOpen.isFile()) {
-                    	    IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-
-                    	    IEditorDescriptor desc = PlatformUI.getWorkbench().
-                    	            getEditorRegistry().getDefaultEditor(fileToOpen.getName());
-                    	    page.openEditor(new FileEditorInput(fileToOpen), desc.getId());
-                    	} else {
-                    	    //Do something if the file does not exist
-                    	}
-				 */
-
-
+				} else {
+					log("No active page for opening editor");
+				}
 			}
-		}
-				);
-
-
-
+		});
 	}
 
 	// http://wiki.eclipse.org/FAQ_How_do_I_open_an_editor_programmatically%3F
 	// http://wiki.eclipse.org/FAQ_How_do_I_open_an_editor_on_something_that_is_not_a_file%3F
 	// http://eclipsesnippets.blogspot.no/2008/06/programmatically-opening-editor.html
 	// http://stackoverflow.com/questions/171824/programmatically-showing-a-view-from-an-eclipse-plug-in
+	
 	@Override
 	public void onNdefOperations(NdefOperations ndefOperations) {
 		if (ndefOperations.isFormatted()) {
@@ -259,4 +238,19 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 		}
 	}
 
+	public boolean hasFoundTerminal() {
+		return foundTerminal;
+	}
+
+	public NdefTerminalListener getNdefTerminalListener() {
+		return ndefTerminalListener;
+	}
+
+	public void setNdefTerminalListener(NdefTerminalListener ndefTerminalListener) {
+		synchronized(this) {
+			this.ndefTerminalListener = ndefTerminalListener;
+		}
+	}
+
+	
 }

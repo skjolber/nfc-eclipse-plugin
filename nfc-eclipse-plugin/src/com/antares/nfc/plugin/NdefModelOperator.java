@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,10 @@
 
 package com.antares.nfc.plugin;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -45,6 +48,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefException;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
 import org.nfctools.ndef.NdefMessageEncoder;
@@ -134,44 +138,62 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		this.model = new NdefRecordModelParent();
 	}
 	
-	public boolean load(File file) throws IOException {
-		NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
+	/**
+	 * 
+	 * Load from stream. 
+	 * 
+	 * @param in
+	 * @return true if the read input will not be represented the same way when reading (spec interpretation mismatch or bugs)
+	 * @throws IOException
+	 */
+	
+	public boolean load(InputStream in) throws IOException {
+		// load all the input first
 		
-		int length = (int)file.length();
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		
-		Activator.info("Read " + length + " bytes from " + file);
-
-		Record[] records = null;
-		if(length > 0) {
-			byte[] payload = new byte[length];
+		
+		byte[] buffer = new byte[4 * 1024];
+		
+		int read;
+		do {
+			read = in.read(buffer, 0, buffer.length);
+			if(read == -1) {
+				break;
+			}
 			
-			InputStream in = null;
+			bout.write(buffer, 0, read);
+		} while(true);
+		
+		if(bout.size() > 0) {
+			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
+			
+			boolean modified = false;
+			
+			NdefMessage decode = null;
 			try {
-				in = new FileInputStream(file);
-				DataInputStream din = new DataInputStream(in);
-				
-				din.readFully(payload);
-				
-				NdefMessage decode = ndefMessageDecoder.decode(payload);
-				
-				List<Record> list = ndefMessageDecoder.decodeToRecords(decode);
-				
-				records = list.toArray(new Record[list.size()]);
-				
-				this.model = NdefRecordModelFactory.represent(records);
-				
-				return true;
-			} finally {
-				if(in != null) {
-					try {
-						in.close();
-					} catch(IOException e) {
-						// ignore
-					}
+				decode = ndefMessageDecoder.decode(new ByteArrayInputStream(bout.toByteArray(), 0, bout.size()), false);
+			} catch(NdefException e) {
+				if(e.getCause() instanceof EOFException) {
+					
+					// try again with more relaxed decoding
+					decode = ndefMessageDecoder.decodeFully(bout.toByteArray());
+					
+					modified = true;
 				}
 			}
+			List<Record> list = ndefMessageDecoder.decodeToRecords(decode);
+			
+			Record[] records = list.toArray(new Record[list.size()]);
+			
+			this.model = NdefRecordModelFactory.represent(records);
+			
+			return modified;
+		} else {
+			newModel();
+			
+			return false;
 		}
-		return false;
 	}
 	
 	

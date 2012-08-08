@@ -173,7 +173,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 	// mime content
 	private Action viewContent;
-	private Action saveContent;
+	private SaveContentAction saveContent;
 
 	private class InsertSiblingAction extends Action {
 
@@ -254,8 +254,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	
 	private class SaveContentAction extends Action {
 
+		private String mimeType;
+		
 		public SaveContentAction(String name) {
 			super(name);
+		}
+		
+		public void setMimeType(String mimeType) {
+			this.mimeType = mimeType;
 		}
 		
 		@Override
@@ -267,6 +273,51 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				// Set the text
 				fileDialog.setText("Save mime media");
 				// Set filter
+
+				String mimeType = this.mimeType;
+
+				String [] filterNames = null;
+				String [] filterExtensions = null;
+
+				if(mimeType != null) {
+					// guess file ext from mime type
+					String ext = null;
+					String name = null;
+					if(mimeType.startsWith("image/")) {
+						if(mimeType.equals("image/png")) {
+							ext = "*.png";
+							name = "Portable Network Graphics";
+						}
+					} else if(mimeType.startsWith("text/")) {
+						if(mimeType.startsWith("text/xml")) {
+							ext = "*.xml";
+							name = "XML";
+						} else if(mimeType.startsWith("text/plain")) {
+							ext = "*.txt";
+							name = "Plain text";
+						}
+					}
+					
+					if(ext != null && name != null) {
+						filterNames = new String [] {name, "All Files"};
+						filterExtensions = new String [] {ext, "*"};						
+					}
+					
+				}
+				
+				if(filterNames != null || filterExtensions != null) {
+					filterNames = new String [] {"All Files"};
+					filterExtensions = new String [] {"*"};
+					
+				}
+				// Set filter
+				String platform = SWT.getPlatform();
+				if (platform.equals("win32") || platform.equals("wpf")) {
+					filterExtensions[filterExtensions.length - 1] = "*.*";
+				}
+				
+				fileDialog.setFilterNames (filterNames);
+				fileDialog.setFilterExtensions (filterExtensions);
 				
 				final String fileString = fileDialog.open();
 				
@@ -643,8 +694,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 						if(selectedNode.getRecordBranchIndex() == 1) {
 							MimeRecord mimeRecord = (MimeRecord)record;
-							if(mimeRecord.hasContentType()) {
+							if(mimeRecord.hasContent()) {
 								//menuManager.add(viewContent);
+								saveContent.setMimeType(mimeRecord.getContentType());
 								menuManager.add(saveContent);
 							}
 						}
@@ -653,6 +705,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 						UnknownRecord unknownRecord = (UnknownRecord)record;
 						if(unknownRecord.hasPayload()) {
 							//menuManager.add(viewContent);
+							saveContent.setMimeType(null);
 							menuManager.add(saveContent);
 						}
 					}

@@ -28,7 +28,9 @@ package com.antares.nfc.plugin;
 
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 import org.eclipse.core.resources.IFile;
@@ -38,6 +40,7 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -60,6 +63,7 @@ import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IPathEditorInput;
 import org.eclipse.ui.IPersistableElement;
+import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -68,6 +72,8 @@ import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
+
+import com.antares.nfc.terminal.NdefTerminalInput;
 
 public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener {
 
@@ -78,6 +84,8 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	private NdefModelOperator modelOperator;
 	
 	private NdefRecordFactory ndefRecordFactory = new NdefRecordFactory();
+	
+	protected boolean dirty = false;
 	
 	public NdefMultiPageEditor() {
 		super();
@@ -193,6 +201,19 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 			IURIEditorInput uriEditorInput = (IURIEditorInput) input;
 			URI uri = uriEditorInput.getURI();
 			file = new File(uri);
+		} else if(input instanceof IStorageEditorInput) {
+			IStorageEditorInput iStorageEditorInput = (IStorageEditorInput)input;
+
+			try {
+				IPath fullPath = iStorageEditorInput.getStorage().getFullPath();
+				if(fullPath == null) {
+					Activator.info("Open file save as dialog");
+				}
+			} catch (CoreException e) {
+				Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+				MessageDialog.openError(shell, "Error", "Error writing file '" + file + "', " + e.toString());
+
+			}
 		} else {
 			// unknown file type
 		} 
@@ -202,6 +223,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 			try {
 				modelOperator.save(file);
 
+				setDirty(false);
 				ndefEditor.setDirty(false);
 				ndefQREditor.setDirty(false);
 				
@@ -247,32 +269,93 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		super.setInput(input);
 		
 		File file = null;
-
-		if (input instanceof IFileEditorInput) {
-			IFile iFile = ((IFileEditorInput) input).getFile();
-			
-			file = iFile.getRawLocation().toFile();
-		} else if (input instanceof IPathEditorInput) {
-			IPathEditorInput pathEditorInput = (IPathEditorInput) input;
-			IPath path = pathEditorInput.getPath();
-
-			file = path.toFile();
-
-		} else if (input instanceof IURIEditorInput) {
-			//
-			// Input file is outside the Eclipse Workspace
-			//
-			IURIEditorInput uriEditorInput = (IURIEditorInput) input;
-			URI uri = uriEditorInput.getURI();
-			file = new File(uri);
-		} else {
+		InputStream contents = null;
+		
+		try {
+			if (input instanceof IFileEditorInput) {
+				IFile iFile = ((IFileEditorInput) input).getFile();
+				
+				file = iFile.getRawLocation().toFile();
+				
+				if(file.exists()) {
+					contents = iFile.getContents();
+				}
+			} else if (input instanceof IPathEditorInput) {
+				IPathEditorInput pathEditorInput = (IPathEditorInput) input;
+				IPath path = pathEditorInput.getPath();
+	
+				file = path.toFile();
+				
+				if(file.exists()) {
+					contents = new FileInputStream(file);
+				}
+			} else if (input instanceof IURIEditorInput) {
+				//
+				// Input file is outside the Eclipse Workspace
+				//
+				IURIEditorInput uriEditorInput = (IURIEditorInput) input;
+				URI uri = uriEditorInput.getURI();
+				file = new File(uri);
+				
+				if(file.exists()) {
+					contents = new FileInputStream(file);
+				}
+			} else if(input instanceof IStorageEditorInput) {
+				IStorageEditorInput iStorageEditorInput = (IStorageEditorInput)input;
+				
+				if(iStorageEditorInput.exists()) {
+					contents = iStorageEditorInput.getStorage().getContents();
+				}
+			} else {
+				throw new IllegalArgumentException("Unsupported input type " + input.getClass().getName());
+			}
+		} catch (Exception e) {
 			Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 			MessageDialog.openError(shell, "Error", "Could not read input " + input);
 			
 			return;
 		}
 		
-		// get the project path file
+		// get the project path file for auto-detect of AAR package name
+		File projectPath = findProjectRoot(input);
+		
+		if(projectPath != null) {
+			ndefRecordFactory.setProjectPath(projectPath);
+		}
+		modelOperator = new NdefModelOperator(ndefRecordFactory);
+		
+		if(contents != null) {
+			try {
+				if(modelOperator.load(contents)) {
+					setDirty(true);
+				}
+				
+				// if this came from the terminal, saving should be possible straight away
+				if(input instanceof NdefTerminalInput) {
+					setDirty(true);
+				}
+			} catch(IOException e) {
+				Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+				MessageDialog.openError(shell, "Error", "Could not read file '" + file + "'");
+				
+				return;
+			} finally {
+				if(contents != null) {
+					try {
+						contents.close();
+					} catch(IOException e) {
+						// ignore
+					}
+				}
+			}
+		} else {
+			modelOperator.newModel();
+		}
+		
+		setPartName(input.getName());
+	}
+
+	private File findProjectRoot(IEditorInput input) {
 		File projectPath = null;
 		
 		search:
@@ -310,28 +393,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		} else {
 			// no path found
 		}
-		
-		if(projectPath != null) {
-			ndefRecordFactory.setProjectPath(projectPath);
-		}
-		modelOperator = new NdefModelOperator(ndefRecordFactory);
-		
-		if(file.exists()) {
-			try {
-				if(!modelOperator.load(file)) {
-					modelOperator.newModel();
-				}
-			} catch(IOException e) {
-				Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-				MessageDialog.openError(shell, "Error", "Could not read file '" + file + "'");
-				
-				return;
-			}
-		} else {
-			modelOperator.newModel();
-		}
-		
-		setPartName(file.getName());
+		return projectPath;
 	}
 	
 	
@@ -392,7 +454,22 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 
 	@Override
 	public boolean isDirty() {
-		return ndefEditor.isDirty() || ndefQREditor.isDirty();
+		return dirty || ndefEditor.isDirty() || ndefQREditor.isDirty();
+	}
+	
+	/**
+	 * Sets the "dirty" flag.
+	 * @param isDirty true if the file has been modified otherwise false
+	 */
+	public void setDirty(boolean isDirty) {
+		//
+		// Set internal "dirty" flag
+		//
+		this.dirty = isDirty;
+		//
+		// Fire the "property change" event to change file's status within Eclipse IDE
+		//
+		firePropertyChange(IEditorPart.PROP_DIRTY);
 	}
 	
 }

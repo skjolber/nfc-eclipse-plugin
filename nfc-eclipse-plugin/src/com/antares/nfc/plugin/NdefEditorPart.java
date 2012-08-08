@@ -94,7 +94,6 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	protected TreeViewer treeViewer; 
 	protected NdefModelOperator operator;
 	protected SashForm form;
-	protected final int hintColumnMinimumSize = 200;
 
 	public NdefEditorPart(NdefModelOperator operator) {
 		this.operator = operator;
@@ -168,6 +167,9 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		updateActions();
 		
 		refreshStatusLine();
+		
+		// also fill the last column (i.e. pack or fill) if any hint has been modified
+		packAndFillLastColumn();
 	}
 	
 	private void updateActions() {
@@ -326,13 +328,14 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		// http://blog.eclipse-tips.com/2008/05/single-column-tableviewer-and.html
 		
 		column = new TreeViewerColumn(treeViewer, SWT.NONE);
-		column.getColumn().setWidth(hintColumnMinimumSize);
 		column.getColumn().setMoveable(true);
 		column.getColumn().setResizable(false);
 		column.getColumn().setText("Hint");
 		column.getColumn().setAlignment(SWT.LEFT);
 		
 		column.setLabelProvider(new NdefRecordModelHintColumnProvider());
+		
+		column.getColumn().pack();
 		
 		treeViewer.setContentProvider(new NdefRecordModelContentProvider());
 
@@ -347,7 +350,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 				{
 					public void run()
 					{
-						fillColumn();
+						packAndFillLastColumn();
 					}
 				}
 				);
@@ -355,7 +358,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		// we want the last column to 'fill' with the layout
 		treeViewer.getTree().addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
-               	fillColumn();
+               	packAndFillLastColumn();
 			}
 		});
 		
@@ -516,34 +519,37 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		});
 	}
 	
-	protected void fillColumn() {
+	/**
+	 * 
+	 * Resize last column in tree viewer so that it fills the client area completely if extra space.
+	 * 
+	 */
+	
+	protected void packAndFillLastColumn() {
 		Tree tree = treeViewer.getTree();
 		int columnsWidth = 0;
 		for (int i = 0; i < tree.getColumnCount() - 1; i++) {
 			columnsWidth += tree.getColumn(i).getWidth();
 		}
-		
-		Point size = tree.getSize();
-		
-		int scrollBarWidth;
-		ScrollBar verticalBar = treeViewer.getTree().getVerticalBar();
-		if(verticalBar.isVisible()) {
-			scrollBarWidth = verticalBar.getSize().x;
-		} else {
-			scrollBarWidth = 0;
-		}
-
-		// adjust column according to available horizontal space
 		TreeColumn lastColumn = tree.getColumn(tree.getColumnCount() - 1);
-		if(columnsWidth + hintColumnMinimumSize + tree.getBorderWidth() * 2 < size.x - scrollBarWidth) {
-			lastColumn.setWidth(size.x - scrollBarWidth - columnsWidth - tree.getBorderWidth() * 2);
-			
-		} else {
-			// fall back to minimum, scrollbar will show
-			if(lastColumn.getWidth() != hintColumnMinimumSize) {
-				lastColumn.setWidth(hintColumnMinimumSize);
-			}
-		}
+		lastColumn.pack();
+		
+		Rectangle area = tree.getClientArea();
+		
+		Point preferredSize = tree.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+	    int width = area.width - 2*tree.getBorderWidth();
+		
+	    if (preferredSize.y > area.height + tree.getHeaderHeight()) {
+	        // Subtract the scrollbar width from the total column width
+	        // if a vertical scrollbar will be required
+	        Point vBarSize = tree.getVerticalBar().getSize();
+	        width -= vBarSize.x;
+	    }
+
+	    // last column is packed, so that is the minimum. If more space is available, add it.
+	    if(lastColumn.getWidth() < width - columnsWidth) {
+	    	lastColumn.setWidth(width - columnsWidth);
+	    }
 	}
 
 	private int getColumn(int x) {

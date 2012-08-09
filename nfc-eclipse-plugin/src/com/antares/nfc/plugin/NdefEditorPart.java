@@ -36,8 +36,6 @@ import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
-import org.eclipse.jface.viewers.ITreeViewerListener;
-import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
@@ -59,7 +57,6 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
@@ -336,7 +333,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		column.setLabelProvider(new NdefRecordModelHintColumnProvider());
 		
 		column.getColumn().pack();
-		
+				
 		treeViewer.setContentProvider(new NdefRecordModelContentProvider());
 
 		treeViewer.setInput(operator.getModel());
@@ -345,6 +342,9 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		
 		treeViewer.expandAll();
 
+		// we want the last column to 'fill' with the layout
+		// trigger at key points:
+		// first show
 		composite.getDisplay().asyncExec(
 				new Runnable()
 				{
@@ -355,12 +355,22 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 				}
 				);
 
-		// we want the last column to 'fill' with the layout
+		// resize
 		treeViewer.getTree().addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
                	packAndFillLastColumn();
 			}
 		});
+
+		// manual resizing of columns
+		Tree tree = treeViewer.getTree();
+		for (int i = 0; i < tree.getColumnCount() - 1; i++) {
+			tree.getColumn(i).addControlListener(new ControlAdapter() {
+				public void controlResized(ControlEvent e) {
+	               	packAndFillLastColumn();
+				}
+			});
+		}
 		
 		// drag and drop
 	    Transfer[] types = new Transfer[] {LocalSelectionTransfer.getTransfer()};

@@ -54,6 +54,8 @@ import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 import org.nfctools.ndef.wkt.records.WellKnownRecord;
 
+import com.antares.nfc.plugin.util.FileDialogUtil;
+
 public class NdefRecordModelFactory {
 
 	public static NdefRecordModelParent represent(Record[] records) {
@@ -185,6 +187,11 @@ public class NdefRecordModelFactory {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", Integer.toString(binaryMimeRecord.getContentAsBytes().length) + " bytes binary payload", ndefRecordModelRecord));
 			} else {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Empty binary payload", ndefRecordModelRecord));
+			}
+
+			// remember content type for file dialogs
+			if(binaryMimeRecord.hasContentType()) {
+				FileDialogUtil.registerMimeType(binaryMimeRecord.getContentType());
 			}
 			
 			return ndefRecordModelRecord;

@@ -28,10 +28,8 @@ package com.antares.nfc.plugin;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,17 +67,19 @@ import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelAddListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelAddRecordOperation;
-import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelMoveRecordOperation;
+import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
-import com.antares.nfc.plugin.operation.NdefReplaceModelOperation;
+import com.antares.nfc.plugin.operation.NdefModelReplaceRootRecordsOperation;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
 
 public class NdefModelOperator implements NdefRecordModelChangeListener {
 	
+	private static final int MAX_BINARY_QR_PAYLOAD = 2953;
+
 	// IEditorInput input = getEditorInput();
 	
 	public static File getProjectPath(IEditorInput input) {
@@ -320,6 +320,12 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		byte[] ndef = toNdefMessage();
 
 		if(ndef.length > 0) {
+			
+			// do not encode if too large. the encoding takes a lot of time to fail
+			if(ndef.length > MAX_BINARY_QR_PAYLOAD) {
+				return null;
+			}
+			
 			int parent = Math.min(parentWidth, parentHeight);
 			
 			writer.setAligment(horizontal, vertical);
@@ -471,7 +477,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			// set the children of the root parent so that all initialized references still point to the correct node
 			NdefRecordModelParent nextModel = loadModel(content);
 			
-			NdefReplaceModelOperation step = new NdefReplaceModelOperation(model, model.getChildren(), nextModel.getChildren());
+			NdefModelReplaceRootRecordsOperation step = new NdefModelReplaceRootRecordsOperation(model, model.getChildren(), nextModel.getChildren());
 			
 			addStep(step);
 			

@@ -38,7 +38,8 @@ public class NdefMultiPageEditorContributor extends MultiPageEditorActionBarCont
 	
 	private IEditorPart activeEditorPart;
 	
-	private StatusLineContributionItem statusLineContributionItem;
+	private StatusLineContributionItem statusLineSizeContributionItem;
+	private StatusLineContributionItem statusLineTerminalContributionItem;
 	
 	public NdefMultiPageEditorContributor() {
 		super();
@@ -55,10 +56,25 @@ public class NdefMultiPageEditorContributor extends MultiPageEditorActionBarCont
 
 		Activator.info("Contribute to status line");
 
-		if(statusLineContributionItem == null) {
-			StatusLineContributionItem statusLineContributionItem = new StatusLineContributionItem(getClass().getName()+".size");
+		if(statusLineSizeContributionItem == null) {
+			statusLineSizeContributionItem = new StatusLineContributionItem(getClass().getName()+".size");
 
-			statusLineManager.add(statusLineContributionItem);
+			statusLineManager.add(statusLineSizeContributionItem);
+		}
+
+		// http://stackoverflow.com/questions/6214042/javax-smartcardio-javadocs
+		try {
+			Class.forName("javax.smartcardio.CardTerminal");
+			
+			if(statusLineTerminalContributionItem == null) {
+				statusLineTerminalContributionItem = new StatusLineContributionItem(getClass().getName()+".terminal");
+	
+				statusLineManager.add(statusLineTerminalContributionItem);
+			}
+			Activator.info("Card terminals supported");
+		} catch(ClassNotFoundException e) {
+			// ignore
+			Activator.info("Card terminals not supported");
 		}
 	}
 	

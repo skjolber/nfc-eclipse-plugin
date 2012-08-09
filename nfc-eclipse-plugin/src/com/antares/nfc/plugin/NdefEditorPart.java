@@ -209,7 +209,28 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 								} catch(NdefException e) {
 									size.setText("-");
 								}
+							} else if(item.getId().equals(NdefMultiPageEditorContributor.class.getName()+".terminal")) {
+								StatusLineContributionItem size = (StatusLineContributionItem)item;
+								
+								com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+								
+								if(ndefTerminalDetector != null) {
+									if(ndefTerminalDetector.hasFoundTerminal()) {
+	
+										String terminalName = ndefTerminalDetector.getTerminalName();
+										if(terminalName != null) {
+											size.setText(terminalName);
+										} else {
+											size.setText("Disconnected");
+										}
+									} else {
+										size.setText("No card terminal");
+									}
+								} else {
+									size.setText("No card terminal");
+								}
 							}
+
 						}
 						
 						// set global message using

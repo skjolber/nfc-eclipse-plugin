@@ -94,7 +94,6 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	public void createBinaryQRPage() {
 		Composite composite = new Composite(getContainer(), SWT.NONE);
 		composite.setBackground(new Color(Display.getDefault(), 0xFF, 0xFF, 0xFF));
-		
 
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 1;

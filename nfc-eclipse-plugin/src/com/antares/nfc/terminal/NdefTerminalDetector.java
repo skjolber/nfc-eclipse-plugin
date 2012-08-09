@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.antares.nfc.plugin.Activator;
+import com.antares.nfc.plugin.NdefEditorPart;
 import com.antares.nfc.plugin.NdefMultiPageEditor;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
@@ -101,6 +103,37 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 		}
 	}
 
+	private void notfiyChange() {
+		log("Notify change in card terminal status");
+		
+		// notify status line if editor is open
+    	Display.getDefault().asyncExec(
+                new Runnable()
+                {
+                    public void run()
+                    {
+
+		
+                    	IEditorPart activeEditor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+		
+                    	if(activeEditor != null) {
+                    		if(activeEditor instanceof NdefMultiPageEditor) {
+                    			NdefMultiPageEditor ndefMultiPageEditor = (NdefMultiPageEditor)activeEditor;
+                    			
+                    			Object selectedPage = ndefMultiPageEditor.getSelectedPage();
+                    			if(selectedPage instanceof NdefEditorPart) {
+                    				NdefEditorPart ndefEditorPart = (NdefEditorPart)selectedPage;
+                    				
+                    				ndefEditorPart.refreshStatusLine();
+                    			}
+                    		}
+                    	}
+
+                    }
+                }
+            );
+	}
+
 	private void log(String message) {
 		Activator activator = Activator.getDefault();		
 		
@@ -141,7 +174,9 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	public void run() {
 		while(!close) {
 			try {
-				detectTerminal();
+				if(detectTerminal()) {
+					notfiyChange();
+				}
 			} catch(IllegalArgumentException e) {
 				// ignore
 			}
@@ -235,6 +270,8 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	public void onStatusChanged(TerminalStatus status) {
 		if(status == TerminalStatus.CLOSED) {
 			stopReader();
+			
+			notfiyChange();
 		}
 	}
 
@@ -249,6 +286,15 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	public void setNdefTerminalListener(NdefTerminalListener ndefTerminalListener) {
 		synchronized(this) {
 			this.ndefTerminalListener = ndefTerminalListener;
+		}
+	}
+
+	public String getTerminalName() {
+		synchronized(this) {
+			if(currentTerminal != null) {
+				return currentTerminal.getTerminalName();
+			}
+			return null;
 		}
 	}
 

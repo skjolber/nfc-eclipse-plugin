@@ -33,6 +33,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 
+import com.antares.nfc.plugin.util.FileDialogUtil;
+
 
 public class FileDialogCellEditor extends CellEditor {
 
@@ -49,20 +51,8 @@ public class FileDialogCellEditor extends CellEditor {
 		FileDialog fileDialog = new FileDialog(cellEditorWindow.getShell(), SWT.OPEN);
 		// Set the text
 		fileDialog.setText("Select File");
-		// Set filter
-		String [] filterNames = new String [] {"NDEF Files", "All Files"};
-		String [] filterExtensions = new String [] {"*.ndef", "*"};
-		
-		String platform = SWT.getPlatform();
-		if (platform.equals("win32") || platform.equals("wpf")) {
-			filterExtensions[1] = "*.*";
-		}
-		
-		fileDialog.setFilterNames (filterNames);
-		fileDialog.setFilterExtensions (filterExtensions);
-		
-		// Open Dialog and save result of selection
-		return fileDialog.open();
+
+		return FileDialogUtil.open(fileDialog, null);
 
 	}
 

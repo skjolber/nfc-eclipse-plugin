@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -77,6 +78,11 @@ import com.antares.nfc.plugin.operation.DefaultNdefModelListItemOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
+import com.antares.nfc.plugin.operation.NdefModelOperationList;
+import com.antares.nfc.plugin.util.FileDialogUtil;
+
+import eu.medsea.mimeutil.MimeType;
+import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 
 /**
  * Main editing (as in changing property values) class.
@@ -1953,6 +1959,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				
 				int parentIndex = node.getParentIndex();
 				if(parentIndex == 0) {
+					FileDialogUtil.registerMimeType(stringValue);
+					
 					if(!stringValue.equals(mimeRecord.getContentType())) {
 						return new DefaultNdefModelPropertyOperation<String, MimeRecord>(mimeRecord, (NdefRecordModelProperty)node, mimeRecord.getContentType(), stringValue) {
 							
@@ -1990,6 +1998,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								DataInputStream din = new DataInputStream(in);
 								
 								din.readFully(payload);
+
+								// add to used extensions
+								FileDialogUtil.registerExtension(ExtensionMimeDetector.getExtension(file.getName()));
 							} catch(IOException e) {
 								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 								MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
@@ -2005,7 +2016,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 								}
 							}
 							
-							return new DefaultNdefModelPropertyOperation<byte[], BinaryMimeRecord>(binaryMimeRecord, (NdefRecordModelProperty)node, binaryMimeRecord.getContent(), payload) {
+							NdefModelOperation contentOperation = new DefaultNdefModelPropertyOperation<byte[], BinaryMimeRecord>(binaryMimeRecord, (NdefRecordModelProperty)node, binaryMimeRecord.getContent(), payload) {
 								
 								@Override
 								public void execute() {
@@ -2034,6 +2045,43 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 									}	
 								}
 							};
+							
+							// can we auto-detect the mime type?
+							String contentType = binaryMimeRecord.getContentType();
+							if(contentType == null || contentType.length() == 0) {
+								
+								ExtensionMimeDetector extensionMimeDetector = new ExtensionMimeDetector();								
+								Collection mimeTypes = extensionMimeDetector.getMimeTypes(file);
+								if(!mimeTypes.isEmpty()) {
+									
+									MimeType mimeType = (MimeType) mimeTypes.iterator().next();
+									
+									NdefModelOperation mimeTypeOperation = new DefaultNdefModelPropertyOperation<String, MimeRecord>(mimeRecord, (NdefRecordModelProperty)node.getParent().getChild(0), mimeRecord.getContentType(), mimeType.toString()) {
+											
+											@Override
+											public void execute() {
+												super.execute();
+												
+												record.setContentType(next);
+											}
+											
+											@Override
+											public void revoke() {
+												super.revoke();
+												
+												record.setContentType(previous);
+											}
+										};
+										
+									NdefModelOperationList listOperation = new NdefModelOperationList();
+									listOperation.add(mimeTypeOperation);
+									listOperation.add(contentOperation);
+									
+									return listOperation;
+								}
+							}
+							
+							return contentOperation;
 							
 						}
 					} else {

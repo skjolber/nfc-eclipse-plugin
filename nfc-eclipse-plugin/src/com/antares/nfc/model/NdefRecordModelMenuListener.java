@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -69,6 +70,9 @@ import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 
 import com.antares.nfc.plugin.Activator;
+import com.antares.nfc.plugin.util.FileDialogUtil;
+
+import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 	
@@ -268,61 +272,22 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			if(listener != null) {
 				
+		    	Display.getCurrent().asyncExec(
+		                new Runnable()
+		                {
+		                    public void run()
+		                    {
+
 				// File standard dialog
 				FileDialog fileDialog = new FileDialog(treeViewer.getTree().getShell(), SWT.SAVE);
 				// Set the text
 				fileDialog.setText("Save mime media");
 				// Set filter
 
-				String mimeType = this.mimeType;
-
-				String [] filterNames = null;
-				String [] filterExtensions = null;
-
-				if(mimeType != null) {
-					// guess file ext from mime type
-					String ext = null;
-					String name = null;
-					if(mimeType.startsWith("image/")) {
-						if(mimeType.equals("image/png")) {
-							ext = "*.png";
-							name = "Portable Network Graphics";
-						}
-					} else if(mimeType.startsWith("text/")) {
-						if(mimeType.startsWith("text/xml")) {
-							ext = "*.xml";
-							name = "XML";
-						} else if(mimeType.startsWith("text/plain")) {
-							ext = "*.txt";
-							name = "Plain text";
-						}
-					}
-					
-					if(ext != null && name != null) {
-						filterNames = new String [] {name, "All Files"};
-						filterExtensions = new String [] {ext, "*"};						
-					}
-					
-				}
-				
-				if(filterNames != null || filterExtensions != null) {
-					filterNames = new String [] {"All Files"};
-					filterExtensions = new String [] {"*"};
-					
-				}
-				// Set filter
-				String platform = SWT.getPlatform();
-				if (platform.equals("win32") || platform.equals("wpf")) {
-					filterExtensions[filterExtensions.length - 1] = "*.*";
-				}
-				
-				fileDialog.setFilterNames (filterNames);
-				fileDialog.setFilterExtensions (filterExtensions);
-				
-				final String fileString = fileDialog.open();
+				final String fileString = FileDialogUtil.open(fileDialog, SaveContentAction.this.mimeType);
 				
 				if(fileString != null) {
-					Activator.info("Save to " + fileString);
+					Activator.info("Save to file " + fileString);
 
 					File file = new File(fileString);
 					
@@ -346,24 +311,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 						Activator.info("Save " + payload.length + " bytes");
 
-
 						outputStream.write(payload);
 					} catch(IOException e) {
 						
 						Activator.warn("Unable to save to file " + fileString, e);
 						
-				    	Display.getCurrent().asyncExec(
-				                new Runnable()
-				                {
-				                    public void run()
-				                    {
-										// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
-										Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-										MessageDialog.openError(shell, "Error", "Unable to save to file " + fileString);
-				                    }
-				                }
-				            );
-
+						// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+						MessageDialog.openError(shell, "Error", "Unable to save to file " + fileString);
 					} finally {
 						try {
 							if(outputStream != null) {
@@ -376,8 +331,17 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				} else {
 					Activator.info("No save");
 				}
+				
+		                    }
+		                }
+		            );
+
 			}
+		                    
+		                    
 		}
+		                
+		                
 	}
 	
 	

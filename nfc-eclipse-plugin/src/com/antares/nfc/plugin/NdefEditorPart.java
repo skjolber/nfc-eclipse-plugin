@@ -91,6 +91,7 @@ import com.antares.nfc.model.NdefRecordModelValueColumnLabelProvider;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.terminal.NdefTerminalDetector;
 import com.antares.nfc.terminal.NdefTerminalListener;
+import com.antares.nfc.terminal.NdefTerminalWrapper;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
 public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeListener {
@@ -192,10 +193,9 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	}
 
 	private void handleTerminal() {
-		NdefTerminalDetector ndefTerminalDetector = NdefTerminalDetector.getInstance();
-		if(ndefTerminalDetector != null) {
+		if(NdefTerminalWrapper.isAvailable()) {
 			
-			NdefTerminalListener ndefTerminalListener = ndefTerminalDetector.getNdefTerminalListener();
+			NdefTerminalListener ndefTerminalListener = NdefTerminalWrapper.getNdefTerminalListener();
 			
 			if(ndefTerminalListener != null) {
 				if(ndefTerminalListener == ndefMultiPageEditor) {
@@ -203,7 +203,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 					Type type = ndefMultiPageEditor.getType();
 					
 					if(type == Type.WRITE || type == Type.READ_WRITE) {
-						NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+						NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 						
 						if(ndefOperations != null) {
 							List<Record> records = operator.getRecords();
@@ -273,12 +273,10 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 							} else if(item.getId().equals(NdefMultiPageEditorContributor.class.getName()+".terminal")) {
 								StatusLineContributionItem size = (StatusLineContributionItem)item;
 								
-								com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-								
-								if(ndefTerminalDetector != null) {
-									if(ndefTerminalDetector.hasFoundTerminal()) {
+								if(NdefTerminalWrapper.isAvailable()) {
+									if(NdefTerminalWrapper.hasFoundTerminal()) {
 	
-										String terminalName = ndefTerminalDetector.getTerminalName();
+										String terminalName = NdefTerminalWrapper.getTerminalName();
 										if(terminalName != null) {
 											size.setText(terminalName);
 										} else {
@@ -713,14 +711,13 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void dispose() {
 		super.dispose();
 		
-		NdefTerminalDetector ndefTerminalDetector = NdefTerminalDetector.getInstance();
-		if(ndefTerminalDetector != null) {
+		if(NdefTerminalWrapper.isAvailable()) {
 			
-			NdefTerminalListener ndefTerminalListener = ndefTerminalDetector.getNdefTerminalListener();
+			NdefTerminalListener ndefTerminalListener = NdefTerminalWrapper.getNdefTerminalListener();
 			
 			if(ndefTerminalListener != null) {
 				if(ndefTerminalListener == ndefMultiPageEditor) {
-					ndefTerminalDetector.setNdefTerminalListener(null);
+					NdefTerminalWrapper.setNdefTerminalListener(null);
 				}
 			}
 		}

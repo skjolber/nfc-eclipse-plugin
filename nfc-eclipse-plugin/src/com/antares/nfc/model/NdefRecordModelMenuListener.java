@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -81,8 +80,7 @@ import com.antares.nfc.plugin.NdefMultiPageEditor;
 import com.antares.nfc.plugin.util.FileDialogUtil;
 import com.antares.nfc.terminal.NdefTerminalListener;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
-
-import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
+import com.antares.nfc.terminal.NdefTerminalWrapper;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 	
@@ -210,9 +208,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			
 			List<Record> ndefContent = ndefMultiPageEditor.getNdefRecords();
 			
-			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-
-			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+			NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 
 			if(ndefOperations != null) {
 
@@ -242,9 +238,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Import from terminal");
 			
-			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-
-			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+			NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 			
 			if(ndefOperations != null) {
 				try {
@@ -278,25 +272,23 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			
 			Type type = ndefMultiPageEditor.getType();
 
-			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-
 			if(isChecked()) {
 				if(type == Type.READ) {
 					ndefMultiPageEditor.setType(Type.READ_WRITE);
 				} else {
 					ndefMultiPageEditor.setType(Type.WRITE);
 				}
-				NdefTerminalListener listener = ndefTerminalDetector.getNdefTerminalListener();
+				NdefTerminalListener listener = NdefTerminalWrapper.getNdefTerminalListener();
 				if(listener != null) {
 					if(listener != ndefMultiPageEditor) {
 						listener.setType(Type.NONE);
 					}
 				}
 				
-				ndefTerminalDetector.setNdefTerminalListener(ndefMultiPageEditor);
+				NdefTerminalWrapper.setNdefTerminalListener(ndefMultiPageEditor);
 
 				// write now
-				NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+				NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 
 				if(ndefOperations != null) {
 					List<Record> ndefContent = ndefMultiPageEditor.getNdefRecords();
@@ -318,7 +310,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				} else {
 					ndefMultiPageEditor.setType(Type.NONE);
 					
-					ndefTerminalDetector.setNdefTerminalListener(null);
+					NdefTerminalWrapper.setNdefTerminalListener(null);
 				}
 			}
 			
@@ -337,8 +329,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 			Type type = ndefMultiPageEditor.getType();
 			
-			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-
 			if(isChecked()) {
 				if(type == Type.WRITE) {
 					ndefMultiPageEditor.setType(Type.READ_WRITE);
@@ -346,14 +336,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					ndefMultiPageEditor.setType(Type.READ);
 				}
 				
-				NdefTerminalListener listener = ndefTerminalDetector.getNdefTerminalListener();
+				NdefTerminalListener listener = NdefTerminalWrapper.getNdefTerminalListener();
 				if(listener != null) {
 					if(listener != ndefMultiPageEditor) {
 						listener.setType(Type.NONE);
 					}
 				}
 				
-				ndefTerminalDetector.setNdefTerminalListener(ndefMultiPageEditor);
+				NdefTerminalWrapper.setNdefTerminalListener(ndefMultiPageEditor);
 
 			} else {
 
@@ -362,7 +352,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				} else {
 					ndefMultiPageEditor.setType(Type.NONE);
 					
-					ndefTerminalDetector.setNdefTerminalListener(null);
+					NdefTerminalWrapper.setNdefTerminalListener(null);
 				}
 			}
 		}
@@ -378,9 +368,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Format");
 			
-			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-
-			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+			NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 
 			if(ndefOperations != null) {
 				try {
@@ -408,9 +396,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Set to read only");
 			
-			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-			
-			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+			NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 
 			if(ndefOperations != null) {
 				try {
@@ -929,16 +915,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			menuManager.add(addRootChildRecord);
 		}
 		
-		com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-		if(ndefTerminalDetector != null) {
-			String terminalName = ndefTerminalDetector.getTerminalName();
+		if(NdefTerminalWrapper.isAvailable()) {
+			String terminalName = NdefTerminalWrapper.getTerminalName();
 			
 			if(terminalName != null) {
-				 ndefTerminalDetector.getNdefTerminalListener();
-				
 		        MenuManager terminalMenuManager = new MenuManager(terminalName, null);
 		        
-		        NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+		        NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 		        
 		        if(ndefOperations != null) {
 
@@ -960,7 +943,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		        	}
 		        }
 		        
-		        NdefTerminalListener current = ndefTerminalDetector.getNdefTerminalListener();
+		        NdefTerminalListener current = NdefTerminalWrapper.getNdefTerminalListener();
 		        if(current != null) {
 		        	if(current != ndefMultiPageEditor) {
 		        		autoReadTerminal.setChecked(false);

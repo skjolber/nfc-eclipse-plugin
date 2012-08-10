@@ -1,6 +1,7 @@
 package com.antares.nfc.terminal;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.swt.widgets.Display;
@@ -10,10 +11,12 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.nfctools.NfcAdapter;
+import org.nfctools.api.Tag;
+import org.nfctools.api.UnknownTagListener;
 import org.nfctools.mf.classic.MfClassicNfcTagListener;
 import org.nfctools.mf.ul.Type2NfcTagListener;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefListener;
+import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.NdefOperationsListener;
 import org.nfctools.ndef.Record;
@@ -32,7 +35,7 @@ import com.antares.nfc.plugin.NdefEditorPart;
 import com.antares.nfc.plugin.NdefMultiPageEditor;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
-public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperationsListener, TerminalStatusListener {
+public class NdefTerminalDetector implements Runnable, NdefOperationsListener, TerminalStatusListener, UnknownTagListener {
 
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -58,6 +61,12 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	private boolean foundTerminal = false;
 	
 	private NdefTerminalListener ndefTerminalListener;
+	
+	private NdefOperations ndefOperations;
+	
+	private TerminalStatus terminalStatus = null;
+	
+	private int counter = 0;
 	
 	public NdefTerminalDetector() {
 		terminalHandler = new TerminalHandler();
@@ -99,6 +108,7 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 			
 			nfcAdapter.registerTagListener(new MfClassicNfcTagListener(this));
 			nfcAdapter.registerTagListener(new Type2NfcTagListener(this));
+			nfcAdapter.registerUnknownTagListerner(this);
 			nfcAdapter.startListening();
 		}
 	}
@@ -112,23 +122,24 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
                 {
                     public void run()
                     {
+                    	IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                    	if(activePage != null) {
+                    		IEditorPart activeEditor = activePage.getActiveEditor();
+		
+	                    	if(activeEditor != null) {
+	                    		if(activeEditor instanceof NdefMultiPageEditor) {
+	                    			NdefMultiPageEditor ndefMultiPageEditor = (NdefMultiPageEditor)activeEditor;
+	                    			
+	                    			Object selectedPage = ndefMultiPageEditor.getSelectedPage();
+	                    			if(selectedPage instanceof NdefEditorPart) {
+	                    				NdefEditorPart ndefEditorPart = (NdefEditorPart)selectedPage;
+	                    				
+	                    				ndefEditorPart.refreshStatusLine();
+	                    			}
+	                    		}
+	                    	}
 
-		
-                    	IEditorPart activeEditor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-		
-                    	if(activeEditor != null) {
-                    		if(activeEditor instanceof NdefMultiPageEditor) {
-                    			NdefMultiPageEditor ndefMultiPageEditor = (NdefMultiPageEditor)activeEditor;
-                    			
-                    			Object selectedPage = ndefMultiPageEditor.getSelectedPage();
-                    			if(selectedPage instanceof NdefEditorPart) {
-                    				NdefEditorPart ndefEditorPart = (NdefEditorPart)selectedPage;
-                    				
-                    				ndefEditorPart.refreshStatusLine();
-                    			}
-                    		}
                     	}
-
                     }
                 }
             );
@@ -154,6 +165,7 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 				nfcAdapter = null;
 			}
 			currentTerminal = null;
+			ndefOperations = null;
 		}
 	}
 	
@@ -188,48 +200,19 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 		}
 	}
 	
-	@Override
-	public void onNdefMessages(final Collection<Record> records) {
-		
-		final byte[] encode = NdefContext.getNdefMessageEncoder().encode(records);
-
-		synchronized(this) {
-			if(ndefTerminalListener != null) {
-				Type type = ndefTerminalListener.getType();
-				switch(type) {
-				case NONE: {
-					openNewEditor(encode);
-					
-					break;
-				}
-				case READ: {
-					log("Read NDEF into open editor " + ndefTerminalListener.getClass().getSimpleName());
-					
-					ndefTerminalListener.setNdefContent(encode);
-					
-					break;
-				}
-				case WRITE: {
-					log("Write NDEF from editor " + ndefTerminalListener.getClass().getSimpleName());
-
-					byte[] ndefContent = ndefTerminalListener.getNdefContent();
-					// TODO
-					
-					break;
-				}
-				}
-			} else {
-				openNewEditor(encode);
-			}
-		}
-	}
+	
+	
 
 	private void openNewEditor(final byte[] encode) {
 		log("Open NDEF content in new editor");
 
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				IStorage storage = new NdefTerminalStorage(encode, currentTerminal.getTerminalName()); // TODO add file name counter
+				
+				// TODO add tag id and type
+				// if some tag id i already open, activate its editor TODO
+				
+				IStorage storage = new NdefTerminalStorage(encode, currentTerminal.getTerminalName() + "-" + counter++); // TODO file name counter i temporary solution
 				IStorageEditorInput input = new NdefTerminalInput(storage, currentTerminal.getTerminalName());
 
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -237,6 +220,8 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 				if (page != null) {
 					try {
 						page.openEditor(input, NdefMultiPageEditor.class.getName());
+						
+						setStatus("Read tag successful.");
 					} catch (PartInitException e) {
 						log(e.toString());
 
@@ -248,6 +233,39 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 			}
 		});
 	}
+	
+	private void setStatus(final String message) {
+		// notify status line if editor is open
+    	Display.getDefault().asyncExec(
+                new Runnable()
+                {
+                    public void run()
+                    {
+                    	IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                    	if(activePage != null) {
+                    		IEditorPart activeEditor = activePage.getActiveEditor();
+		
+	                    	if(activeEditor != null) {
+	                    		if(activeEditor instanceof NdefMultiPageEditor) {
+	                    			NdefMultiPageEditor ndefMultiPageEditor = (NdefMultiPageEditor)activeEditor;
+	                    			
+	                    			Object selectedPage = ndefMultiPageEditor.getSelectedPage();
+	                    			if(selectedPage instanceof NdefEditorPart) {
+	                    				NdefEditorPart ndefEditorPart = (NdefEditorPart)selectedPage;
+	                    				
+	                    				ndefEditorPart.setStatus(message);
+	                    			}
+	                    		}
+	                    	}
+
+                    	}
+                    }
+                }
+            );
+
+
+		
+	}
 
 	// http://wiki.eclipse.org/FAQ_How_do_I_open_an_editor_programmatically%3F
 	// http://wiki.eclipse.org/FAQ_How_do_I_open_an_editor_on_something_that_is_not_a_file%3F
@@ -256,22 +274,89 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	
 	@Override
 	public void onNdefOperations(NdefOperations ndefOperations) {
-		if (ndefOperations.isFormatted()) {
-			if (ndefOperations.hasNdefMessage())
-				onNdefMessages(ndefOperations.readNdefMessage());
-			else
-				log.info("Empty formatted tag. Size: " + ndefOperations.getMaxSize() + " bytes");
+		log("onNdefOperations");
+		
+		synchronized(this) {
+			this.ndefOperations = ndefOperations;
+			
+			Type type = Type.NONE;
+			if(ndefTerminalListener != null) {
+				type = ndefTerminalListener.getType();
+
+				if(type == Type.WRITE) {
+					log("Write NDEF from editor " + ndefTerminalListener.getClass().getSimpleName());
+
+					List<Record> records = ndefTerminalListener.getNdefRecords();
+					
+					if(ndefOperations != null) {
+						
+		        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		        		
+		        		try {
+		        			ndefMessageEncoder.encode(records);
+
+							if(ndefOperations.isFormatted()) {
+								ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
+							} else {
+								ndefOperations.format(records.toArray(new Record[records.size()]));
+							}
+		        			setStatus("Auto-write successful.");
+		        		} catch(Exception e) {
+		        			setStatus("Auto-write not possible.");
+		        		}
+					}
+					
+					return;
+				} else {
+					log("Read " + ndefTerminalListener.getClass().getSimpleName() + " type " + type);
+				}
+			}
+			
+			List<Record> list; 
+			if (ndefOperations.isFormatted()) {
+				if (ndefOperations.hasNdefMessage()) {
+					list = ndefOperations.readNdefMessage();
+				} else {
+					log("Empty formatted tag. Size: " + ndefOperations.getMaxSize() + " bytes");
+					
+					 list = new ArrayList<Record>();
+				}
+			} else {
+				log("Empty tag. NOT formatted. Size: " + ndefOperations.getMaxSize() + " bytes");
+				
+				 list = new ArrayList<Record>();
+			}
+				
+			
+			if(type == Type.NONE) {
+				log("Read NDEF into new editor");
+				
+				final byte[] encode = NdefContext.getNdefMessageEncoder().encode(list);
+
+				openNewEditor(encode);
+			} else {
+				log("Read NDEF into open editor " + ndefTerminalListener.getClass().getSimpleName());
+				
+				ndefTerminalListener.setNdefContent(list);
+				
+				setStatus("Auto-read successful.");
+			}
+
 		}
-		else
-			log.info("Empty tag. NOT formatted. Size: " + ndefOperations.getMaxSize() + " bytes");
+
+		
 	}
 
 	@Override
 	public void onStatusChanged(TerminalStatus status) {
+		this.terminalStatus = status;
+		
 		if(status == TerminalStatus.CLOSED) {
 			stopReader();
 			
 			notfiyChange();
+			
+			
 		}
 	}
 
@@ -284,6 +369,11 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 	}
 
 	public void setNdefTerminalListener(NdefTerminalListener ndefTerminalListener) {
+		if(ndefTerminalListener != null) {
+			log("Set terminal listener to " + ndefTerminalListener.getClass().getSimpleName());
+		} else {
+			log("Clear terminal listener");
+		}
 		synchronized(this) {
 			this.ndefTerminalListener = ndefTerminalListener;
 		}
@@ -298,5 +388,18 @@ public class NdefTerminalDetector implements Runnable, NdefListener, NdefOperati
 		}
 	}
 
+	public NdefOperations getNdefOperations() {
+		return ndefOperations;
+	}
+
+	public TerminalStatus getTerminalStatus() {
+		return terminalStatus;
+	}
+
+	@Override
+	public void unsupportedTag(Tag tag) {
+		setStatus("Unsupported tag of type " + tag.getTagType() + " detected");
+	};
+	
 	
 }

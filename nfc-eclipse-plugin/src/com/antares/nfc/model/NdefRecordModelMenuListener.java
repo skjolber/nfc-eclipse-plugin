@@ -30,12 +30,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -48,6 +51,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefMessageEncoder;
+import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
@@ -70,7 +76,11 @@ import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 
 import com.antares.nfc.plugin.Activator;
+import com.antares.nfc.plugin.NdefEditorPart;
+import com.antares.nfc.plugin.NdefMultiPageEditor;
 import com.antares.nfc.plugin.util.FileDialogUtil;
+import com.antares.nfc.terminal.NdefTerminalListener;
+import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
 import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 
@@ -107,8 +117,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 	private TreeViewer treeViewer;
 	private MenuManager manager = new MenuManager();
-	private NdefRecordModelChangeListener listener;
-	
+	private NdefEditorPart editorPart;
+	private NdefMultiPageEditor ndefMultiPageEditor;
+
 	private int activeColumn = -1;
 	
 	private NdefRecordModelParent root;
@@ -175,10 +186,247 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private MenuManager setHandoverCarrierExternalType;
 	private MenuManager setHandoverCarrierWellKnownType;
 
+	// terminal
+	private ReadTerminal readTerminal = new ReadTerminal();
+	private WriteTerminal writeTerminal = new WriteTerminal();
+	private AutoReadTerminal autoReadTerminal = new AutoReadTerminal();
+	private AutoWriteTerminal autoWriteTerminal = new AutoWriteTerminal();
+	private FormatTerminal formatTerminal = new FormatTerminal();
+	private ReadOnlyTerminal readOnlyTerminal = new ReadOnlyTerminal();
+	
 	// mime content
 	private Action viewContent;
 	private SaveContentAction saveContent;
 
+	private class WriteTerminal extends Action {
+		
+		public WriteTerminal() {
+			super("Write");
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Export to terminal");
+			
+			List<Record> ndefContent = ndefMultiPageEditor.getNdefRecords();
+			
+			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+
+			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+
+			if(ndefOperations != null) {
+
+				try {
+					if(!ndefOperations.isFormatted()) {
+						ndefOperations.format(ndefContent.toArray(new Record[ndefContent.size()]));
+					} else {
+						ndefOperations.writeNdefMessage(ndefContent.toArray(new Record[ndefContent.size()]));
+					}
+					editorPart.setStatus("Write successful");
+				} catch(Exception e) {
+					editorPart.setStatus("Write failed: " + e.toString());
+				}
+			} else {
+				editorPart.setStatus("Operation not possible");
+			}
+		}
+	}
+
+	private class ReadTerminal extends Action {
+
+		public ReadTerminal() {
+			super("Read");
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Import from terminal");
+			
+			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+
+			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+			
+			if(ndefOperations != null) {
+				try {
+					List<Record> readNdefMessage;
+					if(ndefOperations.isFormatted()) {
+						readNdefMessage = ndefOperations.readNdefMessage();
+					} else {
+						readNdefMessage = new ArrayList<Record>();
+					}
+		
+					ndefMultiPageEditor.setNdefContent(readNdefMessage);
+					editorPart.setStatus("Read successful");
+				} catch(Exception e) {
+					editorPart.setStatus("Read failed: " + e.toString());
+				}
+			} else {
+				editorPart.setStatus("Operation not possible");
+			}
+		}
+	}
+
+	private class AutoWriteTerminal extends Action {
+		
+		public AutoWriteTerminal() {
+			super("Auto-write here", Action.AS_CHECK_BOX);
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Automatically export to terminal");
+			
+			Type type = ndefMultiPageEditor.getType();
+
+			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+
+			if(isChecked()) {
+				if(type == Type.READ) {
+					ndefMultiPageEditor.setType(Type.READ_WRITE);
+				} else {
+					ndefMultiPageEditor.setType(Type.WRITE);
+				}
+				NdefTerminalListener listener = ndefTerminalDetector.getNdefTerminalListener();
+				if(listener != null) {
+					if(listener != ndefMultiPageEditor) {
+						listener.setType(Type.NONE);
+					}
+				}
+				
+				ndefTerminalDetector.setNdefTerminalListener(ndefMultiPageEditor);
+
+				// write now
+				NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+
+				if(ndefOperations != null) {
+					List<Record> ndefContent = ndefMultiPageEditor.getNdefRecords();
+
+					try {
+						if(!ndefOperations.isFormatted()) {
+							ndefOperations.format(ndefContent.toArray(new Record[ndefContent.size()]));
+						} else {
+							ndefOperations.writeNdefMessage(ndefContent.toArray(new Record[ndefContent.size()]));
+						}
+						editorPart.setStatus("Auto-write successful");
+					} catch(Exception e) {
+						editorPart.setStatus("Auto-write failed: " + e.toString());
+					}
+				}					
+			} else {
+				if(type == Type.READ_WRITE) {
+					ndefMultiPageEditor.setType(Type.READ);
+				} else {
+					ndefMultiPageEditor.setType(Type.NONE);
+					
+					ndefTerminalDetector.setNdefTerminalListener(null);
+				}
+			}
+			
+		}
+	}
+
+	private class AutoReadTerminal extends Action {
+
+		public AutoReadTerminal() {
+			super("Auto-read here", Action.AS_CHECK_BOX);
+		}
+
+		@Override
+		public void run() {
+			Activator.info("Automatically import from terminal");
+
+			Type type = ndefMultiPageEditor.getType();
+			
+			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+
+			if(isChecked()) {
+				if(type == Type.WRITE) {
+					ndefMultiPageEditor.setType(Type.READ_WRITE);
+				} else {
+					ndefMultiPageEditor.setType(Type.READ);
+				}
+				
+				NdefTerminalListener listener = ndefTerminalDetector.getNdefTerminalListener();
+				if(listener != null) {
+					if(listener != ndefMultiPageEditor) {
+						listener.setType(Type.NONE);
+					}
+				}
+				
+				ndefTerminalDetector.setNdefTerminalListener(ndefMultiPageEditor);
+
+			} else {
+
+				if(type == Type.READ_WRITE) {
+					ndefMultiPageEditor.setType(Type.WRITE);
+				} else {
+					ndefMultiPageEditor.setType(Type.NONE);
+					
+					ndefTerminalDetector.setNdefTerminalListener(null);
+				}
+			}
+		}
+	}
+
+	private class FormatTerminal extends Action {
+		
+		public FormatTerminal() {
+			super("Format");
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Format");
+			
+			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+
+			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+
+			if(ndefOperations != null) {
+				try {
+					ndefOperations.format();
+					
+					editorPart.setStatus("Format successful");
+				} catch(Exception e) {
+					editorPart.setStatus("Format failed: " + e.toString());
+				}
+			} else {
+				editorPart.setStatus("Operation not possible");
+			}
+		}
+		
+	}
+
+	
+	private class ReadOnlyTerminal extends Action {
+		
+		public ReadOnlyTerminal() {
+			super("Set read-only");
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Set to read only");
+			
+			com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+			
+			NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+
+			if(ndefOperations != null) {
+				try {
+					ndefOperations.makeReadOnly();
+					
+					editorPart.setStatus("Set read-only successful");
+				} catch(Exception e) {
+					editorPart.setStatus("Set read-only failed: " + e.toString());
+				}
+			} else {
+				editorPart.setStatus("Operation not possible");
+			}
+		}
+		
+	}
+	
 	private class InsertSiblingAction extends Action {
 
 		private Class<? extends Record> recordType;
@@ -193,8 +441,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
-				listener.addRecord(selectedNode.getParent(), selectedNode.getParentIndex() + offset, recordType);
+			if(editorPart != null) {
+				editorPart.addRecord(selectedNode.getParent(), selectedNode.getParentIndex() + offset, recordType);
 			}
 		}
 	}
@@ -211,11 +459,11 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
+			if(editorPart != null) {
 				if(selectedNode != null) {
-					listener.addRecord((NdefRecordModelParent)selectedNode, -1, recordType);
+					editorPart.addRecord((NdefRecordModelParent)selectedNode, -1, recordType);
 				} else {
-					listener.addRecord((NdefRecordModelParent)root, -1, recordType);
+					editorPart.addRecord((NdefRecordModelParent)root, -1, recordType);
 				}
 			}
 		}
@@ -229,7 +477,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
+			if(editorPart != null) {
 				
 				byte[] payload;
 				String mimeType;
@@ -270,7 +518,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
+			if(editorPart != null) {
 				
 		    	Display.getCurrent().asyncExec(
 		                new Runnable()
@@ -357,8 +605,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
-				listener.setRecord((NdefRecordModelParentProperty)selectedNode, recordType);
+			if(editorPart != null) {
+				editorPart.setRecord((NdefRecordModelParentProperty)selectedNode, recordType);
 			}
 		}
 	}
@@ -376,8 +624,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
-				listener.addListItem(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset);
+			if(editorPart != null) {
+				editorPart.addListItem(selectedNode.getParent(), selectedNode.getParent().indexOf(selectedNode) + offset);
 			}
 		}
 	}
@@ -390,8 +638,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
-				listener.addListItem((NdefRecordModelParent)selectedNode, -1);
+			if(editorPart != null) {
+				editorPart.addListItem((NdefRecordModelParent)selectedNode, -1);
 			}
 		}
 	}
@@ -404,9 +652,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
+			if(editorPart != null) {
 				if(selectedNode != null) {
-					listener.removeRecord((NdefRecordModelRecord)selectedNode);
+					editorPart.removeRecord((NdefRecordModelRecord)selectedNode);
 					
 					selectedNode = null;
 				}
@@ -423,9 +671,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		@Override
 		public void run() {
-			if(listener != null) {
+			if(editorPart != null) {
 				if(selectedNode != null) {
-					listener.removeListItem((NdefRecordModelPropertyListItem)selectedNode);
+					editorPart.removeListItem((NdefRecordModelPropertyListItem)selectedNode);
 					
 					selectedNode = null;
 				}
@@ -435,9 +683,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	}
 
 	@SuppressWarnings("unchecked")
-	public NdefRecordModelMenuListener(final TreeViewer treeViewer, final NdefRecordModelChangeListener listener, NdefRecordModelParent root) {
+	public NdefRecordModelMenuListener(final TreeViewer treeViewer, final NdefEditorPart ndefEditorPart, NdefMultiPageEditor ndefMultiPageEditor, NdefRecordModelParent root) {
 		this.treeViewer = treeViewer;
-		this.listener = listener;
+		this.editorPart = ndefEditorPart;
+		this.ndefMultiPageEditor = ndefMultiPageEditor;
 		this.root = root;
 		
 		// root
@@ -679,6 +928,72 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			// force select of root node
 			menuManager.add(addRootChildRecord);
 		}
+		
+		com.antares.nfc.terminal.NdefTerminalDetector ndefTerminalDetector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+		if(ndefTerminalDetector != null) {
+			String terminalName = ndefTerminalDetector.getTerminalName();
+			
+			if(terminalName != null) {
+				 ndefTerminalDetector.getNdefTerminalListener();
+				
+		        MenuManager terminalMenuManager = new MenuManager(terminalName, null);
+		        
+		        NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+		        
+		        if(ndefOperations != null) {
+
+			        terminalMenuManager.add(readTerminal);
+
+		        	if(ndefOperations.isWritable()) {
+
+		        		// add write option IF message can in fact be written
+		        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		        		
+		        		try {
+		        			ndefMessageEncoder.encode(ndefMultiPageEditor.getNdefRecords());
+		        			
+		        			writeTerminal.setEnabled(true);
+		        		} catch(Exception e) {
+		        			writeTerminal.setEnabled(false);
+		        		}
+				        terminalMenuManager.add(writeTerminal);
+		        	}
+		        }
+		        
+		        NdefTerminalListener current = ndefTerminalDetector.getNdefTerminalListener();
+		        if(current != null) {
+		        	if(current != ndefMultiPageEditor) {
+		        		autoReadTerminal.setChecked(false);
+		        		autoWriteTerminal.setChecked(false);
+		        	} else {
+		        		Type type = current.getType();
+		        		
+		        		autoReadTerminal.setChecked(type == Type.READ || type == Type.READ_WRITE);
+		        		autoWriteTerminal.setChecked(type == Type.WRITE || type == Type.READ_WRITE);
+		        	}
+		        } else {
+	        		autoReadTerminal.setChecked(false);
+	        		autoWriteTerminal.setChecked(false);
+		        }
+		        
+		        // always present
+		        terminalMenuManager.add(autoReadTerminal);
+		        terminalMenuManager.add(autoWriteTerminal);
+		        
+		        if(ndefOperations != null) {
+		        	if(ndefOperations.isWritable()) {
+				        terminalMenuManager.add(new Separator());
+				        terminalMenuManager.add(formatTerminal);
+				        terminalMenuManager.add(new Separator());
+				        terminalMenuManager.add(readOnlyTerminal);
+		        	}
+		        }
+		        
+		        menuManager.add(new Separator());
+		        menuManager.add(terminalMenuManager);
+			}
+		}
+		
 	}
 	
 	@Override

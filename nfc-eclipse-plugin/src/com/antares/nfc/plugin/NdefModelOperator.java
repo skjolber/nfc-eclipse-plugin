@@ -228,16 +228,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public byte[] toNdefMessage() {
 		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 
-		List<Record> records = new ArrayList<Record>();
-		
-		List<NdefRecordModelNode> children = model.getChildren();
-		for(NdefRecordModelNode child : children) {
-			NdefRecordModelRecord record = (NdefRecordModelRecord)child;
-			
-			records.add(record.getRecord());
-			
-		}
-		return ndefMessageEncoder.encode(records);
+		return ndefMessageEncoder.encode(getRecords());
 	}
 
 	@Override
@@ -490,6 +481,32 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			e.printStackTrace();
 		}
 		
+	}
+
+	public List<Record> getRecords() {
+		List<Record> records = new ArrayList<Record>();
+		
+		List<NdefRecordModelNode> children = model.getChildren();
+		for(NdefRecordModelNode child : children) {
+			NdefRecordModelRecord record = (NdefRecordModelRecord)child;
+			
+			records.add(record.getRecord());
+			
+		}
+		
+		return records;
+	}
+
+	public void setRecords(List<Record> content) {
+
+		Record[] records = content.toArray(new Record[content.size()]);
+		
+		NdefModelReplaceRootRecordsOperation step = new NdefModelReplaceRootRecordsOperation(model, model.getChildren(), NdefRecordModelFactory.represent(records).getChildren());
+		
+		addStep(step);
+		
+		step.execute();
+
 	}
 	
 	/*

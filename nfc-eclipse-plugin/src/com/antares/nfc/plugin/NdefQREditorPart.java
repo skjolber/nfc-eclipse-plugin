@@ -41,8 +41,8 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 
 	private Label binaryQRLabel;
 
-	public NdefQREditorPart(NdefModelOperator operator) {
-		super(operator);
+	public NdefQREditorPart(NdefModelOperator operator, NdefMultiPageEditor ndefMultiPageEditor) {
+		super(operator, ndefMultiPageEditor);
 	}
 
 	public void setDirty(boolean dirty) {
@@ -86,7 +86,7 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 		Point size = binaryQRLabel.getSize();
 
 		try {
-			binaryQRLabel.setImage(operator.toBinaryQRImage(size.x, size.y, -1, 0));
+			binaryQRLabel.setImage(operator.toBinaryQRImage(size.x, size.y, 0, 0));
 		} catch (Exception e) {
 			binaryQRLabel.setImage(null);
 		}
@@ -95,10 +95,10 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 	
 
 	@Override
-	protected void modified() {
+	protected void modified(boolean terminal) {
 		refreshBinaryQR();
 		
-		super.modified();
+		super.modified(terminal);
 	}
 	
 	@Override

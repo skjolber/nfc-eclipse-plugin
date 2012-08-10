@@ -29,20 +29,25 @@ package com.antares.nfc.plugin;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
+import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
@@ -54,6 +59,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
@@ -69,9 +75,14 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
+import org.nfctools.ndef.Record;
+import org.nfctools.ndef.mime.MimeRecord;
+import org.nfctools.ndef.unknown.UnknownRecord;
 
+import com.antares.nfc.plugin.util.FileDialogUtil;
 import com.antares.nfc.terminal.NdefTerminalInput;
 import com.antares.nfc.terminal.NdefTerminalListener;
+import com.antares.nfc.terminal.NdefTerminalStorage;
 
 public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener, NdefTerminalListener {
 
@@ -82,6 +93,8 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	private NdefModelOperator modelOperator;
 	
 	private NdefRecordFactory ndefRecordFactory = new NdefRecordFactory();
+	
+	private NdefTerminalListener.Type type;
 	
 	protected boolean dirty = false;
 	
@@ -101,7 +114,8 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		composite.setLayout(gridLayout);
 
 		binaryQRLabel = new Label(composite, SWT.NONE);
-		
+		binaryQRLabel.setBackground(new Color(Display.getDefault(), 0xFF, 0xFF, 0xFF));
+
 		GridData gridData = new GridData();
 		gridData.horizontalAlignment = GridData.FILL;
 		gridData.verticalAlignment = GridData.FILL;
@@ -110,7 +124,6 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		gridData.horizontalSpan = 2;
 		binaryQRLabel.setLayoutData(gridData);
 
-		
 		binaryQRLabel.addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
                	refreshBinaryQR();
@@ -123,7 +136,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 
 	public void createNdefQREditorPage() {
 		try {
-			ndefQREditor = new NdefQREditorPart(modelOperator);
+			ndefQREditor = new NdefQREditorPart(modelOperator, this);
 			int index = addPage(ndefQREditor, getEditorInput());
 			setPageText(index, ndefQREditor.getTitle());
 		} catch (PartInitException e) {
@@ -137,7 +150,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 
 	public void createNdefEditorPage() {
 		try {
-			ndefEditor = new NdefEditorPart(modelOperator);
+			ndefEditor = new NdefEditorPart(modelOperator, this);
 			int index = addPage(ndefEditor, getEditorInput());
 			setPageText(index, ndefEditor.getTitle());
 		} catch (PartInitException e) {
@@ -205,6 +218,27 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 				IPath fullPath = iStorageEditorInput.getStorage().getFullPath();
 				if(fullPath == null) {
 					Activator.info("Open file save as dialog");
+					
+					file = openSaveDialog();
+					
+					if(file == null) {
+						return;
+					} else {
+						setPartName(file.getName());
+						
+						if(iStorageEditorInput instanceof NdefTerminalInput) {
+							NdefTerminalInput ndefTerminalInput = (NdefTerminalInput)iStorageEditorInput;
+							
+							IStorage storage = ndefTerminalInput.getStorage();
+							if(storage instanceof NdefTerminalStorage) {
+								NdefTerminalStorage ndefTerminalStorage = (NdefTerminalStorage)storage;
+								
+								ndefTerminalStorage.setFullPath(new Path(file.getAbsolutePath()));
+							}
+						}
+					}
+				}  else {
+					file = fullPath.toFile();
 				}
 			} catch (CoreException e) {
 				Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -239,6 +273,32 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 			}
 		}		
 		
+	}
+
+	private File openSaveDialog() {
+		// File standard dialog
+		FileDialog fileDialog = new FileDialog(getContainer().getShell(), SWT.SAVE);
+		// Set the text
+		fileDialog.setText("Save file");
+		// Set filter
+		String [] filterNames = new String [] {"NDEF Files", "All Files"};
+		String [] filterExtensions = new String [] {"*.ndef", "*"};
+		
+		String platform = SWT.getPlatform();
+		if (platform.equals("win32") || platform.equals("wpf")) {
+			filterExtensions[1] = "*.*";
+		}
+		
+		fileDialog.setFilterNames (filterNames);
+		fileDialog.setFilterExtensions (filterExtensions);
+		
+		// Open Dialog and save result of selection
+		String file = fileDialog.open();
+
+		if(file != null) {
+			return new File(file);
+		}
+		return null;
 	}
 
 	public void doSaveAs() {
@@ -470,20 +530,46 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	}
 
 	@Override
-	public byte[] getNdefContent() {
-		return modelOperator.toNdefMessage();
+	public List<Record> getNdefRecords() {
+		return modelOperator.getRecords();
 	}
 
 	@Override
-	public void setNdefContent(byte[] content) {
-		modelOperator.setRecords(content);
+	public void setNdefContent(final List<Record> content) {
 		
-		setDirty(true);
+    	Display.getDefault().asyncExec(
+                new Runnable()
+                {
+                    public void run()
+                    {
+		
+						modelOperator.setRecords(content);
+						
+						if(ndefEditor == getActiveEditor()) {
+							ndefEditor.modified(type != Type.READ_WRITE);
+						}
+						
+						if(ndefQREditor == getActiveEditor()) {
+							ndefQREditor.modified(type != Type.READ_WRITE);
+						}
+						
+						setDirty(true);
+		
+                    }
+                }
+            );
+
+
 	}
 
 	@Override
 	public Type getType() {
-		return null;
+		return type;
+	}
+	
+	@Override
+	public void setType(Type type) {
+		this.type = type;
 	}
 	
 }

@@ -6,10 +6,12 @@ import java.io.InputStream;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 public class NdefTerminalStorage implements IStorage {
 	private byte[] contents;
 	private String name;
+	private IPath fullPath;
 	
 	NdefTerminalStorage(byte[] contents, String name) {
 		this.contents = contents;
@@ -21,7 +23,7 @@ public class NdefTerminalStorage implements IStorage {
 	}
 
 	public IPath getFullPath() {
-		return null;
+		return fullPath;
 	}
 
 	public Object getAdapter(Class adapter) {
@@ -34,5 +36,9 @@ public class NdefTerminalStorage implements IStorage {
 
 	public boolean isReadOnly() {
 		return false;
+	}
+
+	public void setFullPath(IPath path) {
+		this.fullPath = path;
 	}
 }

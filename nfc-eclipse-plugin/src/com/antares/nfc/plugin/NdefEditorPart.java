@@ -26,6 +26,8 @@
 
 package com.antares.nfc.plugin;
 
+import java.util.List;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IStatusLineManager;
@@ -68,7 +70,10 @@ import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.EditorPart;
+import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefException;
+import org.nfctools.ndef.NdefMessageEncoder;
+import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
@@ -84,6 +89,9 @@ import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.model.NdefRecordModelSizeColumnLabelProvider;
 import com.antares.nfc.model.NdefRecordModelValueColumnLabelProvider;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
+import com.antares.nfc.terminal.NdefTerminalDetector;
+import com.antares.nfc.terminal.NdefTerminalListener;
+import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
 public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeListener {
 
@@ -91,16 +99,18 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	protected TreeViewer treeViewer; 
 	protected NdefModelOperator operator;
 	protected SashForm form;
-
-	public NdefEditorPart(NdefModelOperator operator) {
+	protected NdefMultiPageEditor ndefMultiPageEditor;
+	
+	public NdefEditorPart(NdefModelOperator operator, NdefMultiPageEditor ndefMultiPageEditor) {
 		this.operator = operator;
+		this.ndefMultiPageEditor = ndefMultiPageEditor;
 	}
 	
 	@Override
 	public void update(NdefRecordModelNode ndefRecordModelNode, NdefModelOperation operation) {
 		operator.update(ndefRecordModelNode, operation);
 		
-		modified();
+		modified(true);
 		
 		treeViewer.expandToLevel(ndefRecordModelNode, TreeViewer.ALL_LEVELS);
 	}
@@ -109,7 +119,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void addRecord(NdefRecordModelParent parent, int index, Class<? extends Record> type) {
 		operator.addRecord(parent, index, type);
 		
-		modified();
+		modified(true);
 		
 		if(index == -1) {
 			treeViewer.expandToLevel(parent.getChild(parent.getSize() - 1), TreeViewer.ALL_LEVELS);
@@ -122,7 +132,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void addListItem(NdefRecordModelParent parent, int index) {
 		operator.addListItem(parent, index);
 		
-		modified();
+		modified(true);
 		
 		if(index == -1) {
 			treeViewer.expandToLevel(parent.getChild(parent.getSize() - 1), TreeViewer.ALL_LEVELS);
@@ -135,7 +145,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void setRecord(NdefRecordModelParentProperty ndefRecordModelParentProperty, Class<? extends Record> type) {
 		operator.setRecord(ndefRecordModelParentProperty, type);
 		
-		modified();
+		modified(true);
 		
 		treeViewer.expandToLevel(ndefRecordModelParentProperty, TreeViewer.ALL_LEVELS);
 	}
@@ -144,17 +154,23 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void removeRecord(NdefRecordModelRecord node) {
 		operator.removeRecord(node);
 		
-		modified();
+		modified(true);
+		
+		clearStatus();
+	}
+
+	private void clearStatus() {
+		setStatus("");
 	}
 
 	@Override
 	public void removeListItem(NdefRecordModelPropertyListItem node) {
 		operator.removeListItem(node);
 		
-		modified();
+		modified(true);
 	}
 		
-	protected void modified() {
+	protected void modified(boolean terminal) {
 		treeViewer.refresh();
 
 		form.update();
@@ -163,10 +179,55 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		
 		updateActions();
 		
+		clearStatus();
+
 		refreshStatusLine();
 		
 		// also fill the last column (i.e. pack or fill) if any hint has been modified
 		packAndFillLastColumn();
+		
+		if(terminal) {
+			handleTerminal();
+		}
+	}
+
+	private void handleTerminal() {
+		NdefTerminalDetector ndefTerminalDetector = NdefTerminalDetector.getInstance();
+		if(ndefTerminalDetector != null) {
+			
+			NdefTerminalListener ndefTerminalListener = ndefTerminalDetector.getNdefTerminalListener();
+			
+			if(ndefTerminalListener != null) {
+				if(ndefTerminalListener == ndefMultiPageEditor) {
+					
+					Type type = ndefMultiPageEditor.getType();
+					
+					if(type == Type.WRITE || type == Type.READ_WRITE) {
+						NdefOperations ndefOperations = ndefTerminalDetector.getNdefOperations();
+						
+						if(ndefOperations != null) {
+							List<Record> records = operator.getRecords();
+							
+			        		// add write option IF message can in fact be written
+			        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+			        		
+			        		try {
+			        			ndefMessageEncoder.encode(records);
+
+								if(ndefOperations.isFormatted()) {
+									ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
+								} else {
+									ndefOperations.format(records.toArray(new Record[records.size()]));
+								}
+			        			setStatus("Auto-write successful.");
+			        		} catch(Exception e) {
+			        			setStatus("Auto-write not possible.");
+			        		}
+						}
+					}
+				}
+			}			
+		}
 	}
 	
 	private void updateActions() {
@@ -196,7 +257,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 						if( statusLineManager == null ) {
 							return ;
 						}
-
+						
 						IContributionItem[] items = statusLineManager.getItems();
 						
 						for(IContributionItem item : items) {
@@ -359,7 +420,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 
 		treeViewer.setInput(operator.getModel());
 		
-		new NdefRecordModelMenuListener(treeViewer, this, operator.getModel());
+		new NdefRecordModelMenuListener(treeViewer, this, ndefMultiPageEditor, operator.getModel());
 		
 		treeViewer.expandAll();
 
@@ -523,13 +584,13 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 								
 								operator.move(source, node.getParent(), node.getParentIndex());
 								
-								modified();
+								modified(true);
 							} else if (pt.y > bounds.y + 2 * bounds.height / 3) {
 								Activator.info("Drop " + source + " after " + node);
 								
 								operator.move(source, node.getParent(), node.getParentIndex() + 1);
 								
-								modified();
+								modified(true);
 							} else {
 								// event.feedback |= DND.FEEDBACK_SELECT;
 							}
@@ -609,7 +670,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void undo() {
 		operator.undo();
 
-		modified();
+		modified(true);
 		
 		treeViewer.expandAll();
 	}
@@ -617,7 +678,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	public void redo() {
 		operator.redo();
 		
-		modified();
+		modified(true);
 		
 		treeViewer.expandAll();
 	}
@@ -631,8 +692,40 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		treeViewer.refresh();
 	}
 
-	
+	public void setStatus(String string) {
+		IActionBars actionBars = getEditorSite().getActionBars(); 
 
+		if( actionBars == null ) {
+			return ;
+		}
+
+		IStatusLineManager statusLineManager = actionBars.getStatusLineManager();
+
+		if( statusLineManager == null ) {
+			return ;
+		}
+
+		statusLineManager.setMessage(string);
+	}
+
+	
+	@Override
+	public void dispose() {
+		super.dispose();
+		
+		NdefTerminalDetector ndefTerminalDetector = NdefTerminalDetector.getInstance();
+		if(ndefTerminalDetector != null) {
+			
+			NdefTerminalListener ndefTerminalListener = ndefTerminalDetector.getNdefTerminalListener();
+			
+			if(ndefTerminalListener != null) {
+				if(ndefTerminalListener == ndefMultiPageEditor) {
+					ndefTerminalDetector.setNdefTerminalListener(null);
+				}
+			}
+		}
+
+	}
 	
 
 }

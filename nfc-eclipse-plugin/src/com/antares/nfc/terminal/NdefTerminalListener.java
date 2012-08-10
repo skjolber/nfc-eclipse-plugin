@@ -1,8 +1,13 @@
 package com.antares.nfc.terminal;
 
+import java.util.List;
+
+import org.nfctools.ndef.Record;
+
+
 /**
  * 
- * 
+ * Interface for editor read/write and state information
  * 
  * @author thomas
  *
@@ -11,12 +16,14 @@ package com.antares.nfc.terminal;
 public interface NdefTerminalListener {
 
 	public enum Type {
-		READ, WRITE, NONE;
+		READ, WRITE, NONE, READ_WRITE;
 	}
 	
-	byte[] getNdefContent();
+	List<Record> getNdefRecords();
 	
-	void setNdefContent(byte[] content);
+	void setNdefContent(List<Record> content);
 	
 	Type getType();
+	
+	void setType(Type type);
 }

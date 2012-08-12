@@ -29,10 +29,8 @@ package com.antares.nfc.plugin;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.List;
 
@@ -76,10 +74,7 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.nfctools.ndef.Record;
-import org.nfctools.ndef.mime.MimeRecord;
-import org.nfctools.ndef.unknown.UnknownRecord;
 
-import com.antares.nfc.plugin.util.FileDialogUtil;
 import com.antares.nfc.terminal.NdefTerminalInput;
 import com.antares.nfc.terminal.NdefTerminalListener;
 import com.antares.nfc.terminal.NdefTerminalStorage;

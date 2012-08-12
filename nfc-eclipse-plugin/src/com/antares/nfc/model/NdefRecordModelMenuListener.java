@@ -922,11 +922,12 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		        MenuManager terminalMenuManager = new MenuManager(terminalName, null);
 		        
 		        NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
+
+		        terminalMenuManager.add(readTerminal);
+		        terminalMenuManager.add(writeTerminal);
 		        
 		        if(ndefOperations != null) {
-
-			        terminalMenuManager.add(readTerminal);
-
+		        	readTerminal.setEnabled(true);
 		        	if(ndefOperations.isWritable()) {
 
 		        		// add write option IF message can in fact be written
@@ -939,8 +940,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		        		} catch(Exception e) {
 		        			writeTerminal.setEnabled(false);
 		        		}
-				        terminalMenuManager.add(writeTerminal);
 		        	}
+		        } else {
+		        	readTerminal.setEnabled(false);
+        			writeTerminal.setEnabled(false);
 		        }
 		        
 		        NdefTerminalListener current = NdefTerminalWrapper.getNdefTerminalListener();
@@ -962,16 +965,26 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		        // always present
 		        terminalMenuManager.add(autoReadTerminal);
 		        terminalMenuManager.add(autoWriteTerminal);
-		        
+
 		        if(ndefOperations != null) {
 		        	if(ndefOperations.isWritable()) {
-				        terminalMenuManager.add(new Separator());
-				        terminalMenuManager.add(formatTerminal);
-				        terminalMenuManager.add(new Separator());
-				        terminalMenuManager.add(readOnlyTerminal);
+		        		formatTerminal.setEnabled(true);
+		        		readOnlyTerminal.setEnabled(true);
+		        	} else {
+		        		formatTerminal.setEnabled(false);
+		        		readOnlyTerminal.setEnabled(false);
 		        	}
+	        	} else {
+	        		formatTerminal.setEnabled(false);
+	        		readOnlyTerminal.setEnabled(false);
 		        }
-		        
+
+		        terminalMenuManager.add(new Separator());
+		        terminalMenuManager.add(formatTerminal);
+		        terminalMenuManager.add(new Separator());
+		        terminalMenuManager.add(readOnlyTerminal);
+
+
 		        menuManager.add(new Separator());
 		        menuManager.add(terminalMenuManager);
 			}

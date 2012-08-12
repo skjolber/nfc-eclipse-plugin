@@ -89,10 +89,9 @@ import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.model.NdefRecordModelSizeColumnLabelProvider;
 import com.antares.nfc.model.NdefRecordModelValueColumnLabelProvider;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
-import com.antares.nfc.terminal.NdefTerminalDetector;
 import com.antares.nfc.terminal.NdefTerminalListener;
-import com.antares.nfc.terminal.NdefTerminalWrapper;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
+import com.antares.nfc.terminal.NdefTerminalWrapper;
 
 public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeListener {
 

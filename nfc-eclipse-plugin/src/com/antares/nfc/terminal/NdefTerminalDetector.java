@@ -199,9 +199,6 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 			}
 		}
 	}
-	
-	
-	
 
 	private void openNewEditor(final byte[] encode) {
 		log("Open NDEF content in new editor");
@@ -349,14 +346,24 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 
 	@Override
 	public void onStatusChanged(TerminalStatus status) {
-		this.terminalStatus = status;
-		
-		if(status == TerminalStatus.CLOSED) {
-			stopReader();
-			
-			notfiyChange();
-			
-			
+
+		synchronized(this) {
+			if(this.terminalStatus != status) {
+				if(status == TerminalStatus.CLOSED) {
+					stopReader();
+					
+					notfiyChange();
+				} else if(status == TerminalStatus.CONNECTED) {
+					setStatus("Tag connected.");
+				} else if(status == TerminalStatus.DISCONNECTED) {
+					setStatus("Tag disconnected.");
+					
+					ndefOperations = null;
+				} else if(status == TerminalStatus.WAITING) {
+					// do nothing
+				}
+				this.terminalStatus = status;
+			}
 		}
 	}
 
@@ -369,11 +376,6 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 	}
 
 	public void setNdefTerminalListener(NdefTerminalListener ndefTerminalListener) {
-		if(ndefTerminalListener != null) {
-			log("Set terminal listener to " + ndefTerminalListener.getClass().getSimpleName());
-		} else {
-			log("Clear terminal listener");
-		}
 		synchronized(this) {
 			this.ndefTerminalListener = ndefTerminalListener;
 		}

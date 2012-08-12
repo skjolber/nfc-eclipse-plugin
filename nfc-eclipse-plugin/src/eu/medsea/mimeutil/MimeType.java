@@ -18,8 +18,6 @@ package eu.medsea.mimeutil;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
-import eu.medsea.mimeutil.MimeException;
-
 /**
  * This class represents a simple MimeType object. A mime type is made up of
  * two parts <code>&lt;media type&gt;/&lt;sub type&gt;</code>.

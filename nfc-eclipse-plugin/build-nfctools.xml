@@ -9,6 +9,7 @@
 
 	<property name="src.api.dir"     value="${git.dir}/nfctools-api/src/main/java"/>
 	<property name="src.ndef.dir"     value="${git.dir}/nfctools-ndef/src/main/java"/>
+	<property name="src.core.dir"     value="${git.dir}/nfctools-core/src/main/java"/>
 
 	<property name="build.dir"   value="build"/>
 	<property name="classes.dir" value="${build.dir}/classes"/>
@@ -27,12 +28,19 @@
 		<mkdir dir="${classes.dir}"/>
 		<mkdir dir="${src.dir}"/>
 
+	  	<path id="lib.path.ref">
+		    <fileset dir="lib" includes="*.jar"/>
+		</path>
+		
 		<copy todir="${src.dir}">
 			<fileset dir="${src.api.dir}"/>
 			<fileset dir="${src.ndef.dir}"/>
+			<fileset dir="${src.core.dir}"/>
 		</copy>
 
-		<javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}"/>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}">
+			<classpath refid="lib.path.ref"/>
+		</javac>
 		<copy todir="${classes.dir}">
 			<fileset dir="${src.dir}" excludes="**/*.java"/>
 		</copy>

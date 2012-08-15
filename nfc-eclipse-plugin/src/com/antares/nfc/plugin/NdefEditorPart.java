@@ -37,6 +37,7 @@ import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
+import org.eclipse.jface.viewers.ColumnViewerToolTipSupport;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -352,6 +353,8 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		treeViewer.getTree().setLinesVisible(true);
 		treeViewer.getTree().setHeaderVisible(true);
 				
+		ColumnViewerToolTipSupport.enableFor(treeViewer);		
+		
 		TreeViewerFocusCellManager focusCellManager = new TreeViewerFocusCellManager(treeViewer,new FocusCellOwnerDrawHighlighter(treeViewer));
 		ColumnViewerEditorActivationStrategy actSupport = new ColumnViewerEditorActivationStrategy(treeViewer) {
 			@Override
@@ -379,13 +382,15 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 			public String getText(Object element) {
 				return element.toString();
 			}
-
+			
+			// add tooltip here
 		});
 		
 		column = new TreeViewerColumn(treeViewer, SWT.NONE);
 		column.getColumn().setWidth(200);
 		column.getColumn().setMoveable(true);
 		column.getColumn().setText("Value");
+		
 		column.setLabelProvider(new NdefRecordModelValueColumnLabelProvider());
 		column.setEditingSupport(new NdefRecordModelEditingSupport(treeViewer, this, operator.getNdefRecordFactory()));		
 		
@@ -395,11 +400,6 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		column.getColumn().setText("Size");
 		column.getColumn().setAlignment(SWT.CENTER);
 		column.setLabelProvider(new NdefRecordModelSizeColumnLabelProvider());
-		
-		//TableColumn singleColumn = new TableColumn(v.getTable(), SWT.NONE);
-		 //TableColumnLayout tableColumnLayout = new TableColumnLayout();
-		 //tableColumnLayout.setColumnData(singleColumn, new ColumnWeightData(100));
-		 //tableComposite.setLayout(tableColumnLayout);
 		
 		// http://blog.eclipse-tips.com/2008/05/single-column-tableviewer-and.html
 		

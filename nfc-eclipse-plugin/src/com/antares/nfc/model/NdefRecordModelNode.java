@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -164,11 +164,4 @@ public class NdefRecordModelNode implements Cloneable {
 		return null;
 	}
 
-	public NdefRecordModelNode clone() {
-		NdefRecordModelNode ndefRecordModelNode = new NdefRecordModelNode();
-		
-		ndefRecordModelNode.setParent(parent); 
-		
-		return ndefRecordModelNode;
-	}
 }

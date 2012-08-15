@@ -192,6 +192,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				if(e.getCause() instanceof EOFException) {
 					// try again with more relaxed decoding
 					decode = ndefMessageDecoder.decodeFully(ndef);
+				} else {
+					throw new IOException(e);
 				}
 			}
 			List<Record> list = ndefMessageDecoder.decodeToRecords(decode);

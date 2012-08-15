@@ -57,15 +57,4 @@ public class NdefRecordModelParentProperty extends NdefRecordModelParent {
 		return name;
 	}
 	
-	public NdefRecordModelNode clone() {
-		List<NdefRecordModelNode> children = new ArrayList<NdefRecordModelNode>();
-		for(NdefRecordModelNode child : this.children) {
-			children.add(child.clone());
-		}
-		
-		return new NdefRecordModelParentProperty(name, children, parent);
-	}
-
-
-	
 }

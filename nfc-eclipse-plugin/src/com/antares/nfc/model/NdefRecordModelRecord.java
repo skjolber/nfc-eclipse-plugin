@@ -64,14 +64,5 @@ public class NdefRecordModelRecord extends NdefRecordModelParent {
 	public String toString() {
 		return name != null ? name : record.getClass().getSimpleName();
 	}
-
-	public NdefRecordModelNode clone() {
-		List<NdefRecordModelNode> children = new ArrayList<NdefRecordModelNode>();
-		for(NdefRecordModelNode child : this.children) {
-			children.add(child.clone());
-		}
-		
-		return new NdefRecordModelRecord(record, name, children, parent);
-	}
 	
 }

@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * @author Steven McArdle
  *
  */
-public class MimeType implements Comparable, Serializable {
+public class MimeType implements Comparable<MimeType>, Serializable {
 
 	private static final long serialVersionUID = -1324243127744494894L;
 
@@ -40,9 +40,6 @@ public class MimeType implements Comparable, Serializable {
 	protected String mediaType = "*";
 	protected String subType = "*";
 
-	//This is a estimate of how specific this mime type is
-	private int specificity = 1;
-
 	/**
 	 * Construct a MimeType from another MimeType instance
 	 * @param mimeType
@@ -50,7 +47,6 @@ public class MimeType implements Comparable, Serializable {
 	public MimeType(final MimeType mimeType) {
 		this.mediaType = mimeType.mediaType;
 		this.subType = mimeType.subType;
-		this.specificity = mimeType.specificity;
 	}
 
 	/**
@@ -91,43 +87,6 @@ public class MimeType implements Comparable, Serializable {
 		return subType;
 	}
 
-
-	/**
-	 * See if this MimeType is the same as the passed in mime type string
-	 * @param mimeType as a String
-	 * @return true if the MimeType passed in has the same media and sub types, else returns false.
-	 */
-	private boolean match(final String mimeType) {
-		return toString().equals(mimeType);
-	}
-
-	/**
-	 * Get the hashCode of this MimeType.
-	 * The hashCode is calculate as (31 * mediaType.hashCode()) + subType.hashCode()
-	 * @return calculated hashCode
-	 * @see Object#hashCode()
-	 */
-	public int hashCode() {
-		return (31 * mediaType.hashCode()) + subType.hashCode();
-	}
-
-	/**
-	 * Overrides the equals method of <code>java.lang.Object</code>. This is able to compare
-	 * against another MimeType instance or a string representation of a mime type.
-	 * @return true if the types match else false.
-	 * @see Object#equals(Object o)
-	 */
-	public boolean equals(Object o) {
-		if(o instanceof MimeType) {
-			if(this.mediaType.equals(((MimeType)o).mediaType) && this.subType.equals(((MimeType)o).subType)) {
-				return true;
-			}
-		} else if(o instanceof String) {
-			return match((String)o);
-		}
-		return false;
-	}
-
 	/**
 	 * Overrides the toString method of <code>java.lang.Object</code>.
 	 * @return String representation i.e. <code>&lt;media type&gt;/&lt;sub type&gt;.
@@ -135,31 +94,6 @@ public class MimeType implements Comparable, Serializable {
 	 */
 	public String toString() {
 		return mediaType + "/" + subType;
-	}
-
-	/**
-	 * This indicates how specific the mime types is i.e. how good a match
-	 * the mime type is when returned from the getMimeTypes(...) calls.
-	 * <p>
-	 * This is calculated by the number of times this MimeType would be returned
-	 * if the Collection was not normalised. The higher the count the more MimeDetectors
-	 * have matched this type. As this can be a false positive for types such as application/octect-stream
-	 * and text/plain where they would be returned by multiple MimeDetector(s). These types are referred to as root
-	 * mime types where ALL mime types derive from application/octet-stream and all text/* types derive from text/plan
-	 * so in these cases we set the specificity to 0 no matter how many times they match. This ensures they are regarded
-	 * as the least specific in the returned Collection.
-	 * </p>
-	 * @return how specific this MimeType is according to the rest of the MimeTypes in a Collection.
-	 */
-	public int getSpecificity() {
-		return specificity;
-	}
-
-	/*
-	 * Set the value of the specificity. The higher the value the more specific a MimeType is.
-	 */
-	void setSpecificity(final int specificity) {
-		this.specificity = specificity;
 	}
 
 	/*
@@ -188,10 +122,8 @@ public class MimeType implements Comparable, Serializable {
 	/**
 	 * Allows us to use MimeType(s) in Sortable Set's such as the TreeSet.
 	 */
-	public int compareTo(Object arg0) {
-		if(arg0 instanceof MimeType) {
-			return toString().compareTo(((MimeType)arg0).toString());
-		}
-		return 0;
+	public int compareTo(MimeType mimeType) {
+		return toString().compareTo(mimeType.toString());
 	}
+	
 }

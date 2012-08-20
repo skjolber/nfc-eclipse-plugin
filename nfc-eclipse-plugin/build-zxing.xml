@@ -26,14 +26,14 @@
       	 	<fileset dir="${src.zxing.javase.dir}"/>
       	 </copy>
     	
-        <javac srcdir="${src.dir}" destdir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" target="1.6" source="1.6"/>
        	 <copy todir="${classes.dir}">
        	 	<fileset dir="${src.dir}" excludes="**/*.java"/>
        	 </copy>
        	
     </target>
 
-    <target name="jar" depends="compile">
+    <target name="jar" depends="compile" >
         <mkdir dir="${jar.dir}"/>
         <jar destfile="${jar.dir}/${jar.filename}.jar" basedir="${classes.dir}">
             <manifest>

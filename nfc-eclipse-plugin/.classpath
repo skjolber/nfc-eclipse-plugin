@@ -10,6 +10,12 @@
 	<classpathentry kind="src" path="src-zxing-javase"/>
 	<classpathentry kind="src" path="zxing-binaryqr"/>
 	<classpathentry kind="src" path="zxing-core"/>
+	<classpathentry kind="src" path="nfctools-api"/>
+	<classpathentry kind="src" path="nfctools-core"/>
+	<classpathentry kind="src" path="nfctools-ndef"/>
+	<classpathentry kind="src" path="nfctools-ndef-test"/>
+	<classpathentry kind="src" path="nfctools-ndef-test-resources"/>
+	<classpathentry kind="src" path="nfctools-p2p"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/binaryqr.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.6.jar"/>

@@ -25,7 +25,11 @@ package com.google.zxing;
  */
 public final class FormatException extends ReaderException {
 
-  private static final FormatException instance = new FormatException();
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+private static final FormatException instance = new FormatException();
 
   private FormatException() {
     // do nothing

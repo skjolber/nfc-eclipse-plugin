@@ -77,7 +77,12 @@ final class MultiFinderPatternFinder extends FinderPatternFinder {
    * A comparator that orders FinderPatterns by their estimated module size.
    */
   private static class ModuleSizeComparator implements Comparator<FinderPattern>, Serializable {
-    @Override
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	@Override
     public int compare(FinderPattern center1, FinderPattern center2) {
       float value = center2.getEstimatedModuleSize() - center1.getEstimatedModuleSize();
       return value < 0.0 ? -1 : value > 0.0 ? 1 : 0;

@@ -24,7 +24,12 @@ package com.google.zxing.common.reedsolomon;
  */
 public final class ReedSolomonException extends Exception {
 
-  public ReedSolomonException(String message) {
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+public ReedSolomonException(String message) {
     super(message);
   }
 

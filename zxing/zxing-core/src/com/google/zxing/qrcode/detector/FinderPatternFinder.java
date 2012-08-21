@@ -550,7 +550,11 @@ public class FinderPatternFinder {
    * <p>Orders by furthest from average</p>
    */
   private static class FurthestFromAverageComparator implements Comparator<FinderPattern>, Serializable {
-    private final float average;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final float average;
     private FurthestFromAverageComparator(float f) {
       average = f;
     }
@@ -566,7 +570,11 @@ public class FinderPatternFinder {
    * <p>Orders by {@link FinderPattern#getCount()}, descending.</p>
    */
   private static class CenterComparator implements Comparator<FinderPattern>, Serializable {
-    private final float average;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final float average;
     private CenterComparator(float f) {
       average = f;
     }

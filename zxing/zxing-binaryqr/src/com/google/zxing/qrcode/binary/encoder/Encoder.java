@@ -17,10 +17,14 @@ package com.google.zxing.qrcode.binary.encoder;
 
 
 
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitArray;
-import com.google.zxing.common.CharacterSetECI;
 import com.google.zxing.common.reedsolomon.GenericGF;
 import com.google.zxing.common.reedsolomon.ReedSolomonEncoder;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
@@ -31,11 +35,6 @@ import com.google.zxing.qrcode.encoder.ByteMatrix;
 import com.google.zxing.qrcode.encoder.MaskUtil;
 import com.google.zxing.qrcode.encoder.MatrixUtil;
 import com.google.zxing.qrcode.encoder.QRCode;
-
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author satorux@google.com (Satoru Takabayashi) - creator
@@ -542,10 +541,6 @@ public final class Encoder {
     }
   }
 
-  private static void appendECI(CharacterSetECI eci, BitArray bits) {
-    bits.appendBits(Mode.ECI.getBits(), 4);
-    // This is correct for values up to 127, which is all we need now.
-    bits.appendBits(eci.getValue(), 8);
-  }
+  
 
 }

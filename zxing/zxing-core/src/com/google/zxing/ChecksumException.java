@@ -24,7 +24,11 @@ package com.google.zxing;
  */
 public final class ChecksumException extends ReaderException {
 
-  private static final ChecksumException instance = new ChecksumException();
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+private static final ChecksumException instance = new ChecksumException();
 
   private ChecksumException() {
     // do nothing

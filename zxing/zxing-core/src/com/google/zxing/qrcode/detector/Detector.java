@@ -62,10 +62,10 @@ public class Detector {
   public DetectorResult detect() throws NotFoundException, FormatException {
 	  
 	  // add try harder
-	  Map hints = new HashMap();
+	  Map<DecodeHintType, Boolean> hints = new HashMap<DecodeHintType, Boolean>();
 	  hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
 	  
-    return detect(null);
+    return detect(hints);
   }
 
   /**

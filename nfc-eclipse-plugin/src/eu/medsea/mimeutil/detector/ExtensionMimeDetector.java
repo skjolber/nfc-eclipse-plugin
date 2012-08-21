@@ -43,7 +43,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 	private static Logger log = LoggerFactory.getLogger(ExtensionMimeDetector.class);
 
 	// Extension MimeTypes
-	private static Map extMimeTypes;
+	private static Properties extMimeTypes;
 	private static Map<String, Set<String>> mimeTypeExts;
 
 	static {
@@ -66,7 +66,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 	 * @return collection of the matched mime types.
 	 * @throws MimeException if errors occur.
 	 */
-	public Collection getMimeTypesFile(final File file) throws MimeException {
+	public Collection<MimeType> getMimeTypesFile(final File file) throws MimeException {
 		return getMimeTypesFileName(file.getName());
 	}
 
@@ -77,7 +77,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 	 * @return collection of the matched mime types.
 	 * @throws MimeException if errors occur.
 	 */
-	public Collection getMimeTypesURL(final URL url) throws MimeException {
+	public Collection<MimeType> getMimeTypesURL(final URL url) throws MimeException {
 		return getMimeTypesFileName(url.getPath());
 	}
 
@@ -90,7 +90,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 	 * @return collection of the matched mime types.
 	 * @throws MimeException if errors occur.
 	 */
-	public Collection getMimeTypesFileName(final String fileName) throws MimeException {
+	public Collection<MimeType> getMimeTypesFileName(final String fileName) throws MimeException {
 
 		String fileExtension = getExtension(fileName);
 		
@@ -184,7 +184,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 			// override the default mime type entries. Could also be in jar files.
 			// Get an enumeration of all files on the classpath with this name. They could be in jar files as well
 			try {
-				Enumeration e = MimeType.class.getClassLoader().getResources("mime-types.properties");
+				Enumeration<URL> e = MimeType.class.getClassLoader().getResources("mime-types.properties");
 				while(e.hasMoreElements()) {
 					URL url = (URL)e.nextElement();
 					if(log.isDebugEnabled()) {
@@ -272,7 +272,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 	 * we just throw an {@link UnsupportedOperationException}. This ensures that the getMimeTypes(...) methods ignore this
 	 * method. We could also have just returned an empty collection.
 	 */
-	public Collection getMimeTypesInputStream(InputStream in)
+	public Collection<MimeType> getMimeTypesInputStream(InputStream in)
 			throws UnsupportedOperationException {
 		throw new UnsupportedOperationException("This MimeDetector does not support detection from streams.");
 	}
@@ -282,7 +282,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 	 * we just throw an {@link UnsupportedOperationException}. This ensures that the getMimeTypes(...) methods ignore this
 	 * method. We could also have just returned an empty collection.
 	 */
-	public Collection getMimeTypesByteArray(byte[] data)
+	public Collection<MimeType> getMimeTypesByteArray(byte[] data)
 			throws UnsupportedOperationException {
 		throw new UnsupportedOperationException("This MimeDetector does not support detection from byte arrays.");
 	}

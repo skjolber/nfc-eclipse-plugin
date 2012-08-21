@@ -25,6 +25,7 @@ public class NdefTerminalStorage implements IStorage {
 		return fullPath;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		return null;
 	}

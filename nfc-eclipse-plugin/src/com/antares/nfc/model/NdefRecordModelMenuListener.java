@@ -44,8 +44,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -118,12 +116,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private NdefEditorPart editorPart;
 	private NdefMultiPageEditor ndefMultiPageEditor;
 
-	private int activeColumn = -1;
+	//private int activeColumn = -1;
 	
 	private NdefRecordModelParent root;
 		
 	private NdefRecordModelNode selectedNode;
 	
+	/*
 	private void triggerColumnSelectedColumn(final TreeViewer v) {
 		v.getTree().addMouseListener(new MouseAdapter() {
 
@@ -147,6 +146,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		
 	}
+	*/
 	
 	private MenuManager insertRootSiblingRecordBefore;
 	private MenuManager insertRootSiblingRecordAfter;
@@ -193,7 +193,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private ReadOnlyTerminal readOnlyTerminal = new ReadOnlyTerminal();
 	
 	// mime content
-	private Action viewContent;
 	private SaveContentAction saveContent;
 
 	private class WriteTerminal extends Action {
@@ -455,6 +454,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		}
 	}
 	
+	/*
 	private class ViewContentAction extends Action {
 
 		public ViewContentAction(String name) {
@@ -466,29 +466,24 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			if(editorPart != null) {
 				
 				byte[] payload;
-				String mimeType;
 				Record record = selectedNode.getRecord();
 				if(record instanceof MimeRecord) {
 					MimeRecord mimeRecord = (MimeRecord) record;
 
-					mimeType = mimeRecord.getContentType();
 					payload = mimeRecord.getContentAsBytes();
 				} else if(record instanceof UnknownRecord) {
 					UnknownRecord unknownRecord = (UnknownRecord) record;
 					
-					mimeType = null;
 					payload = unknownRecord.getPayload();
 				} else {
 					throw new RuntimeException();
 				}
 
 				Activator.info("View " + payload.length + " bytes");
-				
-				
-				//listener.viewBinaryContent((NdefRecordModelParentProperty)selectedNode);
 			}
 		}
 	}
+	*/
 	
 	private class SaveContentAction extends Action {
 
@@ -668,7 +663,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 	}
 
-	@SuppressWarnings("unchecked")
 	public NdefRecordModelMenuListener(final TreeViewer treeViewer, final NdefEditorPart ndefEditorPart, NdefMultiPageEditor ndefMultiPageEditor, NdefRecordModelParent root) {
 		this.treeViewer = treeViewer;
 		this.editorPart = ndefEditorPart;
@@ -766,7 +760,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         removeListItem = new RemoveListItemAction("Remove item");
         
         // mime interaction
-        viewContent = new ViewContentAction("View content");
         saveContent = new SaveContentAction("Save to file");
         
 		manager.setRemoveAllWhenShown(true);
@@ -775,7 +768,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		treeViewer.getControl().setMenu(manager.createContextMenu(treeViewer.getControl()));
 		
-		triggerColumnSelectedColumn(treeViewer);
+		//triggerColumnSelectedColumn(treeViewer);
 		
 		treeViewer.addSelectionChangedListener(this);
 	}

@@ -27,8 +27,6 @@ import org.nfctools.scio.TerminalStatus;
 import org.nfctools.scio.TerminalStatusListener;
 import org.nfctools.spi.acs.AcsTerminal;
 import org.nfctools.spi.scm.SclTerminal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.antares.nfc.plugin.Activator;
 import com.antares.nfc.plugin.NdefEditorPart;
@@ -37,8 +35,6 @@ import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
 public class NdefTerminalDetector implements Runnable, NdefOperationsListener, TerminalStatusListener, UnknownTagListener {
 
-	private Logger log = LoggerFactory.getLogger(getClass());
-	
 	private static NdefTerminalDetector detector;
 
 	public static void initialize() {
@@ -150,8 +146,6 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		
 		if(activator != null) {
 			Activator.info(message);
-		} else {
-			log.info(message);
 		}
 			
 	}

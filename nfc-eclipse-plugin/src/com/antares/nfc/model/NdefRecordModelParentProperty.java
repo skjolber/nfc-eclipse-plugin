@@ -26,7 +26,6 @@
 
 package com.antares.nfc.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 

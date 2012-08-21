@@ -28,8 +28,6 @@ package com.antares.nfc.model;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;

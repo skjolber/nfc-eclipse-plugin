@@ -465,11 +465,9 @@ public class NdefRecordModelFactory {
 
 			return ndefRecordModelRecord;
 		} else if(record instanceof UnsupportedRecord) {
-			UnsupportedRecord unsupportedRecord = (UnsupportedRecord)record;
-
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 			
-			//ndefRecordModelRecord.add(new NdefRecordModelProperty("TNF", Integer.toString(unsupportedRecord.getTnf()), ndefRecordModelRecord));
+			//ndefRecordModelRecord.add(new NdefRecordModelProperty("TNF", Integer.toString(record.getTnf()), ndefRecordModelRecord));
 			
 			return ndefRecordModelRecord;
 		} else {

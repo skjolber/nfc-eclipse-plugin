@@ -39,6 +39,7 @@ public class NdefTerminalInput implements IStorageEditorInput {
 		return "Content from terminal " + terminal;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		return null;
 	}

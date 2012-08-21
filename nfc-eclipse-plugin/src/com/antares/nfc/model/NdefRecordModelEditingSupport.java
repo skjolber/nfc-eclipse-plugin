@@ -2051,7 +2051,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 							if(contentType == null || contentType.length() == 0) {
 								
 								ExtensionMimeDetector extensionMimeDetector = new ExtensionMimeDetector();								
-								Collection mimeTypes = extensionMimeDetector.getMimeTypes(file);
+								Collection<MimeType> mimeTypes = extensionMimeDetector.getMimeTypes(file);
 								if(!mimeTypes.isEmpty()) {
 									
 									MimeType mimeType = (MimeType) mimeTypes.iterator().next();

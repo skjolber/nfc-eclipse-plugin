@@ -66,6 +66,33 @@
 		</jar>
 	</target>
 
+	<taskdef resource="proguard/ant/task.properties" classpath="./lib/proguard.jar" />
+	
+	<target name="obfuscate" >
+		<proguard>
+		  -libraryjars ${java.home}/lib/rt.jar
+		  -injars      ${jar.dir}/${jar.filename}.jar
+		  -outjars     ${jar.dir}/${jar.filename}_obfuscated.jar
+		   -libraryjars ${jar.dir}/RXTXcomm.jar
+		   -libraryjars ${jar.dir}/slf4j-api-1.6.6.jar
+				
+		  -assumenosideeffects interface org.slf4j.Logger { 
+		      public *** *(...);
+		   }
+	
+		   -assumenosideeffects class org.slf4j.LoggerFactory { 
+			      public static *** *(...);
+			}
+	
+			-dontskipnonpubliclibraryclasses
+			-dontobfuscate
+			-forceprocessing
+			-dontoptimize
+	
+			-keep class *
+			
+		</proguard>
+	</target>	
 	<target name="make" depends="jar,clean">
 	</target>
 

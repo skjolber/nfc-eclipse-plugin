@@ -15,7 +15,10 @@
 	<property name="classes.dir" value="${build.dir}/classes"/>
 	<property name="jar.dir"     value="./lib"/>
 	<property name="jar.filename" 	value="nfctools"/>
+	<!-- enable debug to embedd source in jar -->
 	<property name="debug" 		value="false"/>
+	<!-- enable debug to include nfctools-core  in jar -->
+	<property name="core" 		value="true"/>
 
 	<property name="src.dir"     value="${build.dir}/src"/>
 
@@ -35,9 +38,17 @@
 		<copy todir="${src.dir}">
 			<fileset dir="${src.api.dir}"/>
 			<fileset dir="${src.ndef.dir}"/>
-			<fileset dir="${src.core.dir}"/>
 		</copy>
 
+		<if>
+			<equals arg1="${core}" arg2="true" />
+			<then>
+				<copy todir="${src.dir}">
+					<fileset dir="${src.core.dir}"/>
+				</copy>
+			</then>
+		</if>
+			
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}" target="1.6" source="1.6">
 			<classpath refid="lib.path.ref"/>
 		</javac>

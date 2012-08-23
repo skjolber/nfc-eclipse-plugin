@@ -42,8 +42,10 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
 import org.nfctools.ndef.NdefContext;
@@ -78,7 +80,7 @@ import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
 
 public class NdefModelOperator implements NdefRecordModelChangeListener {
 	
-	private static final int MAX_BINARY_QR_PAYLOAD = 2953;
+	public static final int MAX_BINARY_QR_PAYLOAD = 2953;
 
 	// IEditorInput input = getEditorInput();
 	
@@ -307,42 +309,51 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public NdefRecordModelParent getModel() {
 		return model;
 	}
+	public void refreshBinaryQR(Label label) {
+		try {
 
-	public Image toBinaryQRImage(int parentWidth, int parentHeight, int horizontal, int vertical) throws WriterException {
+			byte[] ndef = toNdefMessage();
 
-		byte[] ndef = toNdefMessage();
+			if(ndef.length > 0) {
+				// do not encode if too large. the encoding takes a lot of time to fail
+				if(ndef.length > MAX_BINARY_QR_PAYLOAD) {
+					label.setImage(null);
+					label.setText("NDEF payload size of " + ndef.length + " exceeeds QR code capacity of " + NdefModelOperator.MAX_BINARY_QR_PAYLOAD + " by " + (ndef.length - NdefModelOperator.MAX_BINARY_QR_PAYLOAD) + " bytes.\nIf you wish to use larger payloads:\n - use a NFC reader terminal, or\n - transfer as file to phone memory and use 'Load file' option.");
+				} else {
+					Point size = label.getSize();
 
-		if(ndef.length > 0) {
-			
-			// do not encode if too large. the encoding takes a lot of time to fail
-			if(ndef.length > MAX_BINARY_QR_PAYLOAD) {
-				return null;
-			}
-			
-			int parent = Math.min(parentWidth, parentHeight);
-			
-			writer.setAligment(horizontal, vertical);
+					int parent = Math.min(size.x, size.y);
 
-			//get a byte matrix for the data
-			BitMatrix matrix = writer.encode(ndef, com.google.zxing.BarcodeFormat.QR_CODE, parent, parent);
-				
-			//generate an image from the byte matrix
-			int width = matrix.getWidth(); 
-			int height = matrix.getHeight(); 
+					writer.setAligment(0, 0);
 
-			//create buffered image to draw to
-			ImageData imageData = new ImageData(width, height, 1, new PaletteData(new RGB[]{new RGB(0xFF, 0xFF, 0xFF), new RGB(0x00, 0x00, 0x00)}));
-			//iterate through the matrix and draw the pixels to the image
-			for (int y = 0; y < height; y++) { 
-				for (int x = 0; x < width; x++) { 
-					int grayValue = matrix.get(x, y) ? 0 : 0xff; 
-					imageData.setPixel(x, y, (grayValue != 0 ? 0 : 0xFFFFFF));
+					//get a byte matrix for the data
+					BitMatrix matrix = writer.encode(ndef, com.google.zxing.BarcodeFormat.QR_CODE, parent, parent);
+
+					//generate an image from the byte matrix
+					int width = matrix.getWidth(); 
+					int height = matrix.getHeight(); 
+
+					//create buffered image to draw to
+					ImageData imageData = new ImageData(width, height, 1, new PaletteData(new RGB[]{new RGB(0xFF, 0xFF, 0xFF), new RGB(0x00, 0x00, 0x00)}));
+					//iterate through the matrix and draw the pixels to the image
+					for (int y = 0; y < height; y++) { 
+						for (int x = 0; x < width; x++) { 
+							int grayValue = matrix.get(x, y) ? 0 : 0xff; 
+							imageData.setPixel(x, y, (grayValue != 0 ? 0 : 0xFFFFFF));
+						}
+					}
+
+					label.setImage(new Image(getDisplay(), imageData));
+					label.setText("");
 				}
+			} else {
+				label.setImage(null);
+				label.setText("");
 			}
-
-			return new Image(getDisplay(), imageData);
+		} catch (Exception e) {
+			label.setImage(null);
+			label.setText("");
 		}
-		return null;
 	}
 
 	public static Display getDisplay() {

@@ -258,7 +258,7 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					}
 				}
 			} else if(record instanceof TextRecord) {
-				if(ndefRecordModelProperty.getParentIndex() == 1) {
+				if(ndefRecordModelProperty.getParentIndex() == 0) {
 					TextRecord textRecord = (TextRecord)record;
 
 					if(textRecord.hasText()) {

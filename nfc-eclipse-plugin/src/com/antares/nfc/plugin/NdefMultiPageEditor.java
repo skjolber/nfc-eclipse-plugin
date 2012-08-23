@@ -473,15 +473,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	}
 	
 	public void refreshBinaryQR() {
-
-		Point size = binaryQRLabel.getSize();
-
-		try {
-			binaryQRLabel.setImage(modelOperator.toBinaryQRImage(size.x, size.y, 0, 0));
-		} catch (Exception e) {
-			// TODO error message
-			binaryQRLabel.setImage(null);
-		}
+		modelOperator.refreshBinaryQR(binaryQRLabel);
 	}
 	
 	/**

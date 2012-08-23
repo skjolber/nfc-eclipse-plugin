@@ -30,6 +30,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -82,17 +83,8 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 	}
 
 	public void refreshBinaryQR() {
-
-		Point size = binaryQRLabel.getSize();
-
-		try {
-			binaryQRLabel.setImage(operator.toBinaryQRImage(size.x, size.y, 0, 0));
-		} catch (Exception e) {
-			binaryQRLabel.setImage(null);
-		}
-	}
-	
-	
+		operator.refreshBinaryQR(binaryQRLabel);
+	}	
 
 	@Override
 	protected void modified(boolean terminal) {

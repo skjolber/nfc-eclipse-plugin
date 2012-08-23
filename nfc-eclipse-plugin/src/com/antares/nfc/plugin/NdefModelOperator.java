@@ -74,7 +74,6 @@ import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelReplaceRootRecordsOperation;
-import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
 
@@ -310,6 +309,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		return model;
 	}
 	public void refreshBinaryQR(Label label) {
+		
+		// implementation note: Label seems to display an image OR an label, whatever is set last.
 		try {
 
 			byte[] ndef = toNdefMessage();
@@ -317,8 +318,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			if(ndef.length > 0) {
 				// do not encode if too large. the encoding takes a lot of time to fail
 				if(ndef.length > MAX_BINARY_QR_PAYLOAD) {
-					label.setImage(null);
 					label.setText("NDEF payload size of " + ndef.length + " exceeeds QR code capacity of " + NdefModelOperator.MAX_BINARY_QR_PAYLOAD + " by " + (ndef.length - NdefModelOperator.MAX_BINARY_QR_PAYLOAD) + " bytes.\nIf you wish to use larger payloads:\n - use a NFC reader terminal, or\n - transfer as file to phone memory and use 'Load file' option.");
+					
+					Activator.info("NDEF size is too large, " + ndef.length);
+
 				} else {
 					Point size = label.getSize();
 
@@ -344,15 +347,16 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 					}
 
 					label.setImage(new Image(getDisplay(), imageData));
-					label.setText("");
+					Activator.info("NDEF size is " + ndef.length + ", set image size " + parent + "x" + parent);
 				}
 			} else {
+				Activator.info("NDEF size is zero");
+				
 				label.setImage(null);
-				label.setText("");
 			}
 		} catch (Exception e) {
+			Activator.error("Cannot create ", e);
 			label.setImage(null);
-			label.setText("");
 		}
 	}
 

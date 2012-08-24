@@ -32,8 +32,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -1551,8 +1555,10 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 	
 	private class TextRecordEditingSuppport extends DefaultRecordEditingSupport {
 
+		private NdefTextRecordLocale localeSupport = new NdefTextRecordLocale();
+		
 		@Override
-		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
+		public NdefModelOperation setValue(NdefRecordModelNode node, final Object value) {
 			TextRecord textRecord = (TextRecord) node.getRecord();
 			if(node instanceof NdefRecordModelProperty) {
 				int propertyIndex  = node.getParentIndex();
@@ -1581,52 +1587,52 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 						
 					}
 				} else if(propertyIndex == 1) {
+					Locale locale = null;
+					
 					if(value instanceof Integer) {
-						Integer index = (Integer)value;
-	
-						if(index.intValue() != -1) {
-							String[] values = Locale.getISOLanguages();
-		
-							Locale locale = new Locale(values[index.intValue()]);
-							if(!locale.equals(textRecord.getLocale())) {
-								return new DefaultNdefModelPropertyOperation<Locale, TextRecord>(textRecord, (NdefRecordModelProperty)node, textRecord.getLocale(), locale) {
-									
-									@Override
-									public void execute() {
-										ndefRecordModelProperty.setValue(next.getLanguage());
-										
-										record.setLocale(next);
-									}
-									
-									@Override
-									public void revoke() {
-										ndefRecordModelProperty.setValue(previous.getLanguage());
-										
-										record.setLocale(previous);
-									}
-								};	
-								
-								
-							}
+						locale = localeSupport.get((Integer)value);
+					} else {
+						// manually entered value, try to detect locale
+
+						locale = localeSupport.getLocaleFromString((String)value);
+					}
+					
+					if(locale != null) {
+						// do not replace the text record if the string representation is equivalent
+						if(!locale.equals(textRecord.getLocale()) && !NdefTextRecordLocale.getLocaleString(locale).equals(NdefTextRecordLocale.getLocaleString(textRecord.getLocale()))) {
+							return new DefaultNdefModelPropertyOperation<Locale, TextRecord>(textRecord, (NdefRecordModelProperty)node, textRecord.getLocale(), locale) {
+
+								@Override
+								public void execute() {
+									ndefRecordModelProperty.setValue(NdefTextRecordLocale.getLocaleString(next));
+
+									record.setLocale(next);
+								}
+
+								@Override
+								public void revoke() {
+									ndefRecordModelProperty.setValue(NdefTextRecordLocale.getLocaleString(previous));
+
+									record.setLocale(previous);
+								}
+							};	
+
+
 						}
 					} else {
-	
-						// manually entered value
-						final String stringValue = (String)value;
-						
-				    	Display.getCurrent().asyncExec(
-				                new Runnable()
-				                {
-				                    public void run()
-				                    {
+						Display.getCurrent().asyncExec(
+								new Runnable()
+								{
+									public void run()
+									{
 										// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
 										Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-										MessageDialog.openError(shell, "Error", "Illegal language '" + stringValue + "', must be ISO language code.");
-				                    }
-				                }
-				            );
-						
-						
+										MessageDialog.openError(shell, "Error", "Illegal locale '" + value + "', must be previously known RFC 3066 locale.");
+									}
+								}
+								);
+
+
 					}
 				} else if(propertyIndex == 2) {
 					if(value instanceof Integer) {
@@ -1701,7 +1707,8 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 					// handle language
 					int index;
 					if(textRecord.hasLocale()) {
-						index = getIndex(Locale.getISOLanguages(), textRecord.getLocale().getLanguage());
+						
+						index = localeSupport.spawnIndex(textRecord.getLocale());
 					} else {
 						index = -1;
 					}
@@ -1734,20 +1741,17 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				if(index == 1) {
 					// handle language codes
 					
-					final String[] isoLanguages = Locale.getISOLanguages();
-					
-					return new ComboBoxCellEditor(treeViewer.getTree(), isoLanguages, ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION) {
-						// subclass to allow typing of language value, if it is the list of iso languages
+					return new ComboBoxCellEditor(treeViewer.getTree(), localeSupport.getStringLocales(), ComboBoxCellEditor.DROP_DOWN_ON_MOUSE_ACTIVATION) {
+						// subclass to allow typing of language value, if it is the list of locales
 						protected Object doGetValue() {
 							Integer integer =  (Integer) super.doGetValue();
 							
 							if(integer.intValue() == -1) {
 								String text = ((CCombo)this.getControl()).getText();
 
-								for(int i = 0; i < isoLanguages.length; i++) {
-									if(isoLanguages[i].equalsIgnoreCase(text)) {
-										return new Integer(i);
-									}
+								Locale locale = localeSupport.getLocaleFromString(text);
+								if(locale != null) {
+									return new Integer(localeSupport.getIndex(locale));
 								}
 								
 								// return entered text for error message

@@ -89,10 +89,6 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
 			NdefRecordType.getType(EmptyRecord.class),
 			NdefRecordType.getType(GenericControlRecord.class),
-		
-			NdefRecordType.getType(HandoverSelectRecord.class),
-			NdefRecordType.getType(HandoverCarrierRecord.class),
-			NdefRecordType.getType(HandoverRequestRecord.class),
 
 			NdefRecordType.getType(BinaryMimeRecord.class),
 			NdefRecordType.getType(SmartPosterRecord.class),
@@ -100,6 +96,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(UnknownRecord.class),
 			NdefRecordType.getType(UriRecord.class)
 	};
+
+	private NdefRecordType[] handoverRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(HandoverSelectRecord.class),
+			NdefRecordType.getType(HandoverCarrierRecord.class),
+			NdefRecordType.getType(HandoverRequestRecord.class),
+	};
+
 	
 	private NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(TextRecord.class),
@@ -676,7 +679,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         for(NdefRecordType recordType: rootRecordTypes) {
         	insertRootSiblingRecordBefore.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
         }
-		
+
+        MenuManager insertRootSiblingRecordBeforeHandoverRecords = new MenuManager("Handover records", null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	insertRootSiblingRecordBeforeHandoverRecords.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
+        }
+        insertRootSiblingRecordBefore.add(insertRootSiblingRecordBeforeHandoverRecords);
+        
 		// insert after
         insertRootSiblingRecordAfter = new MenuManager("Insert record after", null);
         
@@ -684,12 +693,22 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         	insertRootSiblingRecordAfter.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
         }
 
-		// just insert
-        addRootChildRecord = new MenuManager("Add record", null);
+        MenuManager insertRootSiblingRecordAfterHandoverRecords = new MenuManager("Handover records", null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	insertRootSiblingRecordAfterHandoverRecords.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
+        }
+        insertRootSiblingRecordAfter.add(insertRootSiblingRecordAfterHandoverRecords);
         
+		// just add as in add last
+        addRootChildRecord = new MenuManager("Add record", null);
         for(NdefRecordType recordType: rootRecordTypes) {
         	addRootChildRecord.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
+        MenuManager addRootChildRecordHandoverRecords = new MenuManager("Handover records", null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	addRootChildRecordHandoverRecords.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
+        }
+        addRootChildRecord.add(addRootChildRecordHandoverRecords);
 		
 		// generic control
 		// insert before
@@ -734,6 +753,11 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         for(NdefRecordType recordType: rootRecordTypes) {
         	setGenericControlActionRecord.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
+        MenuManager setGenericControlActionRecordHandoverRecords = new MenuManager("Handover records", null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	setGenericControlActionRecordHandoverRecords.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
+        }
+        setGenericControlActionRecord.add(setGenericControlActionRecordHandoverRecords);
                 
         // HandoverRequestRecord
     	insertAlternativeCarrierRecordSiblingRecordBefore = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " before", AlternativeCarrierRecord.class, 0);

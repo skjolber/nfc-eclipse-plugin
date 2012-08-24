@@ -26,7 +26,13 @@
 
 package com.antares.nfc.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
@@ -57,7 +63,7 @@ import org.nfctools.ndef.wkt.records.WellKnownRecord;
 import com.antares.nfc.plugin.util.FileDialogUtil;
 
 public class NdefRecordModelFactory {
-
+	
 	public static NdefRecordModelParent represent(Record[] records) {
 				
 		NdefRecordModelParent ndefRecordModelParent = new NdefRecordModelParent(null);
@@ -140,7 +146,7 @@ public class NdefRecordModelFactory {
 			}
 			
 			if(textRecord.hasLocale()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Locale", textRecord.getLocale().toString(), ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Locale", NdefTextRecordLocale.getLocaleString(textRecord.getLocale()), ndefRecordModelRecord));
 			} else {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Locale", "", ndefRecordModelRecord));
 			}

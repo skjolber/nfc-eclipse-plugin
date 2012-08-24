@@ -258,7 +258,8 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					}
 				}
 			} else if(record instanceof TextRecord) {
-				if(ndefRecordModelProperty.getParentIndex() == 0) {
+				int parentIndex = ndefRecordModelProperty.getParentIndex();
+				if(parentIndex == 0) {
 					TextRecord textRecord = (TextRecord)record;
 
 					if(textRecord.hasText()) {
@@ -266,6 +267,12 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 						if(text.length() > 0) {
 							return text;
 						}
+					}
+				} else if(parentIndex == 1) {
+					TextRecord textRecord = (TextRecord)record;
+
+					if(textRecord.hasLocale()) {
+						return textRecord.getLocale().getDisplayName();
 					}
 				}
 			}

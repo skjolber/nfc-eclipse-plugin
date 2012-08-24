@@ -27,12 +27,7 @@
 package com.antares.nfc.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
@@ -55,6 +50,7 @@ import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
@@ -476,10 +472,80 @@ public class NdefRecordModelFactory {
 			//ndefRecordModelRecord.add(new NdefRecordModelProperty("TNF", Integer.toString(record.getTnf()), ndefRecordModelRecord));
 			
 			return ndefRecordModelRecord;
+		} else if(record instanceof SignatureRecord) {
+			SignatureRecord signatureRecord = (SignatureRecord)record;
+			
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(signatureRecord, ndefRecordModelParent);
+			
+			ndefRecordModelRecord.add(new NdefRecordModelProperty("Version", Byte.toString(signatureRecord.getVersion()), ndefRecordModelRecord));
+
+			// signature
+			NdefRecordModelProperty ndefRecordModelSignatureTypeProperty;
+			if(signatureRecord.hasSignatureType()) {
+				ndefRecordModelSignatureTypeProperty = new NdefRecordModelProperty("Signature type", signatureRecord.getSignatureType().toString(), ndefRecordModelRecord);
+			} else {
+				ndefRecordModelSignatureTypeProperty = new NdefRecordModelProperty("Signature type", "-", ndefRecordModelRecord);
+			}
+			ndefRecordModelRecord.add(ndefRecordModelSignatureTypeProperty);
+
+			if(!signatureRecord.isStartMarker()) {
+				addNonStartMarkerNodes(signatureRecord, ndefRecordModelRecord);
+			}
+			
+			return ndefRecordModelRecord;
 		} else {
 			return new NdefRecordModelRecord(record, ndefRecordModelParent);
 		}
+	}
+	
+	private static void addNonStartMarkerNodes(SignatureRecord signatureRecord, NdefRecordModelRecord ndefRecordModelRecord) {
+		ndefRecordModelRecord.addChildren(getNonStartMarkerNodes(signatureRecord, ndefRecordModelRecord));
+	}
+	
+	public static List<NdefRecordModelNode> getNonStartMarkerNodes(SignatureRecord signatureRecord, NdefRecordModelRecord ndefRecordModelRecord) {
 
+		List<NdefRecordModelNode> nodes = new ArrayList<NdefRecordModelNode>();
 		
+		NdefRecordModelParentProperty ndefRecordModelParentSignatureProperty = new NdefRecordModelParentProperty("Signature", ndefRecordModelRecord);
+		
+		if(signatureRecord.hasSignatureUri()) {
+			ndefRecordModelParentSignatureProperty.add(getNode("URI", signatureRecord.getSignatureUri(), ndefRecordModelParentSignatureProperty));
+		} else if(signatureRecord.hasSignature()) {
+			byte[] signature = signatureRecord.getSignature();
+			if(signature != null) {
+				ndefRecordModelParentSignatureProperty.add(getNode("Embedded value", signature.length + " bytes", ndefRecordModelParentSignatureProperty));
+			} else {
+				ndefRecordModelParentSignatureProperty.add(getNode("Embedded value", "-", ndefRecordModelParentSignatureProperty));
+			}
+		}
+		nodes.add(ndefRecordModelParentSignatureProperty);
+
+		// certificates
+		NdefRecordModelProperty ndefRecordModelCertificateFormatProperty;
+		if(signatureRecord.hasCertificateFormat()) {
+			ndefRecordModelCertificateFormatProperty = new NdefRecordModelProperty("Certificate format", signatureRecord.getCertificateFormat().toString(), ndefRecordModelRecord);
+		} else {
+			ndefRecordModelCertificateFormatProperty = new NdefRecordModelProperty("Certificate format", "-", ndefRecordModelRecord);
+		}
+		nodes.add(ndefRecordModelCertificateFormatProperty);
+		
+		NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Certificates", ndefRecordModelRecord);
+		if(signatureRecord.hasCertificateUri()) {
+			ndefRecordModelParentProperty.add(getNode("URI", signatureRecord.getCertificateUri(), ndefRecordModelParentProperty));
+		} else if(signatureRecord.hasCertificates()) {
+			// add list
+			NdefRecordModelPropertyList list = new NdefRecordModelPropertyList("Embedded certificate chain", "Certificate #%d", ndefRecordModelParentProperty);
+
+			List<byte[]> certificates = signatureRecord.getCertificates();
+			for(int i = 0; i < certificates.size(); i++) {
+				list.add(new NdefRecordModelPropertyListItem(certificates.get(i).length + " bytes", list));
+			}
+			
+			ndefRecordModelParentProperty.add(list);
+		}
+
+		nodes.add(ndefRecordModelParentProperty);
+		
+		return nodes;
 	}
 }

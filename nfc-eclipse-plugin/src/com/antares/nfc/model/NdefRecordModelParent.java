@@ -110,5 +110,8 @@ public class NdefRecordModelParent extends NdefRecordModelNode {
 		this.children = children;
 	}
 	
-	
+	public void addChildren(List<NdefRecordModelNode> children) {
+		this.children.addAll(children);
+	}
+
 }

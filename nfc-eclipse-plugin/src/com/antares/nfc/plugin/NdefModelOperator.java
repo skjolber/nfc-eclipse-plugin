@@ -73,7 +73,7 @@ import com.antares.nfc.plugin.operation.NdefModelMoveRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
-import com.antares.nfc.plugin.operation.NdefModelReplaceRootRecordsOperation;
+import com.antares.nfc.plugin.operation.NdefModelReplaceChildRecordsOperation;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
 
@@ -485,7 +485,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			// set the children of the root parent so that all initialized references still point to the correct node
 			NdefRecordModelParent nextModel = loadModel(content);
 			
-			NdefModelReplaceRootRecordsOperation step = new NdefModelReplaceRootRecordsOperation(model, model.getChildren(), nextModel.getChildren());
+			NdefModelReplaceChildRecordsOperation step = new NdefModelReplaceChildRecordsOperation(model, model.getChildren(), nextModel.getChildren());
 			
 			addStep(step);
 			
@@ -518,7 +518,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 		Record[] records = content.toArray(new Record[content.size()]);
 		
-		NdefModelReplaceRootRecordsOperation step = new NdefModelReplaceRootRecordsOperation(model, model.getChildren(), NdefRecordModelFactory.represent(records).getChildren());
+		NdefModelReplaceChildRecordsOperation step = new NdefModelReplaceChildRecordsOperation(model, model.getChildren(), NdefRecordModelFactory.represent(records).getChildren());
 		
 		addStep(step);
 		

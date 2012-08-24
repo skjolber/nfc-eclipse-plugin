@@ -28,6 +28,7 @@ package com.antares.nfc.model;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
@@ -43,6 +44,7 @@ import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
@@ -155,6 +157,40 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 							return NdefRecordModelEditingSupport.PRESENT_OR_NOT[0];
 						} else {
 							return NdefRecordModelEditingSupport.PRESENT_OR_NOT[1];
+						}
+					}
+				} else if(record instanceof SignatureRecord) {
+					SignatureRecord signatureRecord = (SignatureRecord)record;
+					
+					int index = ndefRecordModelParentProperty.getParentIndex();
+					
+					if(index == 2) { // signature mode
+						
+						if(!signatureRecord.hasSignature() && !signatureRecord.hasSignatureUri()) {
+							return "Select nature";
+						}
+						
+						if(signatureRecord.hasSignature()) {
+							return "Embedded";
+						}
+
+						if(signatureRecord.hasSignatureUri()) {
+							return "Linked";
+						}
+
+					} else if(index == 4) { // certificates mode
+
+						List<byte[]> certificates = signatureRecord.getCertificates();
+						if((certificates == null || certificates.size() == 0) && !signatureRecord.hasCertificateUri()) {
+							return "Select nature";
+						}
+						
+						if((certificates != null && !certificates.isEmpty())) {
+							return "Embedded";
+						}
+
+						if(signatureRecord.hasCertificateUri()) {
+							return "Linked";
 						}
 					}
 				}

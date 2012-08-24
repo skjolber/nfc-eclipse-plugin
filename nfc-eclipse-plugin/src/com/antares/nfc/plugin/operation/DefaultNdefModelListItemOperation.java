@@ -29,7 +29,7 @@ public class DefaultNdefModelListItemOperation<V, R extends Record> implements N
 	@Override
 	public void execute() {
 		if(next != null) {
-			ndefRecordModelPropertyListItem.setValue(next.toString());
+			ndefRecordModelPropertyListItem.setValue(toString(next));
 		} else {
 			ndefRecordModelPropertyListItem.setValue("");
 		}
@@ -38,12 +38,14 @@ public class DefaultNdefModelListItemOperation<V, R extends Record> implements N
 	@Override
 	public void revoke() {
 		if(previous != null) {
-			ndefRecordModelPropertyListItem.setValue(previous.toString());
+			ndefRecordModelPropertyListItem.setValue(toString(previous));
 		} else {
 			ndefRecordModelPropertyListItem.setValue("");
 		}
 	}
 	
-	
+	public String toString(V object) {
+		return object.toString();
+	}
 	
 }

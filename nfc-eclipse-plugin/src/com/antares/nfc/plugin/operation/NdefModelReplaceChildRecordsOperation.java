@@ -7,32 +7,32 @@ import com.antares.nfc.model.NdefRecordModelParent;
 
 /**
  * 
- * Operation to replace all the root parent records 
+ * Operation to replace parent records 
  * 
  * @author thomas
  *
  */
 
-public class NdefModelReplaceRootRecordsOperation  implements NdefModelOperation {
+public class NdefModelReplaceChildRecordsOperation  implements NdefModelOperation {
 
-	private NdefRecordModelParent root;
+	private NdefRecordModelParent parent;
 	private List<NdefRecordModelNode> previous;
 	private List<NdefRecordModelNode> next;
 	
-	public NdefModelReplaceRootRecordsOperation(NdefRecordModelParent root, List<NdefRecordModelNode> previous, List<NdefRecordModelNode> next) {
-		this.root = root;
+	public NdefModelReplaceChildRecordsOperation(NdefRecordModelParent parent, List<NdefRecordModelNode> previous, List<NdefRecordModelNode> next) {
+		this.parent = parent;
 		this.previous = previous;
 		this.next = next;
 	}
 
 	@Override
 	public void execute() {
-		root.setChildren(next);
+		parent.setChildren(next);
 	}
 
 	@Override
 	public void revoke() {
-		root.setChildren(previous);
+		parent.setChildren(previous);
 	}
 
 }

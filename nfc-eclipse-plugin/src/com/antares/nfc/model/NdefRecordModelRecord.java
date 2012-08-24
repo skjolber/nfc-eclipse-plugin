@@ -63,5 +63,6 @@ public class NdefRecordModelRecord extends NdefRecordModelParent {
 	public String toString() {
 		return name != null ? name : record.getClass().getSimpleName();
 	}
+
 	
 }

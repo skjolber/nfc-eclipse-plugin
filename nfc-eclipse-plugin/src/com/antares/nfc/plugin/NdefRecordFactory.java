@@ -33,6 +33,7 @@ import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
@@ -210,6 +211,10 @@ public class NdefRecordFactory {
 			GcDataRecord gcDataRecord = new GcDataRecord();
 			
 			child = gcDataRecord;
+		} else if(recordType == SignatureRecord.class) {
+			SignatureRecord signatureRecord = new SignatureRecord();
+			
+			child = signatureRecord;
 		}
 		return (T)child;
 	}

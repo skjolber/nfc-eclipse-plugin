@@ -49,6 +49,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefException;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
@@ -68,11 +69,11 @@ import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelAddListItemOperation;
-import com.antares.nfc.plugin.operation.NdefModelAddRecordOperation;
+import com.antares.nfc.plugin.operation.NdefModelAddNodeOperation;
 import com.antares.nfc.plugin.operation.NdefModelMoveRecordOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveListItemOperation;
-import com.antares.nfc.plugin.operation.NdefModelRemoveRecordOperation;
+import com.antares.nfc.plugin.operation.NdefModelRemoveNodeOperation;
 import com.antares.nfc.plugin.operation.NdefModelReplaceChildRecordsOperation;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.binary.BinaryQRCodeWriter;
@@ -252,7 +253,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			index = parent.getSize();
 		}
 		
-		NdefModelAddRecordOperation ndefModelAddRecordOperation = new NdefModelAddRecordOperation(parent, ndefRecordFactory.createRecord(type), index);
+		NdefModelAddNodeOperation ndefModelAddRecordOperation = new NdefModelAddNodeOperation(parent, ndefRecordFactory.createRecord(type), index);
 		
 		addOperationStep(parent, ndefModelAddRecordOperation);
 		
@@ -279,11 +280,11 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public void removeRecord(NdefRecordModelRecord node) {
 		Activator.info("Remove record at " + node.getParentIndex());
 		
-		NdefModelRemoveRecordOperation ndefModelRemoveRecordOperation = new NdefModelRemoveRecordOperation(node.getParent(), (NdefRecordModelRecord) node);
+		NdefModelRemoveNodeOperation operation = new NdefModelRemoveNodeOperation(node.getParent(), node);
 		
-		addOperationStep(node, ndefModelRemoveRecordOperation);
+		addOperationStep(node, operation);
 		
-		ndefModelRemoveRecordOperation.execute();
+		operation.execute();
 	}
 
 	public void removeListItem(NdefRecordModelPropertyListItem node) {
@@ -354,6 +355,9 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 				
 				label.setImage(null);
 			}
+		} catch(NdefEncoderException e) {
+			Activator.error("Cannot create: " + e.getMessage());
+			label.setImage(null);
 		} catch (Exception e) {
 			Activator.error("Cannot create ", e);
 			label.setImage(null);

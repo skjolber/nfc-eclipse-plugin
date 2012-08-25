@@ -68,6 +68,7 @@ import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcDataRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
@@ -94,7 +95,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(SmartPosterRecord.class),
 			NdefRecordType.getType(TextRecord.class),
 			NdefRecordType.getType(UnknownRecord.class),
-			NdefRecordType.getType(UriRecord.class)
+			NdefRecordType.getType(UriRecord.class),
+			
+			NdefRecordType.getType(SignatureRecord.class),
 	};
 
 	private NdefRecordType[] handoverRecordTypes = new NdefRecordType[]{
@@ -527,7 +530,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					try {
 						outputStream = new FileOutputStream(file);
 
-						byte[] payload;
+						byte[] payload = null;
 						Record record = selectedNode.getRecord();
 						if(record instanceof MimeRecord) {
 							MimeRecord mimeRecord = (MimeRecord) record;
@@ -537,10 +540,28 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 							UnknownRecord unknownRecord = (UnknownRecord) record;
 							
 							payload = unknownRecord.getPayload();
-						} else {
-							throw new RuntimeException();
+							
+						} else if(record instanceof SignatureRecord) {
+
+							if(selectedNode.getRecordBranchIndex() == 2) {
+								SignatureRecord signatureRecord = (SignatureRecord)record;
+								
+								if(signatureRecord.hasSignature()) {
+									payload = signatureRecord.getSignature();
+								}
+							} else if(selectedNode.getRecordBranchIndex() == 4) {
+								if(selectedNode instanceof NdefRecordModelPropertyListItem) {
+									SignatureRecord signatureRecord = (SignatureRecord)record;
+									
+									payload = signatureRecord.getCertificate(selectedNode.getParentIndex());
+								}
+							}
 						}
 
+						if(payload == null) {
+							throw new RuntimeException();
+						}
+						
 						Activator.info("Save " + payload.length + " bytes");
 
 						outputStream.write(payload);
@@ -802,17 +823,25 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		
 		if(selectedNode != null) {
 
+			Record parentRecord = selectedNode.getParentRecord();
+
 			// filter out list types
 			if(selectedNode instanceof NdefRecordModelPropertyListItem) {
 				menuManager.add(insertListItemSiblingBefore);
 				menuManager.add(insertListItemSiblingAfter);
 				menuManager.add(removeListItem);
+
+				if(parentRecord instanceof SignatureRecord) {
+					if(selectedNode.getRecordBranchIndex() == 4) {
+						saveContent.setMimeType(null);
+						menuManager.add(saveContent);
+					}
+				}
 			} else if(selectedNode instanceof NdefRecordModelPropertyList) {
 				menuManager.add(addListItem);
 			} else {
 			
 				// parent operation (sibling) options
-				Record parentRecord = selectedNode.getParentRecord();
 				if(parentRecord == null) {
 					// root
 					// add and remove sibling nodes
@@ -924,7 +953,19 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 							saveContent.setMimeType(null);
 							menuManager.add(saveContent);
 						}
-					}
+					} else if(record instanceof SignatureRecord) {
+
+						if(selectedNode.getRecordBranchIndex() == 2 && selectedNode instanceof NdefRecordModelProperty) {
+							SignatureRecord signatureRecord = (SignatureRecord)record;
+							
+							if(signatureRecord.hasSignature()) {
+								//menuManager.add(viewContent);
+								saveContent.setMimeType(null);
+								menuManager.add(saveContent);
+							}
+
+						}
+					} 
 				}
 			}
 		} else {

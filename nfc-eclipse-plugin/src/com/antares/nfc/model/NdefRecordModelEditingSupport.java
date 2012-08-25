@@ -34,8 +34,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -74,18 +72,20 @@ import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
 import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.SignatureRecord.CertificateFormat;
+import org.nfctools.ndef.wkt.records.SignatureRecord.SignatureType;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
-import org.nfctools.ndef.wkt.records.SignatureRecord.SignatureType;
 
 import com.antares.nfc.plugin.Activator;
 import com.antares.nfc.plugin.NdefRecordFactory;
 import com.antares.nfc.plugin.operation.DefaultNdefModelListItemOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
+import com.antares.nfc.plugin.operation.NdefModelAddNodeOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperationList;
+import com.antares.nfc.plugin.operation.NdefModelRemoveNodeOperation;
 import com.antares.nfc.plugin.operation.NdefModelReplaceChildRecordsOperation;
 import com.antares.nfc.plugin.util.FileDialogUtil;
 
@@ -172,6 +172,9 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 
 		@Override
 		public boolean canEdit(NdefRecordModelNode node) {
+			if(node instanceof NdefRecordModelPropertyList) {
+				return false;
+			}
 			return true;
 		}
 		
@@ -2236,7 +2239,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		
 		@Override
 		public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
-			SignatureRecord record = (SignatureRecord) node.getRecord();
+			final SignatureRecord record = (SignatureRecord) node.getRecord();
 			int recordIndex = node.getRecordBranchIndex();
 			if(recordIndex == 0) {
 				String stringValue = (String)value;
@@ -2330,31 +2333,153 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				return null;
 			} else if(recordIndex == 2) {
 				if(node instanceof NdefRecordModelParent) {
-					// parent mode
+					NdefRecordModelParent ndefRecordModelParent = (NdefRecordModelParent)node;
+					
 					Integer index = (Integer)value;
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
+
+					if(index == 0) {
+						if(ndefRecordModelParent.hasChildren()) {
+							return new NdefModelRemoveNodeOperation(ndefRecordModelParent, ndefRecordModelParent.getChild(0)) {
+
+								private String signatureUri;
+								private byte[] signature;
+								
+								@Override
+								public void initialize() {
+									signatureUri = record.getSignatureUri();
+									signature = record.getSignature();
+								}
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setSignature(null);
+									record.setSignatureUri(null);
+								}
+								
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setSignature(signature);
+									record.setSignatureUri(signatureUri);
+								}								
+							};
+							
+							
+						} else {
+							// do nothing
+						}
+					} else if(index == 1) { // linked
+						NdefRecordModelNode child = NdefRecordModelFactory.getNode("URI", record.getSignatureUri(), ndefRecordModelParent);
+						if(ndefRecordModelParent.hasChildren()) {
+							return new NdefModelReplaceChildRecordsOperation(ndefRecordModelParent, ndefRecordModelParent.getChild(0), child) {
+								
+								private String signatureUri;
+								private byte[] signature;
+								
+								@Override
+								public void initialize() {
+									signatureUri = record.getSignatureUri();
+									signature = record.getSignature();
+								}
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setSignature(null);
+									record.setSignatureUri("");
+
+								}
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setSignature(signature);
+									record.setSignatureUri(signatureUri);
+								}
+							};
+						} else {
+							return new NdefModelAddNodeOperation(ndefRecordModelParent, child) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setSignature(null);
+									record.setSignatureUri("");
+
+								}
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setSignature(null);
+									record.setSignatureUri(null);
+								}											
+							};
+						}
+					} else if(index == 2) { // embedded
+						
+						NdefRecordModelNode child;
+						byte[] signature = record.getSignature();
+						if(signature != null) {
+							child = NdefRecordModelFactory.getNode("Embedded value", signature.length + " bytes", ndefRecordModelParent);
+						} else {
+							child = NdefRecordModelFactory.getNode("Embedded value", "-", ndefRecordModelParent);
+						}
+						
+						if(ndefRecordModelParent.hasChildren()) {
+							return new NdefModelReplaceChildRecordsOperation(ndefRecordModelParent, ndefRecordModelParent.getChild(0), child) {
+								
+								private String signatureUri;
+								private byte[] signature;
+								
+								@Override
+								public void initialize() {
+									signatureUri = record.getSignatureUri();
+									signature = record.getSignature();
+								}
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setSignature(new byte[0]);
+									record.setSignatureUri(null);
+
+								}
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setSignature(signature);
+									record.setSignatureUri(signatureUri);
+								}								
+							};
+						} else {
+							return new NdefModelAddNodeOperation(ndefRecordModelParent, child) {
+								
+								@Override
+								public void execute() {
+									super.execute();
+									
+									record.setSignature(new byte[0]);
+									record.setSignatureUri(null);
+
+								}
+								@Override
+								public void revoke() {
+									super.revoke();
+									
+									record.setSignature(null);
+									record.setSignatureUri(null);
+								}											
+							};
+						}
+					}
 					
 				} else if(node instanceof NdefRecordModelProperty){
 					// child value
@@ -2477,105 +2602,95 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				}
 				return null;
 			} else if(recordIndex == 4) {
-				if(node instanceof NdefRecordModelParent) {
-					// parent mode
-					Integer index = (Integer)value;
-
-				} else {
-					// children
-					if(node instanceof NdefRecordModelProperty){
-						// child value
-						if(record.hasSignatureUri()) {
-							String stringValue = (String)value;
-							
-							if(!stringValue.equals(record.getCertificateUri())) {
-								return new DefaultNdefModelPropertyOperation<String, SignatureRecord>(record, (NdefRecordModelProperty)node, record.getCertificateUri(), stringValue) {
-									
-									@Override
-									public void execute() {
-										super.execute();
-										
-										record.setCertificateUri(next);
-									}
-									
-									@Override
-									public void revoke() {
-										super.revoke();
-										
-										record.setCertificateUri(previous);
-									}
-								};	
-							}
-						} else {
-							throw new RuntimeException();
-						}
-					} else if(node instanceof NdefRecordModelPropertyListItem) {
-						// handle file dialog
+				if(node instanceof NdefRecordModelPropertyListItem) {
+					// handle file dialog
+					
+					if(value != null) {
 						
-						if(value != null) {
+						String path = (String)value;
+						
+						File file = new File(path);
+		
+						int length = (int)file.length();
+						
+						byte[] payload = new byte[length];
+						
+						InputStream in = null;
+						try {
+							in = new FileInputStream(file);
+							DataInputStream din = new DataInputStream(in);
 							
-							String path = (String)value;
+							din.readFully(payload);
+						} catch(IOException e) {
+							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+							MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
 							
-							File file = new File(path);
-			
-							int length = (int)file.length();
-							
-							byte[] payload = new byte[length];
-							
-							InputStream in = null;
-							try {
-								in = new FileInputStream(file);
-								DataInputStream din = new DataInputStream(in);
-								
-								din.readFully(payload);
-							} catch(IOException e) {
-								Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-								MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-								
-								return null;
-							} finally {
-								if(in != null) {
-									try {
-										in.close();
-									} catch(IOException e) {
-										// ignore
-									}
+							return null;
+						} finally {
+							if(in != null) {
+								try {
+									in.close();
+								} catch(IOException e) {
+									// ignore
 								}
 							}
+						}
+						
+						int index = node.getParentIndex();
+						
+						return new DefaultNdefModelListItemOperation<byte[], SignatureRecord>(record, (NdefRecordModelPropertyListItem)node, record.getCertificates().get(index), payload) {
 							
-							return new DefaultNdefModelListItemOperation<byte[], SignatureRecord>(record, (NdefRecordModelPropertyListItem)node, record.getSignature(), payload) {
+							@Override
+							public void execute() {
+								super.execute();
 								
-								@Override
-								public void execute() {
-									super.execute();
-									
-									int index = ndefRecordModelPropertyListItem.getParentIndex();
+								int index = ndefRecordModelPropertyListItem.getParentIndex();
 
-									record.getCertificates().set(index, next);
-								}
-								
-								@Override
-								public void revoke() {
-									super.revoke();
+								record.getCertificates().set(index, next);
+							}
+							
+							@Override
+							public void revoke() {
+								super.revoke();
 
-									int index = ndefRecordModelPropertyListItem.getParentIndex();
+								int index = ndefRecordModelPropertyListItem.getParentIndex();
 
-									record.getCertificates().set(index, previous);
-								}
-								
-								@Override
-								public String toString(byte[] object) {
-									if(object == null || object.length == 0) {
-										return "Zero bytes";
-									} else {
-										return Integer.toString(object.length) + " bytes";
-									}	
-								}
-							};
-						}				
-
-					}
-				}				
+								record.getCertificates().set(index, previous);
+							}
+							
+							@Override
+							public String toString(byte[] object) {
+								if(object == null || object.length == 0) {
+									return "Zero bytes";
+								} else {
+									return Integer.toString(object.length) + " bytes";
+								}	
+							}
+						};
+					}				
+				}
+			} else if(recordIndex == 5) {
+				
+				String stringValue = (String)value;
+				
+				if(!stringValue.equals(record.getCertificateUri())) {
+					return new DefaultNdefModelPropertyOperation<String, SignatureRecord>(record, (NdefRecordModelProperty)node, record.getCertificateUri(), stringValue) {
+						
+						@Override
+						public void execute() {
+							super.execute();
+							
+							record.setCertificateUri(next);
+						}
+						
+						@Override
+						public void revoke() {
+							super.revoke();
+							
+							record.setCertificateUri(previous);
+						}
+					};	
+				}
 			} else {
 				return super.setValue(node, value);
 			}
@@ -2620,18 +2735,16 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 				}
 				return 0;
 			} else if(index == 4) {
-				if(node instanceof NdefRecordModelParent) {
-					if(signatureRecord.hasCertificateUri()) {
-						return 1;
-					} else if(signatureRecord.hasCertificates()) {
-						return 2;
-					}
-					return 0;
-				} else if(node instanceof NdefRecordModelPropertyListItem) {
+				if(node instanceof NdefRecordModelPropertyListItem) {
 					// open file dialog
 					return EMPTY_STRING;
 				}
 				throw new RuntimeException();
+			} else if(index == 5) {
+				if(signatureRecord.hasCertificateUri()) {
+					return signatureRecord.getCertificateUri();
+				}
+				return EMPTY_STRING;
 			} else {
 				return super.getValue(node);
 			}
@@ -2663,13 +2776,13 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 			} else if(index == 3) {
 				return getComboBoxCellEditor(SignatureRecord.CertificateFormat.values(), true);
 			} else if(index == 4) {
-				if(node instanceof NdefRecordModelParent) {
-					return getComboBoxCellEditor(new String[]{"Linked", "Embedded"}, true);
-				} else if(node instanceof NdefRecordModelPropertyListItem) {
+				if(node instanceof NdefRecordModelPropertyListItem) {
 					// open file dialog
 					return new FileDialogCellEditor(treeViewer.getTree());
 				}
 				return null; // no edit for list
+			} else if(index == 5) {
+				return textCellEditor;
 			} else {
 				return super.getCellEditor(node);
 			}

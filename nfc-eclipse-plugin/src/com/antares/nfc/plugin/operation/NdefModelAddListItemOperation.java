@@ -2,6 +2,7 @@ package com.antares.nfc.plugin.operation;
 
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
 
 import com.antares.nfc.model.NdefRecordModelPropertyList;
 import com.antares.nfc.model.NdefRecordModelPropertyListItem;
@@ -34,7 +35,12 @@ public class NdefModelAddListItemOperation implements NdefModelOperation {
 			AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
 			
 			alternativeCarrierRecord.insertAuxiliaryDataReference(value, index);
-		}	
+		} else if(record instanceof SignatureRecord) {
+
+			SignatureRecord signatureRecord = (SignatureRecord)record;
+			
+			signatureRecord.add(new byte[0]);
+		}
 		
 		parent.insert(childNode, index);
 	}
@@ -47,6 +53,11 @@ public class NdefModelAddListItemOperation implements NdefModelOperation {
 			AlternativeCarrierRecord alternativeCarrierRecord = (AlternativeCarrierRecord)record;
 			
 			alternativeCarrierRecord.removeAuxiliaryDataReference(index);
+		} else if(record instanceof SignatureRecord) {
+
+			SignatureRecord signatureRecord = (SignatureRecord)record;
+		
+			signatureRecord.removeCertificate(index);
 		}	
 
 		parent.remove(index);

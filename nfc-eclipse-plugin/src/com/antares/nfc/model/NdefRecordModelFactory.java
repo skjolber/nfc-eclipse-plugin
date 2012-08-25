@@ -528,23 +528,18 @@ public class NdefRecordModelFactory {
 			ndefRecordModelCertificateFormatProperty = new NdefRecordModelProperty("Certificate format", "-", ndefRecordModelRecord);
 		}
 		nodes.add(ndefRecordModelCertificateFormatProperty);
-		
-		NdefRecordModelParentProperty ndefRecordModelParentProperty = new NdefRecordModelParentProperty("Certificates", ndefRecordModelRecord);
-		if(signatureRecord.hasCertificateUri()) {
-			ndefRecordModelParentProperty.add(getNode("URI", signatureRecord.getCertificateUri(), ndefRecordModelParentProperty));
-		} else if(signatureRecord.hasCertificates()) {
-			// add list
-			NdefRecordModelPropertyList list = new NdefRecordModelPropertyList("Embedded certificate chain", "Certificate #%d", ndefRecordModelParentProperty);
+					
+		// add list
+		NdefRecordModelPropertyList list = new NdefRecordModelPropertyList("Certificate chain", "Certificate #%d", ndefRecordModelRecord);
 
-			List<byte[]> certificates = signatureRecord.getCertificates();
-			for(int i = 0; i < certificates.size(); i++) {
-				list.add(new NdefRecordModelPropertyListItem(certificates.get(i).length + " bytes", list));
-			}
-			
-			ndefRecordModelParentProperty.add(list);
+		List<byte[]> certificates = signatureRecord.getCertificates();
+		for(int i = 0; i < certificates.size(); i++) {
+			list.add(new NdefRecordModelPropertyListItem(certificates.get(i).length + " bytes", list));
 		}
-
-		nodes.add(ndefRecordModelParentProperty);
+		
+		nodes.add(list);
+		
+		nodes.add(getNode("Certificate chain URI", signatureRecord.getCertificateUri(), ndefRecordModelRecord));
 		
 		return nodes;
 	}

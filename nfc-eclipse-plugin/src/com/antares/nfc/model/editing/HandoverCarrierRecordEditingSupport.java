@@ -27,7 +27,7 @@ import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSupport {
+public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	private NdefRecordFactory ndefRecordFactory;
 

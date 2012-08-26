@@ -13,7 +13,7 @@ import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class CollisionResolutionRecordEditingSupport extends DefaultRecordEditingSupport {
+public class CollisionResolutionRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public CollisionResolutionRecordEditingSupport(
 			TreeViewer treeViewer) {

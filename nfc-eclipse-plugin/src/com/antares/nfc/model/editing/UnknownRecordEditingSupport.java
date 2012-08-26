@@ -18,7 +18,7 @@ import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class UnknownRecordEditingSupport extends DefaultRecordEditingSupport {
+public class UnknownRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public UnknownRecordEditingSupport(
 			TreeViewer treeViewer) {

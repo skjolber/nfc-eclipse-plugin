@@ -18,7 +18,7 @@ import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class HandoverSelectRecordEditingSupport extends DefaultRecordEditingSupport {
+public class HandoverSelectRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	private NdefRecordFactory ndefRecordFactory;
 

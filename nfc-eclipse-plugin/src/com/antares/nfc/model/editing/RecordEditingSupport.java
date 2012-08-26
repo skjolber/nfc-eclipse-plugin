@@ -5,7 +5,7 @@ import org.eclipse.jface.viewers.CellEditor;
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-interface RecordEditingSupport {
+public interface RecordEditingSupport {
 	
 	boolean canEdit(NdefRecordModelNode node);
 	

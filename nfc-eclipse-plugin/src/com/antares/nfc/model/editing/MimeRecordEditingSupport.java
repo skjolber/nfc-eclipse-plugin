@@ -26,7 +26,7 @@ import com.antares.nfc.plugin.util.FileDialogUtil;
 import eu.medsea.mimeutil.MimeType;
 import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 
-class MimeRecordEditingSupport extends DefaultRecordEditingSupport {
+public class MimeRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public MimeRecordEditingSupport(
 			TreeViewer treeViewer) {

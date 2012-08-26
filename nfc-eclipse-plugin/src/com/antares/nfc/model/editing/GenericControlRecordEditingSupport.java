@@ -13,7 +13,7 @@ import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class GenericControlRecordEditingSupport extends DefaultRecordEditingSupport {
+public class GenericControlRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public GenericControlRecordEditingSupport(
 			TreeViewer treeViewer) {

@@ -10,7 +10,7 @@ import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSupport {
+public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public ExternalTypeRecordEditingSupport(
 			TreeViewer treeViewer) {

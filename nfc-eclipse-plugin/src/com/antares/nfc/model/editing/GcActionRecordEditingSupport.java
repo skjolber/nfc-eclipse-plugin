@@ -30,7 +30,7 @@ import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOper
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.plugin.operation.NdefModelRemoveNodeOperation;
 
-class GcActionRecordEditingSupport extends DefaultRecordEditingSupport  {
+public class GcActionRecordEditingSupport extends DefaultRecordEditingSupport  {
 
 	private NdefRecordFactory ndefRecordFactory;
 

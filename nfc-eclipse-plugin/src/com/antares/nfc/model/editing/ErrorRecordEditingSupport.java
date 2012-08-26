@@ -7,14 +7,13 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
-import org.nfctools.ndef.wkt.handover.records.ErrorRecord.ErrorReason;
 
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class ErrorRecordEditingSupport extends DefaultRecordEditingSupport {
+public class ErrorRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public ErrorRecordEditingSupport(
 			TreeViewer treeViewer) {

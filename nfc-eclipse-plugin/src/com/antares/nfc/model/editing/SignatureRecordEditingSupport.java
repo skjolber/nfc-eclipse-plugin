@@ -32,7 +32,7 @@ import com.antares.nfc.plugin.operation.NdefModelOperationList;
 import com.antares.nfc.plugin.operation.NdefModelRemoveNodeOperation;
 import com.antares.nfc.plugin.operation.NdefModelReplaceChildRecordsOperation;
 
-class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
+public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	// convention: empty string or empty certificates, but no null values
 	

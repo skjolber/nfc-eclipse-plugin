@@ -10,7 +10,7 @@ import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class AndroidApplicationRecordEditingSupport extends DefaultRecordEditingSupport {
+public class AndroidApplicationRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public AndroidApplicationRecordEditingSupport(
 			TreeViewer treeViewer) {

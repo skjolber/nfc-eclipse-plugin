@@ -15,7 +15,7 @@ import com.antares.nfc.model.NdefRecordModelProperty;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class HandoverRequestRecordEditingSupport extends DefaultRecordEditingSupport {
+public class HandoverRequestRecordEditingSupport extends DefaultRecordEditingSupport {
 
 	public HandoverRequestRecordEditingSupport(
 			TreeViewer treeViewer) {

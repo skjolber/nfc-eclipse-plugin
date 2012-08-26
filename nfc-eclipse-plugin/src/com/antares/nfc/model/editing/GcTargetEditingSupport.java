@@ -12,7 +12,7 @@ import com.antares.nfc.plugin.NdefRecordFactory;
 import com.antares.nfc.plugin.operation.DefaultNdefRecordModelParentPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class GcTargetEditingSupport extends DefaultRecordEditingSupport {
+public class GcTargetEditingSupport extends DefaultRecordEditingSupport {
 
 	private NdefRecordFactory ndefRecordFactory;
 

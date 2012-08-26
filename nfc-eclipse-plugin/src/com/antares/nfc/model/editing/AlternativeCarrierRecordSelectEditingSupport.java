@@ -5,7 +5,6 @@ import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
-import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord.CarrierPowerState;
 
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelParentProperty;
@@ -15,7 +14,7 @@ import com.antares.nfc.plugin.operation.DefaultNdefModelListItemOperation;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class AlternativeCarrierRecordSelectEditingSupport extends DefaultRecordEditingSupport {
+public class AlternativeCarrierRecordSelectEditingSupport extends DefaultRecordEditingSupport {
 	
 	public AlternativeCarrierRecordSelectEditingSupport(
 			TreeViewer treeViewer) {

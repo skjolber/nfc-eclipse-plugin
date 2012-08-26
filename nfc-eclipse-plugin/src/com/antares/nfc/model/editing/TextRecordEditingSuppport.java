@@ -20,7 +20,7 @@ import com.antares.nfc.model.NdefTextRecordLocale;
 import com.antares.nfc.plugin.operation.DefaultNdefModelPropertyOperation;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 
-class TextRecordEditingSuppport extends DefaultRecordEditingSupport {
+public class TextRecordEditingSuppport extends DefaultRecordEditingSupport {
 
 	public TextRecordEditingSuppport(
 			TreeViewer treeViewer) {

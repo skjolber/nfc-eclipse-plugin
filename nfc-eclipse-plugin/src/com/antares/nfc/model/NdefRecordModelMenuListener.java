@@ -107,7 +107,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	};
 
 	
-	private NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
+	public static NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
 			NdefRecordType.getType(TextRecord.class),
 			NdefRecordType.getType(UriRecord.class)
 	};
@@ -116,6 +116,26 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 	@SuppressWarnings("unused")
 	private NdefRecordType[] genericControlRecordActionRecordTypes = rootRecordTypes;
+
+	public static NdefRecordType[] wellKnownRecordTypes = new NdefRecordType[]{
+			NdefRecordType.getType(ActionRecord.class),
+			NdefRecordType.getType(SmartPosterRecord.class),
+			NdefRecordType.getType(TextRecord.class),
+			NdefRecordType.getType(UriRecord.class),
+			
+			NdefRecordType.getType(AlternativeCarrierRecord.class),
+			NdefRecordType.getType(HandoverSelectRecord.class),
+			NdefRecordType.getType(HandoverCarrierRecord.class),
+			NdefRecordType.getType(HandoverRequestRecord.class),
+			
+			NdefRecordType.getType(GenericControlRecord.class)
+	};
+	
+	public static NdefRecordType[] externalRecordTypes = new NdefRecordType[]{
+		NdefRecordType.getType(AndroidApplicationRecord.class),
+		NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
+	};
+
 
 	private TreeViewer treeViewer;
 	private MenuManager manager = new MenuManager();
@@ -788,13 +808,13 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
     	// HandoverCarrierRecord
     	// well known type
         setHandoverCarrierWellKnownType = new MenuManager("Set carrier type", null);
-        for(NdefRecordType recordType: NdefRecordModelEditingSupport.wellKnownRecordTypes) {
+        for(NdefRecordType recordType: wellKnownRecordTypes) {
         	setHandoverCarrierWellKnownType.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
         
         // external type
         setHandoverCarrierExternalType = new MenuManager("Set carrier type", null);
-        for(NdefRecordType recordType: NdefRecordModelEditingSupport.externalRecordTypes) {
+        for(NdefRecordType recordType: externalRecordTypes) {
         	setHandoverCarrierExternalType.add(new SetChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
         }
     	

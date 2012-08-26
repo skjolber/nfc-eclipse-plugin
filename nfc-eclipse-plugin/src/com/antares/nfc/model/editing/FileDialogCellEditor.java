@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  ****************************************************************************/
 
-package com.antares.nfc.model;
+package com.antares.nfc.model.editing;
 
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.swt.SWT;

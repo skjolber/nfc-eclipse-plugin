@@ -47,6 +47,8 @@ import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 
+import com.antares.nfc.model.editing.NdefRecordModelEditingSupport;
+
 public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider {
 
 	public NdefRecordModelValueColumnLabelProvider() {

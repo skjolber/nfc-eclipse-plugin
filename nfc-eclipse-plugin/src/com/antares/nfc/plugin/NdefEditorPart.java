@@ -79,7 +79,6 @@ import org.nfctools.ndef.Record;
 
 import com.antares.nfc.model.NdefRecordModelChangeListener;
 import com.antares.nfc.model.NdefRecordModelContentProvider;
-import com.antares.nfc.model.NdefRecordModelEditingSupport;
 import com.antares.nfc.model.NdefRecordModelHintColumnProvider;
 import com.antares.nfc.model.NdefRecordModelMenuListener;
 import com.antares.nfc.model.NdefRecordModelNode;
@@ -89,6 +88,7 @@ import com.antares.nfc.model.NdefRecordModelPropertyListItem;
 import com.antares.nfc.model.NdefRecordModelRecord;
 import com.antares.nfc.model.NdefRecordModelSizeColumnLabelProvider;
 import com.antares.nfc.model.NdefRecordModelValueColumnLabelProvider;
+import com.antares.nfc.model.editing.NdefRecordModelEditingSupport;
 import com.antares.nfc.plugin.operation.NdefModelOperation;
 import com.antares.nfc.terminal.NdefTerminalListener;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;

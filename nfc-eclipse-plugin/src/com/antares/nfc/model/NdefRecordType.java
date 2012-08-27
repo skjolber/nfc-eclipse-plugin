@@ -1,5 +1,9 @@
 package com.antares.nfc.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,6 +43,15 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 
 public class NdefRecordType {
 	
+	public static final Comparator<NdefRecordType> comparator = new Comparator<NdefRecordType>() {
+
+		@Override
+		public int compare(NdefRecordType o1, NdefRecordType o2) {
+			return o1.getRecordLabel().compareTo(o2.getRecordLabel());
+		}
+		
+	};
+	
 	private static final Map<Class<? extends Record>, NdefRecordType> records;
 	static {
 		Map<Class<? extends Record>, NdefRecordType> map = new ConcurrentHashMap<Class<? extends Record>, NdefRecordType>();
@@ -77,6 +90,20 @@ public class NdefRecordType {
 		map.put(UriRecord.class, new NdefRecordType(UriRecord.class));
 		
 		records = map;
+	}
+
+	public static NdefRecordType[] sort(NdefRecordType[] types) {
+		ArrayList<NdefRecordType> list = new ArrayList<NdefRecordType>(types.length);
+		for(NdefRecordType type : types) {
+			list.add(type);
+		}
+		Collections.sort(list, comparator);
+		
+		return list.toArray(new NdefRecordType[list.size()]);
+	}
+
+	public static void sort(List<NdefRecordType> types) {
+		Collections.sort(types, comparator);
 	}
 	
 	public static NdefRecordType getType(Class<? extends Record> c) {

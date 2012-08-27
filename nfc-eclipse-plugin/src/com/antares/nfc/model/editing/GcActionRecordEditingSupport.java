@@ -16,6 +16,7 @@ import org.nfctools.ndef.wkt.records.Action;
 import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GenericControlRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.SmartPosterRecord;
 import org.nfctools.ndef.wkt.records.TextRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
@@ -55,7 +56,8 @@ public class GcActionRecordEditingSupport extends DefaultRecordEditingSupport  {
 		NdefRecordType.getType(HandoverCarrierRecord.class),
 		NdefRecordType.getType(HandoverRequestRecord.class),
 		
-		NdefRecordType.getType(GenericControlRecord.class)
+		NdefRecordType.getType(GenericControlRecord.class),
+		NdefRecordType.getType(SignatureRecord.class),
 };
 
 	

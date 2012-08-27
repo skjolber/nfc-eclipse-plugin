@@ -119,8 +119,10 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 */
 	private Stack<NdefModelOperation> undolist = new Stack<NdefModelOperation>();
 	private Stack<NdefModelOperation> redolist = new Stack<NdefModelOperation>();
-
+	/** Mark where we are on the current list of operations (undo list) so that we can determine if dirty even when doing undo and redo */
+	private int undoListSizeSaveMark = 0;
 	private int maxUndoSteps = 100;
+	
 	
 	public NdefRecordModelFactory getNdefRecordModelFactory() {
 		return ndefRecordModelFactory;
@@ -132,10 +134,6 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 	public NdefModelOperator( NdefRecordFactory ndefRecordFactory) {
 		this.ndefRecordFactory = ndefRecordFactory;
-	}
-	
-	public void setModel(NdefRecordModelParent model) {
-		this.model = model;
 	}
 
 	public void newModel() {
@@ -217,6 +215,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			
 			fout.close();
 
+			markSave();
+			
 			return true;
 		} finally {
 			if(fout != null) {
@@ -424,18 +424,24 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 * in redolist
 	 */	
 	public void undo(){
-		if(undolist.empty())
-			return;
-		
-		NdefModelOperation operation = (NdefModelOperation)undolist.pop();
-		if (operation == null)
-			return;
-
-		// edit
-		operation.revoke();
-
-		
-		redolist.push(operation);
+		if(!undolist.empty()) {
+			NdefModelOperation operation = (NdefModelOperation)undolist.pop();
+	
+			// undo
+			operation.revoke();
+			
+			redolist.push(operation);
+		}
+	}
+	/**
+	 * 
+	 * Check if model is modified, i.e. that the current operation list size is not equal to the marked size.
+	 * 
+	 * @return is model modified 
+	 */
+	
+	public boolean isDirty() {
+		return undolist.size() != undoListSizeSaveMark;
 	}
 	
 	/** 
@@ -443,16 +449,13 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	 * in undolist
 	 */
 	public void redo(){
-		if(redolist.empty())
-			return;
-		
-		NdefModelOperation operation = (NdefModelOperation)redolist.pop();
-		if (operation == null)
-			return;
-		
-		operation.execute();
-		
-		undolist.push(operation);
+		if(!redolist.empty()) {
+			NdefModelOperation operation = (NdefModelOperation)redolist.pop();
+			
+			operation.execute();
+			
+			undolist.push(operation);
+		}
 	}
 	
 	public boolean canUndo() {
@@ -481,9 +484,11 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		
 		if(maxUndoSteps > 0 && undolist.size() > maxUndoSteps){
 			undolist.remove(0);
+			
+			undoListSizeSaveMark--;
 		}
 	}
-
+	
 	public void setRecords(byte[] content) {
 		try {
 			// set the children of the root parent so that all initialized references still point to the correct node
@@ -528,6 +533,16 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 		
 		step.execute();
 
+	}
+	
+	/**
+	 * 
+	 * Mark where we are on the current list of operations (undo list) so that we can determine if dirty even when doing undo and redo
+	 * 
+	 */
+	
+	public void markSave() {
+		undoListSizeSaveMark = undolist.size();
 	}
 	
 	/*

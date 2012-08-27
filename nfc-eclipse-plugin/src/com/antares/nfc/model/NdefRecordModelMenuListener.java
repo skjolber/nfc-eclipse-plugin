@@ -83,7 +83,9 @@ import com.antares.nfc.terminal.NdefTerminalWrapper;
 
 public class NdefRecordModelMenuListener implements IMenuListener, ISelectionChangedListener {
 	
-	private NdefRecordType[] rootRecordTypes = new NdefRecordType[]{
+	
+	
+	private NdefRecordType[] rootRecordTypes = NdefRecordType.sort(new NdefRecordType[]{
 			NdefRecordType.getType(AbsoluteUriRecord.class),
 			NdefRecordType.getType(ActionRecord.class),
 			NdefRecordType.getType(AndroidApplicationRecord.class),
@@ -98,26 +100,26 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(UriRecord.class),
 			
 			NdefRecordType.getType(SignatureRecord.class),
-	};
+	});
 
-	private NdefRecordType[] handoverRecordTypes = new NdefRecordType[]{
+	private NdefRecordType[] handoverRecordTypes = NdefRecordType.sort(new NdefRecordType[]{
 			NdefRecordType.getType(HandoverSelectRecord.class),
 			NdefRecordType.getType(HandoverCarrierRecord.class),
 			NdefRecordType.getType(HandoverRequestRecord.class),
-	};
+	});
 
 	
-	public static NdefRecordType[] genericControlRecordTargetRecordTypes = new NdefRecordType[]{
+	public static NdefRecordType[] genericControlRecordTargetRecordTypes = NdefRecordType.sort(new NdefRecordType[]{
 			NdefRecordType.getType(TextRecord.class),
 			NdefRecordType.getType(UriRecord.class)
-	};
+	});
 
 	private NdefRecordType[] genericControlRecordDataChildRecordTypes = rootRecordTypes;
 
 	@SuppressWarnings("unused")
 	private NdefRecordType[] genericControlRecordActionRecordTypes = rootRecordTypes;
 
-	public static NdefRecordType[] wellKnownRecordTypes = new NdefRecordType[]{
+	public static NdefRecordType[] wellKnownRecordTypes = NdefRecordType.sort(new NdefRecordType[]{
 			NdefRecordType.getType(ActionRecord.class),
 			NdefRecordType.getType(SmartPosterRecord.class),
 			NdefRecordType.getType(TextRecord.class),
@@ -128,13 +130,16 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(HandoverCarrierRecord.class),
 			NdefRecordType.getType(HandoverRequestRecord.class),
 			
-			NdefRecordType.getType(GenericControlRecord.class)
-	};
+			NdefRecordType.getType(GenericControlRecord.class),
+			
+			NdefRecordType.getType(SignatureRecord.class),
+			
+	});
 	
-	public static NdefRecordType[] externalRecordTypes = new NdefRecordType[]{
+	public static NdefRecordType[] externalRecordTypes = NdefRecordType.sort(new NdefRecordType[]{
 		NdefRecordType.getType(AndroidApplicationRecord.class),
 		NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
-	};
+	});
 
 
 	private TreeViewer treeViewer;
@@ -713,43 +718,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		this.ndefMultiPageEditor = ndefMultiPageEditor;
 		this.root = root;
 		
-		// root
-		// insert before
-		insertRootSiblingRecordBefore = new MenuManager("Insert record before", null);
-        
-        for(NdefRecordType recordType: rootRecordTypes) {
-        	insertRootSiblingRecordBefore.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
-        }
-
-        MenuManager insertRootSiblingRecordBeforeHandoverRecords = new MenuManager("Handover records", null);
-        for(NdefRecordType recordType: handoverRecordTypes) {
-        	insertRootSiblingRecordBeforeHandoverRecords.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
-        }
-        insertRootSiblingRecordBefore.add(insertRootSiblingRecordBeforeHandoverRecords);
-        
-		// insert after
-        insertRootSiblingRecordAfter = new MenuManager("Insert record after", null);
-        
-        for(NdefRecordType recordType: rootRecordTypes) {
-        	insertRootSiblingRecordAfter.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
-        }
-
-        MenuManager insertRootSiblingRecordAfterHandoverRecords = new MenuManager("Handover records", null);
-        for(NdefRecordType recordType: handoverRecordTypes) {
-        	insertRootSiblingRecordAfterHandoverRecords.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
-        }
-        insertRootSiblingRecordAfter.add(insertRootSiblingRecordAfterHandoverRecords);
-        
-		// just add as in add last
-        addRootChildRecord = new MenuManager("Add record", null);
-        for(NdefRecordType recordType: rootRecordTypes) {
-        	addRootChildRecord.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
-        }
-        MenuManager addRootChildRecordHandoverRecords = new MenuManager("Handover records", null);
-        for(NdefRecordType recordType: handoverRecordTypes) {
-        	addRootChildRecordHandoverRecords.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
-        }
-        addRootChildRecord.add(addRootChildRecordHandoverRecords);
+		initializeRootAddInsert();
 		
 		// generic control
 		// insert before
@@ -836,6 +805,66 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		//triggerColumnSelectedColumn(treeViewer);
 		
 		treeViewer.addSelectionChangedListener(this);
+	}
+
+	private void initializeRootAddInsert() {
+		// root
+		// insert before
+		insertRootSiblingRecordBefore = new MenuManager("Insert record before", null);
+        
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	insertRootSiblingRecordBefore.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
+        }
+
+        String handoverRecords = "Handover records";
+        MenuManager insertRootSiblingRecordBeforeHandoverRecords = new MenuManager(handoverRecords, null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	insertRootSiblingRecordBeforeHandoverRecords.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 0));
+        }
+        int index = -1;
+        for(int i = 0; i < rootRecordTypes.length; i++) {
+        	if(rootRecordTypes[i].getRecordLabel().compareTo(handoverRecords) > 0) {
+        		index = i;
+        		
+        		break;
+        	}
+        }
+        if(index == -1) {
+            insertRootSiblingRecordBefore.add(insertRootSiblingRecordBeforeHandoverRecords);
+        } else {
+            insertRootSiblingRecordBefore.insert(index, insertRootSiblingRecordBeforeHandoverRecords);
+        }
+        
+		// insert after
+        insertRootSiblingRecordAfter = new MenuManager("Insert record after", null);
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	insertRootSiblingRecordAfter.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
+        }
+
+        MenuManager insertRootSiblingRecordAfterHandoverRecords = new MenuManager(handoverRecords, null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	insertRootSiblingRecordAfterHandoverRecords.add(new InsertSiblingAction(recordType.getRecordLabel(), recordType.getRecordClass(), 1));
+        }
+        if(index == -1) {
+        	insertRootSiblingRecordAfter.add(insertRootSiblingRecordAfterHandoverRecords);
+        } else {
+        	insertRootSiblingRecordAfter.insert(index, insertRootSiblingRecordAfterHandoverRecords);
+        }
+        
+		// just add as in add last
+        addRootChildRecord = new MenuManager("Add record", null);
+        for(NdefRecordType recordType: rootRecordTypes) {
+        	addRootChildRecord.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
+        }
+        MenuManager addRootChildRecordHandoverRecords = new MenuManager("Handover records", null);
+        for(NdefRecordType recordType: handoverRecordTypes) {
+        	addRootChildRecordHandoverRecords.add(new AddChildAction(recordType.getRecordLabel(), recordType.getRecordClass()));
+        }
+        if(index == -1) {
+        	addRootChildRecord.add(addRootChildRecordHandoverRecords);
+        } else {
+        	addRootChildRecord.insert(index, addRootChildRecordHandoverRecords);
+        }
 	}
 	
 	@Override

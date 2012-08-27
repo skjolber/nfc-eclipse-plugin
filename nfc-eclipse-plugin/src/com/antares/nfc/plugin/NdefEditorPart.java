@@ -176,7 +176,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 
 		form.update();
 		
-		setDirty(true);
+		setDirty(operator.isDirty());
 		
 		updateActions();
 		

@@ -1,9 +1,9 @@
-/***************************************************************************
+ /***************************************************************************
  *
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas R�rvik Skj�lberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rorvik Skjolberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ****************************************************************************/
+
 
 package com.antares.nfc.model.editing;
 

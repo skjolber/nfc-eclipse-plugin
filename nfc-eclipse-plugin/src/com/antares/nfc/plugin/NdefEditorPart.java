@@ -72,6 +72,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.EditorPart;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefException;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
@@ -209,7 +210,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 							List<Record> records = operator.getRecords();
 							
 			        		// add write option IF message can in fact be written
-			        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+							NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 			        		
 			        		try {
 			        			ndefMessageEncoder.encode(records);

@@ -42,6 +42,7 @@ import org.nfctools.api.UnknownTagListener;
 import org.nfctools.mf.classic.MfClassicNfcTagListener;
 import org.nfctools.mf.ul.Type2NfcTagListener;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.NdefOperationsListener;
@@ -307,7 +308,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 					
 					if(ndefOperations != null) {
 						
-		        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		        		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 		        		
 		        		try {
 		        			ndefMessageEncoder.encode(records);
@@ -348,7 +349,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 			if(type == Type.NONE) {
 				log("Read NDEF into new editor");
 				
-				final byte[] encode = NdefContext.getNdefMessageEncoder().encode(list);
+				final byte[] encode = NdefContext.getNdefEncoder().encode(list);
 
 				openNewEditor(encode);
 			} else {

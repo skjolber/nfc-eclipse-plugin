@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas Rørvik Skjølberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rï¿½rvik Skjï¿½lberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
@@ -39,7 +40,7 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 
 public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 
-		private NdefMessageEncoder encoder = NdefContext.getNdefMessageEncoder();
+		private NdefEncoder encoder = NdefContext.getNdefEncoder();
 
 		@Override
 		public String getText(Object element) {
@@ -52,7 +53,7 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 				// first check problems with encoding
 				if(element instanceof NdefRecordModelRecord) {
 					try {
-						encoder.encodeSingle(ndefRecordModelNode.getRecord());
+						encoder.encode(ndefRecordModelNode.getRecord());
 					} catch(NdefEncoderException e) {
 						
 						if(e.getLocation() == ndefRecordModelNode.getRecord()) {
@@ -141,7 +142,7 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 				// first check problems with encoding
 				if(element instanceof NdefRecordModelRecord) {
 					try {
-						encoder.encodeSingle(ndefRecordModelNode.getRecord());
+						encoder.encode(ndefRecordModelNode.getRecord());
 					} catch(NdefEncoderException e) {
 						if(e.getLocation() == ndefRecordModelNode.getRecord()) {
 							return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 

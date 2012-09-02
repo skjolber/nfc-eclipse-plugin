@@ -49,6 +49,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
@@ -1038,7 +1039,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		        	if(ndefOperations.isWritable()) {
 
 		        		// add write option IF message can in fact be written
-		        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		        		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 		        		
 		        		try {
 		        			ndefMessageEncoder.encode(ndefMultiPageEditor.getNdefRecords());

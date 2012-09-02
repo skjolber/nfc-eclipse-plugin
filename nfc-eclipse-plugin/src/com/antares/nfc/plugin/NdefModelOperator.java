@@ -3,7 +3,7 @@
  * This file is part of the NFC Eclipse Plugin project at
  * http://code.google.com/p/nfc-eclipse-plugin/
  *
- * Copyright (C) 2012 by Thomas R�rvik Skj�lberg / Antares Gruppen AS.
+ * Copyright (C) 2012 by Thomas Rorvik Skjolberg / Antares Gruppen AS.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPathEditorInput;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefDecoder;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefException;
 import org.nfctools.ndef.NdefMessage;
@@ -183,20 +185,9 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 	private NdefRecordModelParent loadModel(byte[] ndef) throws IOException {
 		if(ndef.length > 0) {
-			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
-			
-			NdefMessage decode = null;
-			try {
-				decode = ndefMessageDecoder.decode(new ByteArrayInputStream(ndef, 0, ndef.length), false);
-			} catch(NdefException e) {
-				if(e.getCause() instanceof EOFException) {
-					// try again with more relaxed decoding
-					decode = ndefMessageDecoder.decodeFully(ndef);
-				} else {
-					throw new IOException(e);
-				}
-			}
-			List<Record> list = ndefMessageDecoder.decodeToRecords(decode);
+			NdefDecoder ndefMessageDecoder = NdefContext.getNdefDecoder();
+
+			List<Record> list = ndefMessageDecoder.decodeToRecords(ndef);
 			
 			Record[] records = list.toArray(new Record[list.size()]);
 			
@@ -230,7 +221,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	}
 
 	public byte[] toNdefMessage() {
-		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 
 		return ndefMessageEncoder.encode(getRecords());
 	}

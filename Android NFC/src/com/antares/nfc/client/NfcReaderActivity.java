@@ -59,12 +59,22 @@ public class NfcReaderActivity extends NfcDetectorActivity implements NdefReader
 	protected NdefReader reader;
 	
 	protected NdefMessage[] messages;
+	
+	protected final int layout;  // for subclassing
 
+	public NfcReaderActivity() {
+		this(R.layout.reader);
+	}
+
+	public NfcReaderActivity(int layout) {
+		this.layout = layout;
+	}
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.reader);
+		setContentView(layout);
 	}
 	
 	@Override

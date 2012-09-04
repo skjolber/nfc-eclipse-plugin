@@ -92,5 +92,6 @@
 
     <string name="writer">Writer</string>
     <string name="reader">Reader</string>
+    <string name="beamer">Beamer</string>
     
 </resources>

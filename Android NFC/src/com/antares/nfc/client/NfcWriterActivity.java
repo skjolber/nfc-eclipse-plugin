@@ -53,11 +53,21 @@ public class NfcWriterActivity extends NfcDetectorActivity implements NdefWriter
 
 	protected NdefWriter writer;
 
+	protected final int layout; // for subclassing
+	
+	public NfcWriterActivity() {
+		this(R.layout.writer);
+	}
+	
+	public NfcWriterActivity(int layout) {
+		this.layout = layout;
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.writer);
+		setContentView(layout);
 	}
 
 	

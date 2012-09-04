@@ -50,6 +50,11 @@ public class AndroidNfcActivity extends Activity {
         super.onCreate(savedInstanceState);
         
 		setContentView(R.layout.main);
+		
+		if (android.os.Build.VERSION.SDK_INT >= 14) {
+            View view = findViewById(R.id.beamer);
+            view.setVisibility(View.VISIBLE);
+        }
     }
     
     public void writer(View view) {
@@ -66,5 +71,11 @@ public class AndroidNfcActivity extends Activity {
     	startActivity(intent);
     }
     
-
+    public void beamer(View view) {
+    	Log.d(TAG, "Show beamer");
+    	
+    	Intent intent = new Intent(this, NfcBeamerActivity.class);
+    	startActivity(intent);
+    }
+    
 }

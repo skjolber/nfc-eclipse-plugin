@@ -36,3 +36,12 @@
 /nfctools-ndef
 /nfctools-ndef-test
 /output
+/nfctools-ndef
+/nfctools-ndef-test
+/nfctools-ndef-test-resources
+/nfctools-api
+/nfctools-p2p
+/nfctools-core
+/src-zxing-javase
+/zxing-binaryqr
+/zxing-core

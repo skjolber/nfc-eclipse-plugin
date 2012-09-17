@@ -95,15 +95,22 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, "ExternalTypeRecord", ndefRecordModelParent);
 
-			if(externalTypeRecord.hasNamespace()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Namespace", externalTypeRecord.getNamespace(), ndefRecordModelRecord));
+			if(externalTypeRecord.hasDomain()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Domain", externalTypeRecord.getDomain(), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Namespace", "", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Domain", "", ndefRecordModelRecord));
 			}
-			if(externalTypeRecord.hasContent()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", externalTypeRecord.getContent(), ndefRecordModelRecord));
+			
+			if(externalTypeRecord.hasType()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Type", externalTypeRecord.getType(), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Type", "", ndefRecordModelRecord));
+			}
+
+			if(externalTypeRecord.hasData()) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", externalTypeRecord.getData().length + " bytes", ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Zero bytes", ndefRecordModelRecord));
 			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof AbsoluteUriRecord) {
@@ -188,7 +195,7 @@ public class NdefRecordModelFactory {
 			if(binaryMimeRecord.hasContent()) {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", Integer.toString(binaryMimeRecord.getContentAsBytes().length) + " bytes binary payload", ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Empty binary payload", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Empty payload", ndefRecordModelRecord));
 			}
 
 			// remember content type for file dialogs

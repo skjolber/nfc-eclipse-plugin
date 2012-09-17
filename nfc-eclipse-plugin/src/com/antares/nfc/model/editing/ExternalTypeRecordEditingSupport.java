@@ -26,10 +26,20 @@
 
 package com.antares.nfc.model.editing;
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
+import org.nfctools.ndef.unknown.UnknownRecord;
 
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelProperty;
@@ -51,44 +61,105 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 			
 			int parentIndex = node.getParentIndex();
 			if(parentIndex == 0) {
-				if(!stringValue.equals(unsupportedExternalTypeRecord.getNamespace())) {
-					return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getNamespace(), stringValue) {
+				if(!stringValue.equals(unsupportedExternalTypeRecord.getDomain())) {
+					return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getDomain(), stringValue) {
 						
 						@Override
 						public void execute() {
 							super.execute();
 							
-							record.setNamespace(next);
+							record.setDomain(next);
 						}
 						
 						@Override
 						public void revoke() {
 							super.revoke();
 							
-							record.setNamespace(previous);
+							record.setDomain(previous);
 						}
 					};
 					
 				}
 			} else if(parentIndex == 1) {
-				if(!stringValue.equals(unsupportedExternalTypeRecord.getContent())) {
-					return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getContent(), stringValue) {
+				if(!stringValue.equals(unsupportedExternalTypeRecord.getType())) {
+					return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getType(), stringValue) {
 						
 						@Override
 						public void execute() {
 							super.execute();
 							
-							record.setContent(next);
+							record.setType(next);
 						}
 						
 						@Override
 						public void revoke() {
 							super.revoke();
 							
-							record.setContent(previous);
+							record.setType(previous);
 						}
 					};
+					
 				}
+			} else if(parentIndex == 2) {				
+				
+				String path = (String)value;
+				
+				File file = new File(path);
+
+				int length = (int)file.length();
+				
+				byte[] payload = new byte[length];
+				
+				DataInputStream din = null;
+				try {
+					din = new DataInputStream(new FileInputStream(file));
+					
+					din.readFully(payload);
+				} catch(IOException e) {
+					Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+					MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+					
+					return null;
+				} finally {
+					if(din != null) {
+						try {
+							din.close();
+						} catch(IOException e) {
+							// ignore
+						}
+					}
+				}
+				
+				return new DefaultNdefModelPropertyOperation<byte[], UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getData(), payload) {
+					
+					@Override
+					public void execute() {
+						super.execute();
+						
+						record.setData(next);
+						
+						if(next == null) {
+							ndefRecordModelProperty.setValue("Zero bytes");
+						} else {
+							ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes");
+						}	
+
+					}
+					
+					@Override
+					public void revoke() {
+						super.revoke();
+						
+						record.setData(previous);
+						
+						if(previous == null) {
+							ndefRecordModelProperty.setValue("Zero bytes");
+						} else {
+							ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes");
+						}	
+					}
+				};				
+				
 			}
 			
 			return null;
@@ -104,17 +175,19 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 			
 			int parentIndex = node.getParentIndex();
 			if(parentIndex == 0) {
-				if(unsupportedExternalTypeRecord.hasNamespace()) {
-					return unsupportedExternalTypeRecord.getNamespace();
+				if(unsupportedExternalTypeRecord.hasDomain()) {
+					return unsupportedExternalTypeRecord.getDomain();
 				} else {
 					return EMPTY_STRING;
 				}
 			} else if(parentIndex == 1) {
-				if(unsupportedExternalTypeRecord.hasContent()) {
-					return unsupportedExternalTypeRecord.getContent();
+				if(unsupportedExternalTypeRecord.hasType()) {
+					return unsupportedExternalTypeRecord.getType();
 				} else {
 					return EMPTY_STRING;
 				}
+			} else if(parentIndex == 2) {
+				return EMPTY_STRING;
 			} else {
 				throw new RuntimeException();
 			}
@@ -126,7 +199,12 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 	@Override
 	public CellEditor getCellEditor(NdefRecordModelNode node) {
 		if(node instanceof NdefRecordModelProperty) {
-			return new TextCellEditor(treeViewer.getTree());
+			int parentIndex = node.getParentIndex();
+			if(parentIndex == 2) {
+				return new FileDialogCellEditor(treeViewer.getTree());
+			} else {
+				return new TextCellEditor(treeViewer.getTree());
+			}
 		} else {
 			return super.getCellEditor(node);
 		}

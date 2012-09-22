@@ -30,7 +30,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
@@ -39,7 +38,6 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
-import org.nfctools.ndef.unknown.UnknownRecord;
 
 import com.antares.nfc.model.NdefRecordModelNode;
 import com.antares.nfc.model.NdefRecordModelProperty;

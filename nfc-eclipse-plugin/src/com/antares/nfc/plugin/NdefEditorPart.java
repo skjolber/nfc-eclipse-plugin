@@ -74,7 +74,6 @@ import org.eclipse.ui.part.EditorPart;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefException;
-import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
 

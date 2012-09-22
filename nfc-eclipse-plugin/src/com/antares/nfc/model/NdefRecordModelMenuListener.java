@@ -50,7 +50,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
-import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
@@ -77,6 +76,7 @@ import org.nfctools.ndef.wkt.records.UriRecord;
 import com.antares.nfc.plugin.Activator;
 import com.antares.nfc.plugin.NdefEditorPart;
 import com.antares.nfc.plugin.NdefMultiPageEditor;
+import com.antares.nfc.plugin.Startup;
 import com.antares.nfc.plugin.util.FileDialogUtil;
 import com.antares.nfc.terminal.NdefTerminalListener;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
@@ -223,6 +223,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	private AutoWriteTerminal autoWriteTerminal = new AutoWriteTerminal();
 	private FormatTerminal formatTerminal = new FormatTerminal();
 	private ReadOnlyTerminal readOnlyTerminal = new ReadOnlyTerminal();
+	private DisableTerminal disableTerminals = new DisableTerminal();
+	private EnableTerminal enableTerminals = new EnableTerminal();
 	
 	// mime content
 	private SaveContentAction saveContent;
@@ -288,6 +290,36 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			} else {
 				editorPart.setStatus("Operation not possible");
 			}
+		}
+	}
+	
+	private class EnableTerminal extends Action {
+
+		public EnableTerminal() {
+			super("Enable readers");
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Enable terminal");
+
+			Startup.setReaderEnabledPreference(true);
+			Startup.enable();
+		}
+	}
+
+	private class DisableTerminal extends Action {
+
+		public DisableTerminal() {
+			super("Disable readers");
+		}
+		
+		@Override
+		public void run() {
+			Activator.info("Disable terminal");
+
+			Startup.setReaderEnabledPreference(false);
+			Startup.disable();
 		}
 	}
 
@@ -1023,81 +1055,97 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			menuManager.add(addRootChildRecord);
 		}
 		
-		if(NdefTerminalWrapper.isAvailable()) {
-			String terminalName = NdefTerminalWrapper.getTerminalName();
-			
-			if(terminalName != null) {
-		        MenuManager terminalMenuManager = new MenuManager(terminalName, null);
-		        
-		        NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
+			if(NdefTerminalWrapper.isAvailable()) {
+				if(Startup.isReaderEnabledPreference()) {
 
-		        terminalMenuManager.add(readTerminal);
-		        terminalMenuManager.add(writeTerminal);
-		        
-		        if(ndefOperations != null) {
-		        	readTerminal.setEnabled(true);
-		        	if(ndefOperations.isWritable()) {
-
-		        		// add write option IF message can in fact be written
-		        		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
-		        		
-		        		try {
-		        			ndefMessageEncoder.encode(ndefMultiPageEditor.getNdefRecords());
-		        			
-		        			writeTerminal.setEnabled(true);
-		        		} catch(Exception e) {
-		        			writeTerminal.setEnabled(false);
-		        		}
-		        	}
-		        } else {
-		        	readTerminal.setEnabled(false);
-        			writeTerminal.setEnabled(false);
-		        }
-		        
-		        NdefTerminalListener current = NdefTerminalWrapper.getNdefTerminalListener();
-		        if(current != null) {
-		        	if(current != ndefMultiPageEditor) {
-		        		autoReadTerminal.setChecked(false);
-		        		autoWriteTerminal.setChecked(false);
-		        	} else {
-		        		Type type = current.getType();
-		        		
-		        		autoReadTerminal.setChecked(type == Type.READ || type == Type.READ_WRITE);
-		        		autoWriteTerminal.setChecked(type == Type.WRITE || type == Type.READ_WRITE);
-		        	}
-		        } else {
-	        		autoReadTerminal.setChecked(false);
-	        		autoWriteTerminal.setChecked(false);
-		        }
-		        
-		        // always present
-		        terminalMenuManager.add(autoReadTerminal);
-		        terminalMenuManager.add(autoWriteTerminal);
-
-		        if(ndefOperations != null) {
-		        	if(ndefOperations.isWritable()) {
-		        		formatTerminal.setEnabled(true);
-		        		readOnlyTerminal.setEnabled(true);
-		        	} else {
-		        		formatTerminal.setEnabled(false);
-		        		readOnlyTerminal.setEnabled(false);
-		        	}
-	        	} else {
-	        		formatTerminal.setEnabled(false);
-	        		readOnlyTerminal.setEnabled(false);
-		        }
-
-		        terminalMenuManager.add(new Separator());
-		        terminalMenuManager.add(formatTerminal);
-		        terminalMenuManager.add(new Separator());
-		        terminalMenuManager.add(readOnlyTerminal);
-
-
-		        menuManager.add(new Separator());
-		        menuManager.add(terminalMenuManager);
-			}
-		}
+					String terminalName = NdefTerminalWrapper.getTerminalName();
+				
+					if(terminalName != null) {
+				        MenuManager terminalMenuManager = new MenuManager(terminalName, null);
+				        
+				        NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 		
+				        terminalMenuManager.add(readTerminal);
+				        terminalMenuManager.add(writeTerminal);
+				        
+				        if(ndefOperations != null) {
+				        	readTerminal.setEnabled(true);
+				        	if(ndefOperations.isWritable()) {
+		
+				        		// add write option IF message can in fact be written
+				        		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+				        		
+				        		try {
+				        			ndefMessageEncoder.encode(ndefMultiPageEditor.getNdefRecords());
+				        			
+				        			writeTerminal.setEnabled(true);
+				        		} catch(Exception e) {
+				        			writeTerminal.setEnabled(false);
+				        		}
+				        	}
+				        } else {
+				        	readTerminal.setEnabled(false);
+		        			writeTerminal.setEnabled(false);
+				        }
+				        
+				        NdefTerminalListener current = NdefTerminalWrapper.getNdefTerminalListener();
+				        if(current != null) {
+				        	if(current != ndefMultiPageEditor) {
+				        		autoReadTerminal.setChecked(false);
+				        		autoWriteTerminal.setChecked(false);
+				        	} else {
+				        		Type type = current.getType();
+				        		
+				        		autoReadTerminal.setChecked(type == Type.READ || type == Type.READ_WRITE);
+				        		autoWriteTerminal.setChecked(type == Type.WRITE || type == Type.READ_WRITE);
+				        	}
+				        } else {
+			        		autoReadTerminal.setChecked(false);
+			        		autoWriteTerminal.setChecked(false);
+				        }
+				        
+				        // always present
+				        terminalMenuManager.add(autoReadTerminal);
+				        terminalMenuManager.add(autoWriteTerminal);
+		
+				        if(ndefOperations != null) {
+				        	if(ndefOperations.isWritable()) {
+				        		formatTerminal.setEnabled(true);
+				        		readOnlyTerminal.setEnabled(true);
+				        	} else {
+				        		formatTerminal.setEnabled(false);
+				        		readOnlyTerminal.setEnabled(false);
+				        	}
+			        	} else {
+			        		formatTerminal.setEnabled(false);
+			        		readOnlyTerminal.setEnabled(false);
+				        }
+		
+				        terminalMenuManager.add(new Separator());
+				        terminalMenuManager.add(formatTerminal);
+				        terminalMenuManager.add(new Separator());
+				        terminalMenuManager.add(readOnlyTerminal);
+				        
+				        terminalMenuManager.add(new Separator());
+				        terminalMenuManager.add(disableTerminals);
+
+				        menuManager.add(new Separator());
+				        menuManager.add(terminalMenuManager);
+					} else {
+						if(Startup.hasSeenReader()) {
+							menuManager.add(new Separator());
+							menuManager.add(disableTerminals);
+						} else {
+							// dont show anything
+						}
+					}
+				} else {
+					 menuManager.add(new Separator());
+				     menuManager.add(enableTerminals);
+				}
+			}
+		
+			
 	}
 	
 	@Override

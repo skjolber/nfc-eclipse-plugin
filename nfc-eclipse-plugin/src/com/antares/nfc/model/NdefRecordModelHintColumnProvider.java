@@ -32,7 +32,6 @@ import org.eclipse.swt.widgets.Display;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
-import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.mime.MimeRecord;

@@ -43,7 +43,6 @@ import org.nfctools.mf.classic.MfClassicNfcTagListener;
 import org.nfctools.mf.ul.Type2NfcTagListener;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
-import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.NdefOperationsListener;
 import org.nfctools.ndef.Record;
@@ -58,6 +57,7 @@ import org.nfctools.spi.scm.SclTerminal;
 import com.antares.nfc.plugin.Activator;
 import com.antares.nfc.plugin.NdefEditorPart;
 import com.antares.nfc.plugin.NdefMultiPageEditor;
+import com.antares.nfc.plugin.Startup;
 import com.antares.nfc.terminal.NdefTerminalListener.Type;
 
 public class NdefTerminalDetector implements Runnable, NdefOperationsListener, TerminalStatusListener, UnknownTagListener {
@@ -91,6 +91,8 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 	
 	private int counter = 0;
 	
+	private Thread thread;
+	
 	public NdefTerminalDetector() {
 		terminalHandler = new TerminalHandler();
 		terminalHandler.addTerminal(new AcsTerminal());
@@ -114,6 +116,8 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 				if(!foundTerminal) {
 					foundTerminal = true;
 				}
+				Startup.setSeenTerminal(true);
+				
 				startReader(terminal);
 			}
 			return true;
@@ -177,7 +181,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 			
 	}
 
-	private void stopReader() {
+	public void stopReader() {
 		synchronized(this) {
 			log("Stopping terminal " + currentTerminal.getTerminalName());
 			if(nfcAdapter != null) {
@@ -193,31 +197,42 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 	public void startDetecting() {
 		log("Start detecting card terminals");
 		
-		Thread thread = new Thread(this);
-		thread.start();
+		if(thread == null) {
+			thread = new Thread(this);
+			thread.start();
+		}
 	}
 	
 	public void stopDetecting() {
 		log("Stop detecting card terminals");
 		
 		close = true;
+		
+		Thread thread = this.thread;
+		thread.interrupt();
+		
+		stopReader();
 	}
 
 	@Override
 	public void run() {
-		while(!close) {
-			try {
-				if(detectTerminal()) {
-					notfiyChange();
+		try {
+			while(!close) {
+				try {
+					if(detectTerminal()) {
+						notfiyChange();
+					}
+				} catch(IllegalArgumentException e) {
+					// ignore
 				}
-			} catch(IllegalArgumentException e) {
-				// ignore
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					
+				}
 			}
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				
-			}
+		} finally {
+			thread = null;
 		}
 	}
 

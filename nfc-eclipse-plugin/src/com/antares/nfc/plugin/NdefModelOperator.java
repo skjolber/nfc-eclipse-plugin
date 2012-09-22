@@ -26,9 +26,7 @@
 
 package com.antares.nfc.plugin;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -53,9 +51,6 @@ import org.nfctools.ndef.NdefDecoder;
 import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefException;
-import org.nfctools.ndef.NdefMessage;
-import org.nfctools.ndef.NdefMessageDecoder;
-import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;

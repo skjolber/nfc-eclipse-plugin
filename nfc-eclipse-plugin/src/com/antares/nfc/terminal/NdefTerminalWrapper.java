@@ -26,7 +26,12 @@
 
 package com.antares.nfc.terminal;
 
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.nfctools.ndef.NdefOperations;
+import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
+
+import com.antares.nfc.plugin.Activator;
 
 /**
  * 
@@ -99,18 +104,72 @@ public class NdefTerminalWrapper {
 		return null;
 	}
 
+	public static boolean hasSeenReader() {
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode(Activator.class.getPackage().getName());
+		Preferences reader = preferences.node("reader");
 
-	public static boolean hasFoundTerminal() {
-		try {
-			com.antares.nfc.terminal.NdefTerminalDetector detector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
-	
-			if(detector != null) {
-				return detector.hasFoundTerminal();
-			}
-		} catch(Exception e) {
-			// ignore
-		} 
-		return false;
+		return reader.getBoolean("seen", false);
 	}
 
+	public static boolean isReaderEnabledPreference() {
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode(Activator.class.getPackage().getName());
+		Preferences reader = preferences.node("reader");
+
+		return reader.getBoolean("enable", true);
+	}
+
+	public static void setReaderEnabledPreference(boolean enabled) {
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode(Activator.class.getPackage().getName());
+		Preferences reader = preferences.node("reader");
+
+		if(reader.getBoolean("enable", true) != enabled) {
+			reader.putBoolean("enable", enabled);
+			
+			try {
+				  // Forces the application to save the preferences
+				  preferences.flush();
+			} catch (BackingStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void setSeenTerminal(boolean seen) {
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode(Activator.class.getPackage().getName());
+		Preferences reader = preferences.node("reader");
+
+		if(reader.getBoolean("seen", false) != seen) {
+			reader.putBoolean("seen", seen);
+			
+			try {
+				  // Forces the application to save the preferences
+				  preferences.flush();
+			} catch (BackingStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void enable() {
+		try {
+			com.antares.nfc.terminal.NdefTerminalDetector detector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+			if(detector != null) {
+				detector.startDetecting();
+			}
+		} catch(Throwable e) {
+			// assume some classloading issue
+		}
+	}
+	
+	public static void disable() {
+		try {
+			com.antares.nfc.terminal.NdefTerminalDetector detector = com.antares.nfc.terminal.NdefTerminalDetector.getInstance();
+			if(detector != null) {
+				detector.stopDetecting();
+				
+			}
+		} catch(Throwable e) {
+			// assume some classloading issue
+		}
+	}
 }

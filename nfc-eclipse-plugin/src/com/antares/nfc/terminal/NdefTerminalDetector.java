@@ -79,10 +79,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 	private NfcAdapter nfcAdapter;
 	
 	private boolean close = false;
-	
-	/** did we ever see a terminal */
-	private boolean foundTerminal = false;
-	
+		
 	private NdefTerminalListener ndefTerminalListener;
 	
 	private NdefOperations ndefOperations;
@@ -113,10 +110,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 			}
 			
 			if(terminal != null) {
-				if(!foundTerminal) {
-					foundTerminal = true;
-				}
-				Startup.setSeenTerminal(true);
+				NdefTerminalWrapper.setSeenTerminal(true);
 				
 				startReader(terminal);
 			}
@@ -140,7 +134,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		}
 	}
 
-	private void notfiyChange() {
+	public void notfiyChange() {
 		log("Notify change in card terminal status");
 		
 		// notify status line if editor is open
@@ -195,12 +189,13 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 	}
 	
 	public void startDetecting() {
-		log("Start detecting card terminals");
-		
 		if(thread == null) {
+			close = false;
+			
 			thread = new Thread(this);
 			thread.start();
 		}
+		notfiyChange();
 	}
 	
 	public void stopDetecting() {
@@ -212,10 +207,14 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		thread.interrupt();
 		
 		stopReader();
+		
+		notfiyChange();
 	}
 
 	@Override
 	public void run() {
+		log("Start detecting card terminals");
+
 		try {
 			while(!close) {
 				try {
@@ -401,10 +400,6 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 				this.terminalStatus = status;
 			}
 		}
-	}
-
-	public boolean hasFoundTerminal() {
-		return foundTerminal;
 	}
 
 	public NdefTerminalListener getNdefTerminalListener() {

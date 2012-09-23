@@ -303,8 +303,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Enable terminal");
 
-			Startup.setReaderEnabledPreference(true);
-			Startup.enable();
+			NdefTerminalWrapper.setReaderEnabledPreference(true);
+			NdefTerminalWrapper.enable();
 		}
 	}
 
@@ -318,8 +318,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Disable terminal");
 
-			Startup.setReaderEnabledPreference(false);
-			Startup.disable();
+			NdefTerminalWrapper.setReaderEnabledPreference(false);
+			NdefTerminalWrapper.disable();
 		}
 	}
 
@@ -1056,7 +1056,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		}
 		
 			if(NdefTerminalWrapper.isAvailable()) {
-				if(Startup.isReaderEnabledPreference()) {
+				if(NdefTerminalWrapper.isReaderEnabledPreference()) {
 
 					String terminalName = NdefTerminalWrapper.getTerminalName();
 				
@@ -1132,7 +1132,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				        menuManager.add(new Separator());
 				        menuManager.add(terminalMenuManager);
 					} else {
-						if(Startup.hasSeenReader()) {
+						if(NdefTerminalWrapper.hasSeenReader()) {
 							menuManager.add(new Separator());
 							menuManager.add(disableTerminals);
 						} else {

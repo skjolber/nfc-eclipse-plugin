@@ -274,19 +274,24 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 								StatusLineContributionItem size = (StatusLineContributionItem)item;
 								
 								if(NdefTerminalWrapper.isAvailable()) {
-									if(NdefTerminalWrapper.hasFoundTerminal()) {
-	
-										String terminalName = NdefTerminalWrapper.getTerminalName();
-										if(terminalName != null) {
-											size.setText(terminalName);
+									
+									if(NdefTerminalWrapper.hasSeenReader()) {
+
+										if(NdefTerminalWrapper.isReaderEnabledPreference()) {
+											String terminalName = NdefTerminalWrapper.getTerminalName();
+											if(terminalName != null) {
+												size.setText(terminalName);
+											} else {
+												size.setText("Card reader disconnected");
+											}
 										} else {
-											size.setText("Disconnected");
+											size.setText("Card readers disabled");
 										}
 									} else {
-										size.setText("No card terminal");
+										size.setText("No card reader");
 									}
 								} else {
-									size.setText("No card terminal");
+									size.setText("No card reader");
 								}
 							}
 

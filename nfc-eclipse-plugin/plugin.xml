@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension point="org.eclipse.ui.startup">
-      <startup class="com.antares.nfc.plugin.Startup"/>
+      <startup class="org.nfc.eclipse.plugin.Startup"/>
    </extension>
    
    <extension
@@ -11,11 +11,11 @@
             name="NDEF editor"
             extensions="ndef"
             icon="icons/icon.gif"
-            contributorClass="com.antares.nfc.plugin.NdefMultiPageEditorContributor"
-            class="com.antares.nfc.plugin.NdefMultiPageEditor"
-            id="com.antares.nfc.plugin.NdefMultiPageEditor" default="true">
+            contributorClass="org.nfc.eclipse.plugin.NdefMultiPageEditorContributor"
+            class="org.nfc.eclipse.plugin.NdefMultiPageEditor"
+            id="org.nfc.eclipse.plugin.NdefMultiPageEditor" default="true">
             
-            <contentTypeBinding contentTypeId="com.antares.nfc.plugin.content.ndef"/>  
+            <contentTypeBinding contentTypeId="org.nfc.eclipse.plugin.content.ndef"/>  
       </editor>
    </extension>
 
@@ -23,7 +23,7 @@
          point="org.eclipse.core.contenttype.contentTypes">
       <content-type
             file-extensions="ndef"
-            id="com.antares.nfc.plugin.content.ndef"
+            id="org.nfc.eclipse.plugin.content.ndef"
             name="NDEF File"
             priority="normal">
       </content-type>
@@ -36,9 +36,9 @@
     </category>
     <wizard
           category="NFC"
-          class="com.antares.nfc.plugin.NewNdefFileWizard"
+          class="org.nfc.eclipse.plugin.NewNdefFileWizard"
           icon="icons/icon.gif"
-          id="com.antares.nfc.plugin.NewNdefFileWizard"
+          id="org.nfc.eclipse.plugin.NewNdefFileWizard"
           name="NDEF File">
     </wizard>
  </extension>

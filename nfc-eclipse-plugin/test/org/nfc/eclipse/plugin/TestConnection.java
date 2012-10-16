@@ -1,4 +1,4 @@
-package com.antares.nfc;
+package org.nfc.eclipse.plugin;
 
 import org.nfctools.NfcAdapter;
 import org.nfctools.mf.classic.MfClassicNfcTagListener;

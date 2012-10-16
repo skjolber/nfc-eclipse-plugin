@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ****************************************************************************/
-package com.antares.nfc;
+package org.nfc.eclipse.plugin;
 
 import java.io.DataInputStream;
 import java.io.File;

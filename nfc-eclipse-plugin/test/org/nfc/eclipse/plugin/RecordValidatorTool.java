@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  ****************************************************************************/
 
-package com.antares.nfc;
+package org.nfc.eclipse.plugin;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -35,6 +35,7 @@ import java.util.Locale;
 
 import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
@@ -56,6 +57,10 @@ import org.nfctools.ndef.wkt.handover.records.HandoverRequestRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
 import org.nfctools.ndef.wkt.records.Action;
 import org.nfctools.ndef.wkt.records.ActionRecord;
+import org.nfctools.ndef.wkt.records.GcActionRecord;
+import org.nfctools.ndef.wkt.records.GcDataRecord;
+import org.nfctools.ndef.wkt.records.GcTargetRecord;
+import org.nfctools.ndef.wkt.records.GenericControlRecord;
 import org.nfctools.ndef.wkt.records.SignatureRecord;
 import org.nfctools.ndef.wkt.records.SignatureRecord.CertificateFormat;
 import org.nfctools.ndef.wkt.records.SignatureRecord.SignatureType;
@@ -106,6 +111,12 @@ public class RecordValidatorTool {
 	private static GeoRecord coordinatesGeoRecord = new GeoRecord(59.949444, 10.756389);
 	private static GeoRecord coordinatesAltitudeGeoRecord = new GeoRecord(59.949444, 10.756389, 100.0);
 	
+	private static GcActionRecord gcActionRecordAction = new GcActionRecord(Action.SAVE_FOR_LATER);
+	private static GcActionRecord gcActionRecordRecord = new GcActionRecord(new ActionRecord(Action.SAVE_FOR_LATER));
+	private static GcDataRecord gcDataRecord = new GcDataRecord();
+	private static GcTargetRecord gcTargetRecord = new GcTargetRecord(new UriRecord("http://ndef.com"));
+	private static GenericControlRecord genericControlRecord = new GenericControlRecord(gcTargetRecord, (byte)0x0);
+
 	public static Record[] records = new Record[] { absoluteUriRecord, actionRecord, androidApplicationRecord,
 			emptyRecord, textMimeRecord, binaryMimeRecord, smartPosterRecord, textRecord, unknownRecord, uriRecord,
 			collisionResolutionRecord, errorRecord,
@@ -114,7 +125,9 @@ public class RecordValidatorTool {
 			signatureRecordMarker, signatureRecord,
 			
 			unsupportedRecord,
-			addressInformationGeoRecord, coordinatesGeoRecord, coordinatesAltitudeGeoRecord
+			addressInformationGeoRecord, coordinatesGeoRecord, coordinatesAltitudeGeoRecord,
+			
+			gcActionRecordAction, gcActionRecordRecord, gcDataRecord, gcTargetRecord, genericControlRecord
 			};
 
 
@@ -138,6 +151,15 @@ public class RecordValidatorTool {
 		signatureRecord.addCertificate(new byte[]{0x00, 0x10, 0x11});
 		signatureRecord.setSignatureType(SignatureType.RSASSA_PSS_SHA_1);
 		signatureRecord.setSignature(new byte[]{0x01, 0x11, 0x12});
+		
+		// add some GenericControlRecord
+		gcDataRecord.add(new ActionRecord(Action.SAVE_FOR_LATER));
+		gcDataRecord.add(new ActionRecord(Action.OPEN_FOR_EDITING));
+
+		genericControlRecord.setAction(gcActionRecordAction);
+		genericControlRecord.setTarget(gcTargetRecord);
+		genericControlRecord.setData(gcDataRecord);
+
 	}
 	
 	/**
@@ -153,7 +175,7 @@ public class RecordValidatorTool {
 			}
 		}
 		
-		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 
 		// SINGLE
 		for(int i = 0; i < records.length; i++) {
@@ -169,7 +191,7 @@ public class RecordValidatorTool {
 			}
 			FileOutputStream fout = new FileOutputStream(file);
 			try {
-				fout.write(ndefMessageEncoder.encodeSingle(record));
+				fout.write(ndefMessageEncoder.encode(record));
 			} finally {
 				fout.close();
 			}

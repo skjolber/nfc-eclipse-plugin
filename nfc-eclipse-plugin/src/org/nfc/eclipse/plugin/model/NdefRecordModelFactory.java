@@ -546,8 +546,11 @@ public class NdefRecordModelFactory {
 		
 		nodes.add(list);
 		
-		nodes.add(getNode("Certificate chain URI", signatureRecord.getCertificateUri(), ndefRecordModelRecord));
-		
+		if(signatureRecord.hasCertificateUri()) {
+			nodes.add(getNode("Certificate chain URI", signatureRecord.getCertificateUri(), ndefRecordModelRecord));
+		} else {
+			nodes.add(getNode("Certificate chain URI", "", ndefRecordModelRecord));
+		}
 		return nodes;
 	}
 }

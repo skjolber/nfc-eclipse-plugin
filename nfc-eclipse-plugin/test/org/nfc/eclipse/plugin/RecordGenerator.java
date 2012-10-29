@@ -77,7 +77,7 @@ import org.nfctools.ndef.wkt.records.UriRecord;
  */
 
 
-public class RecordValidatorTool {
+public class RecordGenerator {
 	
 	private static AbsoluteUriRecord absoluteUriRecord = new AbsoluteUriRecord("http://absolute.url");
 	private static ActionRecord actionRecord = new ActionRecord(Action.SAVE_FOR_LATER);

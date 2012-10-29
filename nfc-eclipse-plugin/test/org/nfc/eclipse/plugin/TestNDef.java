@@ -1,3 +1,5 @@
+package org.nfc.eclipse.plugin;
+
 /***************************************************************************
  *
  * This file is part of the NFC Eclipse Plugin project at
@@ -24,7 +26,7 @@
  * THE SOFTWARE.
  ****************************************************************************/
 
-package org.nfc.eclipse.plugin;
+
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,6 +44,8 @@ import javax.imageio.ImageIO;
 import org.junit.Test;
 import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
+import org.nfctools.ndef.NdefDecoder;
+import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
 import org.nfctools.ndef.NdefMessageEncoder;
@@ -176,7 +180,7 @@ public class TestNDef {
 		int awidth = 500;
 		int aheight = 500;
 
-		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 
 		for(Record record : records) {
 			List<Record> originalRecords = new ArrayList<Record>();
@@ -184,9 +188,11 @@ public class TestNDef {
 			byte[] ndef = ndefMessageEncoder.encode(originalRecords);
 
 			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
+			NdefDecoder ndefDecoder = NdefContext.getNdefDecoder();
+			
 			NdefMessage decode = ndefMessageDecoder.decode(ndef);
 
-			List<Record> roundTripRecordes = ndefMessageDecoder.decodeToRecords(decode);
+			List<Record> roundTripRecordes = ndefDecoder.decodeToRecords(decode);
 			
 			for(int i = 0; i < roundTripRecordes.size(); i++) {
 				System.out.println(originalRecords.get(i));
@@ -251,7 +257,7 @@ public class TestNDef {
 		int awidth = 400;
 		int aheight = 400;
 
-		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
+		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
 
 		List<Record> list = new ArrayList<Record>();
 		for(Record record : records) {
@@ -262,7 +268,9 @@ public class TestNDef {
 		NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
 		NdefMessage decode = ndefMessageDecoder.decode(ndef);
 
-		List<Record> lists = ndefMessageDecoder.decodeToRecords(decode);
+		NdefDecoder ndefDecoder = NdefContext.getNdefDecoder();
+
+		List<Record> lists = ndefDecoder.decodeToRecords(decode);
 
 		//get a byte matrix for the data
 		BinaryQRCodeWriter writer = new BinaryQRCodeWriter();

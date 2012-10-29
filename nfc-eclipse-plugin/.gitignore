@@ -45,3 +45,10 @@
 /src-zxing-javase
 /zxing-binaryqr
 /zxing-core
+/bin
+/nfctools-api
+/nfctools-core
+/nfctools-ndef
+/nfctools-ndef-test
+/nfctools-ndef-test-resources
+/nfctools-p2p

@@ -42,7 +42,7 @@ import org.nfctools.ndef.NdefMessageDecoder;
  *
  */
 
-public class RecordGeneratorTool {
+public class RecordValidator {
 
 	public static void main(String[] args) throws IOException {
 		File directory = new File("./resources/ndef/graphical/");

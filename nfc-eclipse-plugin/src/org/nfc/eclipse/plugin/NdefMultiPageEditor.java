@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
@@ -39,6 +40,8 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -46,6 +49,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
@@ -63,22 +67,25 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IPathEditorInput;
+import org.eclipse.ui.IPersistableEditor;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
-import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalInput;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalListener;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalStorage;
 import org.nfctools.ndef.Record;
+import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
 
 
-public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener, NdefTerminalListener {
+public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourceChangeListener, NdefTerminalListener, IPersistableEditor {
 
 	private NdefEditorPart ndefEditor;
 	private NdefQREditorPart ndefQREditor;
@@ -92,12 +99,17 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	
 	protected boolean dirty = false;
 	
+	protected boolean saveEditorPartPreference = false;
+	
+	protected int previousEditorIndex = -1;
+	
 	public NdefMultiPageEditor() {
 		super();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
 		
+		this.previousEditorIndex = getEditorPartPreference();
 	}
-
+	
 	public void createBinaryQRPage() {
 		Composite composite = new Composite(getContainer(), SWT.NONE);
 		composite.setBackground(new Color(Display.getDefault(), 0xFF, 0xFF, 0xFF));
@@ -160,9 +172,20 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	 * Creates the pages of the multi-page editor.
 	 */
 	protected void createPages() {
-		createNdefQREditorPage();
+		Activator.info("Create pages");
 		createNdefEditorPage();
+		createNdefQREditorPage();
 		createBinaryQRPage();
+		
+		if(previousEditorIndex != -1) {
+			Activator.info("Set active page " + previousEditorIndex);
+			
+			setActivePage(previousEditorIndex);
+			
+		} else {
+			setActivePage(0);
+		}
+		saveEditorPartPreference = true;
 	}
 	
 	/**
@@ -313,6 +336,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 		super.init(site, editorInput);
 		
 		Activator.info("Initialize");
+		
 	}
 	
 	public void setInput(IEditorInput input) {
@@ -457,19 +481,25 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	
 	
 	/**
-	 * Calculates the contents of page 2 when the it is activated.
+	 * Refresh page views according to the model when activated.
 	 */
 	protected void pageChange(int newPageIndex) {
 		Activator.info("Change to page " + newPageIndex);
 		super.pageChange(newPageIndex);
-		if(newPageIndex == 0) {
+		if(newPageIndex == 1) {
 			ndefQREditor.refresh();
-		} else if(newPageIndex == 1) {
+		} else if(newPageIndex == 0) {
 			ndefEditor.refresh();
 		} else if (newPageIndex == 2) {
 			refreshBinaryQR();
 		}
+		
+		if(saveEditorPartPreference) {
+			setEditorPartPreference(newPageIndex);	
+		}
 	}
+	
+	
 	
 	public void refreshBinaryQR() {
 		modelOperator.refreshBinaryQR(binaryQRLabel);
@@ -480,18 +510,69 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	 */
 	
 	public void resourceChanged(final IResourceChangeEvent event){
+		Activator.info(event.toString());
+		
+		final IEditorInput input=getEditorInput();
+	    if (!( input instanceof IFileEditorInput )) {
+	           return;
+	    }
+	    final IFile jmolfile=((IFileEditorInput)input).getFile();
+	       
 		if(event.getType() == IResourceChangeEvent.PRE_CLOSE){
 			Display.getDefault().asyncExec(new Runnable(){
 				public void run(){
 					IWorkbenchPage[] pages = getSite().getWorkbenchWindow().getPages();
-					for (int i = 0; i<pages.length; i++){
-						if(((FileEditorInput)ndefEditor.getEditorInput()).getFile().getProject().equals(event.getResource())){
+					for (int i = 0; i < pages.length; i++){
+						
+						if(jmolfile.getProject().equals(event.getResource())){
 							IEditorPart editorPart = pages[i].findEditor(ndefEditor.getEditorInput());
 							pages[i].closeEditor(editorPart,true);
 						}
 					}
 				}            
 			});
+		} else if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
+	        // Close editor if resource is deleted (or if any resource that is a parent is deleted)
+
+			IResourceDelta rootDelta = event.getDelta();
+			// get the delta, if any, for the documentation directory
+			final List<IResource> deletedlist = new ArrayList<IResource>();
+
+			IResourceDelta docDelta = rootDelta.findMember(jmolfile.getFullPath());
+			if (docDelta != null) {
+				IResourceDeltaVisitor visitor = new IResourceDeltaVisitor() {
+					public boolean visit(IResourceDelta delta) {
+						// only interested in removal changes
+						if ((delta.getFlags() & IResourceDelta.REMOVED) == 0) {
+							deletedlist.add(delta.getResource());
+						}
+						return true;
+					}
+				};
+				try {
+					docDelta.accept(visitor);
+				} catch (CoreException e) {
+					Activator.error(Activator.PLUGIN_ID, e);
+				}
+			}
+
+			if (deletedlist.size() > 0 && deletedlist.contains(jmolfile)) {
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						if (getSite() == null)
+							return;
+						if (getSite().getWorkbenchWindow() == null)
+							return;
+
+						IWorkbenchPage[] pages = getSite().getWorkbenchWindow()
+								.getPages();
+						for (int i = 0; i < pages.length; i++) {
+							IEditorPart editorPart = pages[i].findEditor(input);
+							pages[i].closeEditor(editorPart, true);
+						}
+					}
+				});
+			}
 		}
 	}
 
@@ -557,5 +638,48 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	public void setType(Type type) {
 		this.type = type;
 	}
+
+	@Override
+	public void restoreState(IMemento iMemento) {
+		Integer version = iMemento.getInteger("version");
+		if(version != null) {
+			Activator.info("Restore state for version " + version);
+			
+			if(version.intValue() <= 1) {
+				this.previousEditorIndex = iMemento.getInteger("activeEditorIndex");
+			}
+		}
+	}
+
+	@Override
+	public void saveState(IMemento iMemento) {
+		iMemento.putInteger("version", 1);
+
+		iMemento.putInteger("activeEditorIndex", getActivePage());
+	}
+	
+	public static int getEditorPartPreference() {
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode(Activator.class.getPackage().getName());
+		Preferences reader = preferences.node("editor");
+
+		return reader.getInt("activeEditorIndex", -1);
+	}
+
+	public static void setEditorPartPreference(int index) {
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode(Activator.class.getPackage().getName());
+		Preferences reader = preferences.node("editor");
+
+		if(reader.getInt("activeEditorIndex", -1) != index) {
+			reader.putInt("activeEditorIndex", index);
+			
+			try {
+				  // Forces the application to save the preferences
+				  preferences.flush();
+			} catch (BackingStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	
 }

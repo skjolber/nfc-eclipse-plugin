@@ -228,7 +228,7 @@ public class NdefRecordModelFactory {
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 			
 			if(unknownRecord.hasPayload()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", String.format(N_BYTES, unknownRecord.getPayload().length) + " bytes payload", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", String.format(N_BYTES, unknownRecord.getPayload().length), ndefRecordModelRecord));
 			} else {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", NO_BYTES, ndefRecordModelRecord));
 			}

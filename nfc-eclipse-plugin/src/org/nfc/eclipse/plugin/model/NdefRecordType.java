@@ -82,38 +82,37 @@ public class NdefRecordType {
 	static {
 		Map<Class<? extends Record>, NdefRecordType> map = new ConcurrentHashMap<Class<? extends Record>, NdefRecordType>();
 
-		map.put(AbsoluteUriRecord.class, new NdefRecordType(AbsoluteUriRecord.class));
-		map.put(EmptyRecord.class, new NdefRecordType(EmptyRecord.class));
+		map.put(AbsoluteUriRecord.class, new NdefRecordType(AbsoluteUriRecord.class, "Absolute URI Record"));
+		map.put(EmptyRecord.class, new NdefRecordType(EmptyRecord.class, "Empty Record"));
 		// external  type records
 		// map.put(ExternalTypeRecord.class, new NdefRecordType(ExternalTypeRecord.class)); 
-		map.put(AndroidApplicationRecord.class, new NdefRecordType(AndroidApplicationRecord.class));
-		map.put(GeoRecord.class, new NdefRecordType(GeoRecord.class));
-		map.put(UnsupportedExternalTypeRecord.class, new NdefRecordType(UnsupportedExternalTypeRecord.class, "ExternalType"));
+		map.put(AndroidApplicationRecord.class, new NdefRecordType(AndroidApplicationRecord.class, "Android Application Record"));
+		map.put(GeoRecord.class, new NdefRecordType(GeoRecord.class, "Geo Record"));
+		map.put(UnsupportedExternalTypeRecord.class, new NdefRecordType(UnsupportedExternalTypeRecord.class, "External Type Record"));
 		
 		// mime
 		//map.put(MimeRecord.class, new NdefRecordType(MimeRecord.class, "MimeRecord"));
-		map.put(BinaryMimeRecord.class, new NdefRecordType(BinaryMimeRecord.class, "MimeRecord"));
-		map.put(TextMimeRecord.class, new NdefRecordType(TextMimeRecord.class)); // strictly not necessary
+		map.put(BinaryMimeRecord.class, new NdefRecordType(BinaryMimeRecord.class, "Mime Record"));
 		
-		map.put(UnknownRecord.class, new NdefRecordType(UnknownRecord.class));
-		map.put(UnsupportedRecord.class, new NdefRecordType(UnsupportedRecord.class));
+		map.put(UnknownRecord.class, new NdefRecordType(UnknownRecord.class, "Unknown Record"));
+		map.put(UnsupportedRecord.class, new NdefRecordType(UnsupportedRecord.class, "Unsupported Record"));
 		
 		// well-known types
-		map.put(ActionRecord.class, new NdefRecordType(ActionRecord.class));
-		map.put(AlternativeCarrierRecord.class, new NdefRecordType(AlternativeCarrierRecord.class));
-		map.put(CollisionResolutionRecord.class, new NdefRecordType(CollisionResolutionRecord.class));
-		map.put(ErrorRecord.class, new NdefRecordType(ErrorRecord.class));
-		map.put(GcActionRecord.class, new NdefRecordType(GcActionRecord.class));
-		map.put(GcDataRecord.class, new NdefRecordType(GcDataRecord.class));
-		map.put(GcTargetRecord.class, new NdefRecordType(GcTargetRecord.class));
-		map.put(GenericControlRecord.class, new NdefRecordType(GenericControlRecord.class));
-		map.put(HandoverCarrierRecord.class, new NdefRecordType(HandoverCarrierRecord.class));
-		map.put(HandoverRequestRecord.class, new NdefRecordType(HandoverRequestRecord.class));
-		map.put(HandoverSelectRecord.class, new NdefRecordType(HandoverSelectRecord.class));
-		map.put(SignatureRecord.class, new NdefRecordType(SignatureRecord.class));
-		map.put(SmartPosterRecord.class, new NdefRecordType(SmartPosterRecord.class));
-		map.put(TextRecord.class, new NdefRecordType(TextRecord.class));
-		map.put(UriRecord.class, new NdefRecordType(UriRecord.class));
+		map.put(ActionRecord.class, new NdefRecordType(ActionRecord.class, "Action Record"));
+		map.put(AlternativeCarrierRecord.class, new NdefRecordType(AlternativeCarrierRecord.class, "Alternative Carrier Record"));
+		map.put(CollisionResolutionRecord.class, new NdefRecordType(CollisionResolutionRecord.class, "Collision Resolution Record"));
+		map.put(ErrorRecord.class, new NdefRecordType(ErrorRecord.class, "Error Record"));
+		map.put(GcActionRecord.class, new NdefRecordType(GcActionRecord.class, "Generic Control Action Record"));
+		map.put(GcDataRecord.class, new NdefRecordType(GcDataRecord.class, "Generic Control Data Record"));
+		map.put(GcTargetRecord.class, new NdefRecordType(GcTargetRecord.class, "Generic Control Target Record"));
+		map.put(GenericControlRecord.class, new NdefRecordType(GenericControlRecord.class, "Generic Control Record"));
+		map.put(HandoverCarrierRecord.class, new NdefRecordType(HandoverCarrierRecord.class, "Handover Carrier Record"));
+		map.put(HandoverRequestRecord.class, new NdefRecordType(HandoverRequestRecord.class, "Handover Request Record"));
+		map.put(HandoverSelectRecord.class, new NdefRecordType(HandoverSelectRecord.class, "Handover Select Record"));
+		map.put(SignatureRecord.class, new NdefRecordType(SignatureRecord.class, "Signature Record"));
+		map.put(SmartPosterRecord.class, new NdefRecordType(SmartPosterRecord.class, "Smart Poster Record"));
+		map.put(TextRecord.class, new NdefRecordType(TextRecord.class, "Text Record"));
+		map.put(UriRecord.class, new NdefRecordType(UriRecord.class, "URI Record"));
 		
 		records = map;
 	}

@@ -60,6 +60,17 @@ import org.nfctools.ndef.wkt.records.WellKnownRecord;
 
 public class NdefRecordModelFactory {
 	
+	private static final String NO_BYTES = "Zero bytes";
+	private static final String N_BYTES = "%d bytes";
+	
+	public static final String getNoBytesString() {
+		return NO_BYTES;
+	}
+
+	public static final String getBytesString(int count) {
+		return String.format(N_BYTES, count);
+	}
+
 	public static NdefRecordModelParent represent(Record[] records) {
 				
 		NdefRecordModelParent ndefRecordModelParent = new NdefRecordModelParent(null);
@@ -93,7 +104,7 @@ public class NdefRecordModelFactory {
 		} else if(record instanceof UnsupportedExternalTypeRecord) {
 			UnsupportedExternalTypeRecord externalTypeRecord = (UnsupportedExternalTypeRecord)record;
 			
-			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, "ExternalTypeRecord", ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
 			if(externalTypeRecord.hasDomain()) {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Domain", externalTypeRecord.getDomain(), ndefRecordModelRecord));
@@ -108,9 +119,9 @@ public class NdefRecordModelFactory {
 			}
 
 			if(externalTypeRecord.hasData()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", externalTypeRecord.getData().length + " bytes", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", String.format(N_BYTES, externalTypeRecord.getData().length), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Zero bytes", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", NO_BYTES, ndefRecordModelRecord));
 			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof AbsoluteUriRecord) {
@@ -184,18 +195,25 @@ public class NdefRecordModelFactory {
 			} else {
 				binaryMimeRecord = new BinaryMimeRecord(mimeMediaRecord.getContentType(), mimeMediaRecord.getContentAsBytes());
 			}
-			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(binaryMimeRecord, "MimeRecord", ndefRecordModelParent);
+			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(binaryMimeRecord, ndefRecordModelParent);
 
 			if(binaryMimeRecord.hasContentType()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mimetype", binaryMimeRecord.getContentType(), ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mime-type", binaryMimeRecord.getContentType(), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mimetype", "", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Mime-type", "", ndefRecordModelRecord));
 			}
 			
+			byte[] payload;
 			if(binaryMimeRecord.hasContent()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", Integer.toString(binaryMimeRecord.getContentAsBytes().length) + " bytes binary payload", ndefRecordModelRecord));
+				payload = binaryMimeRecord.getContentAsBytes();
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", "Empty payload", ndefRecordModelRecord));
+				payload = null;
+			}
+
+			if(payload != null && payload.length > 0) {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", String.format(N_BYTES, payload.length), ndefRecordModelRecord));
+			} else {
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", NO_BYTES, ndefRecordModelRecord));
 			}
 
 			// remember content type for file dialogs
@@ -210,9 +228,9 @@ public class NdefRecordModelFactory {
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 			
 			if(unknownRecord.hasPayload()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", Integer.toString(unknownRecord.getPayload().length) + " bytes payload", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", String.format(N_BYTES, unknownRecord.getPayload().length) + " bytes payload", ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", "Empty payload", ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", NO_BYTES, ndefRecordModelRecord));
 			}
 			
 			return ndefRecordModelRecord;
@@ -284,7 +302,7 @@ public class NdefRecordModelFactory {
 			}
 
 			if(handoverCarrierRecord.hasCarrierData()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data", Integer.toString(handoverCarrierRecord.getCarrierData().length), ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data", String.format(N_BYTES, handoverCarrierRecord.getCarrierData().length), ndefRecordModelRecord));
 			} else {
 				ndefRecordModelRecord.add(new NdefRecordModelProperty("Carrier data", "", ndefRecordModelRecord));
 			}
@@ -520,7 +538,7 @@ public class NdefRecordModelFactory {
 		} else if(signatureRecord.hasSignature()) {
 			byte[] signature = signatureRecord.getSignature();
 			if(signature != null) {
-				ndefRecordModelParentSignatureProperty.add(getNode("Embedded value", signature.length + " bytes", ndefRecordModelParentSignatureProperty));
+				ndefRecordModelParentSignatureProperty.add(getNode("Embedded value", String.format(N_BYTES, signature.length), ndefRecordModelParentSignatureProperty));
 			} else {
 				ndefRecordModelParentSignatureProperty.add(getNode("Embedded value", "-", ndefRecordModelParentSignatureProperty));
 			}
@@ -541,7 +559,7 @@ public class NdefRecordModelFactory {
 
 		List<byte[]> certificates = signatureRecord.getCertificates();
 		for(int i = 0; i < certificates.size(); i++) {
-			list.add(new NdefRecordModelPropertyListItem(certificates.get(i).length + " bytes", list));
+			list.add(new NdefRecordModelPropertyListItem(String.format(N_BYTES, certificates.get(i).length), list));
 		}
 		
 		nodes.add(list);

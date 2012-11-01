@@ -220,9 +220,9 @@ public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSup
 							record.setCarrierData(next);
 							
 							if(next == null) {
-								ndefRecordModelProperty.setValue("Zero byte data");
+								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
 							} else {
-								ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes data");
+								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
 							}	
 
 						}
@@ -234,9 +234,9 @@ public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSup
 							record.setCarrierData(previous);
 							
 							if(previous == null) {
-								ndefRecordModelProperty.setValue("Zero byte data");
+								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
 							} else {
-								ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes data");
+								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
 							}	
 						}
 					};
@@ -360,6 +360,8 @@ public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSup
 							case Media : {
 								return record.getCarrierType().toString();
 							}
+						default:
+							break;
 						}
 					}
 				}
@@ -384,6 +386,8 @@ public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSup
 							
 							return getIndex(NdefRecordModelMenuListener.externalRecordTypes, carrierType.getClass());
 						}
+					default:
+						break;
 					}
 				}
 					

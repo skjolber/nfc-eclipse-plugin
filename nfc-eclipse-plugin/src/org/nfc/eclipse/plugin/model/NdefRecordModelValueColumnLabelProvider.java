@@ -107,7 +107,7 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					GcTargetRecord gcTargetRecord = (GcTargetRecord)record;
 
 					if(gcTargetRecord.hasTargetIdentifier()) {
-						return gcTargetRecord.getTargetIdentifier().getClass().getSimpleName();
+						return NdefRecordType.getType(gcTargetRecord.getTargetIdentifier().getClass()).getRecordLabel();
 					} else {
 						return "Select target identifier..";
 					}
@@ -115,7 +115,7 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 					GcActionRecord gcActionRecord = (GcActionRecord)record;
 
 					if(gcActionRecord.hasActionRecord()) {
-						return gcActionRecord.getActionRecord().getClass().getSimpleName();
+						return NdefRecordType.getType(gcActionRecord.getActionRecord().getClass()).getRecordLabel();
 					} else {
 						return "Select action record..";
 					}

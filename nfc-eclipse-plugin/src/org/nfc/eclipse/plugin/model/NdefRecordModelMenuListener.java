@@ -776,14 +776,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         }
 
         addGenericControlActionRecord = new MenuManager("Add record", null);
-       	addGenericControlActionRecord.add(new AddChildAction(GcActionRecord.class.getSimpleName(), GcActionRecord.class));
+       	addGenericControlActionRecord.add(new AddChildAction(NdefRecordType.getType(GcActionRecord.class).getRecordLabel(), GcActionRecord.class));
 
         addGenericControlDataRecord = new MenuManager("Add record", null);
-       	addGenericControlDataRecord.add(new AddChildAction(GcDataRecord.class.getSimpleName(), GcDataRecord.class));
+       	addGenericControlDataRecord.add(new AddChildAction(NdefRecordType.getType(GcDataRecord.class).getRecordLabel(), GcDataRecord.class));
 
         addGenericControlDataOrActionRecord = new MenuManager("Add record", null);
-        addGenericControlDataOrActionRecord.add(new AddChildAction(GcActionRecord.class.getSimpleName(), GcActionRecord.class));
-        addGenericControlDataOrActionRecord.add(new AddChildAction(GcDataRecord.class.getSimpleName(), GcDataRecord.class));
+        addGenericControlDataOrActionRecord.add(new AddChildAction(NdefRecordType.getType(GcActionRecord.class).getRecordLabel(), GcActionRecord.class));
+        addGenericControlDataOrActionRecord.add(new AddChildAction(NdefRecordType.getType(GcDataRecord.class).getRecordLabel(), GcDataRecord.class));
 
 		removeRecord = new RemoveAction("Remove record");
 
@@ -803,9 +803,9 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         setGenericControlActionRecord.add(setGenericControlActionRecordHandoverRecords);
                 
         // HandoverRequestRecord
-    	insertAlternativeCarrierRecordSiblingRecordBefore = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " before", AlternativeCarrierRecord.class, 0);
-    	insertAlternativeCarrierRecordSiblingRecordAfter = new InsertSiblingAction("Insert " + AlternativeCarrierRecord.class.getSimpleName() + " after", AlternativeCarrierRecord.class, 1);
-    	addAlternativeCarrierRecordChildRecord = new AddChildAction("Add " + AlternativeCarrierRecord.class.getSimpleName(), AlternativeCarrierRecord.class);
+    	insertAlternativeCarrierRecordSiblingRecordBefore = new InsertSiblingAction("Insert " + NdefRecordType.getType(AlternativeCarrierRecord.class).getRecordLabel() + " before", AlternativeCarrierRecord.class, 0);
+    	insertAlternativeCarrierRecordSiblingRecordAfter = new InsertSiblingAction("Insert " + NdefRecordType.getType(AlternativeCarrierRecord.class).getRecordLabel() + " after", AlternativeCarrierRecord.class, 1);
+    	addAlternativeCarrierRecordChildRecord = new AddChildAction("Add " + NdefRecordType.getType(AlternativeCarrierRecord.class).getRecordLabel(), AlternativeCarrierRecord.class);
 
     	// HandoverCarrierRecord
     	// well known type

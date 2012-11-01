@@ -26,6 +26,7 @@
 
 package org.nfc.eclipse.plugin.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.nfctools.ndef.Record;
@@ -38,30 +39,20 @@ public class NdefRecordModelRecord extends NdefRecordModelParent {
 	public NdefRecordModelRecord(Record record, List<NdefRecordModelNode> children, NdefRecordModelParent parent) {
 		super(children, parent);
 		this.record = record;
-	}
-
-	public NdefRecordModelRecord(Record record, String name, List<NdefRecordModelNode> children, NdefRecordModelParent parent) {
-		this(record, children, parent);
-		this.name = name;
+		this.name = NdefRecordType.getType(record.getClass()).getRecordLabel();
 	}
 
 	public NdefRecordModelRecord(Record record, NdefRecordModelParent parent) {
-		super(parent);
-		this.record = record;
+		this(record, new ArrayList<NdefRecordModelNode>(), parent);
 	}
 
-	public NdefRecordModelRecord(Record record, String name, NdefRecordModelParent parent) {
-		this(record, parent);
-		this.name = name;
-	}
-	
 	public Record getRecord() {
 		return record;
 	}
 
 	@Override
 	public String toString() {
-		return name != null ? name : record.getClass().getSimpleName();
+		return name;
 	}
 
 	

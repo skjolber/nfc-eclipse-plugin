@@ -256,9 +256,9 @@ public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 					NdefRecordModelNode child;
 					byte[] signature = record.getSignature();
 					if(signature != null) {
-						child = NdefRecordModelFactory.getNode("Embedded value", signature.length + " bytes", ndefRecordModelParent);
+						child = NdefRecordModelFactory.getNode("Embedded value", NdefRecordModelFactory.getBytesString(signature.length), ndefRecordModelParent);
 					} else {
-						child = NdefRecordModelFactory.getNode("Embedded value", "-", ndefRecordModelParent);
+						child = NdefRecordModelFactory.getNode("Embedded value", NdefRecordModelFactory.getNoBytesString(), ndefRecordModelParent);
 					}
 					
 					if(ndefRecordModelParent.hasChildren()) {
@@ -377,9 +377,9 @@ public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 								record.setSignature(next);
 								
 								if(next == null) {
-									ndefRecordModelProperty.setValue("Zero bytes");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
 								} else {
-									ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
 								}	
 
 							}
@@ -391,9 +391,9 @@ public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 								record.setSignature(previous);
 								
 								if(previous == null) {
-									ndefRecordModelProperty.setValue("Zero bytes");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
 								} else {
-									ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
 								}	
 							}
 						};
@@ -491,9 +491,9 @@ public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 						@Override
 						public String toString(byte[] object) {
 							if(object == null || object.length == 0) {
-								return "Zero bytes";
+								return NdefRecordModelFactory.getNoBytesString();
 							} else {
-								return Integer.toString(object.length) + " bytes";
+								return NdefRecordModelFactory.getBytesString(object.length);
 							}	
 						}
 					};

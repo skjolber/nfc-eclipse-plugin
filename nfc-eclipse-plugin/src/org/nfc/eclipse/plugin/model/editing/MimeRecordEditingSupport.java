@@ -39,6 +39,7 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.nfc.eclipse.plugin.model.NdefRecordModelFactory;
 import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
 import org.nfc.eclipse.plugin.model.NdefRecordModelProperty;
 import org.nfc.eclipse.plugin.operation.DefaultNdefModelPropertyOperation;
@@ -133,9 +134,9 @@ public class MimeRecordEditingSupport extends DefaultRecordEditingSupport {
 								record.setContent(next);
 								
 								if(next == null) {
-									ndefRecordModelProperty.setValue("Zero byte data");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
 								} else {
-									ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes binary payload");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
 								}	
 
 							}
@@ -147,9 +148,9 @@ public class MimeRecordEditingSupport extends DefaultRecordEditingSupport {
 								record.setContent(previous);
 								
 								if(previous == null) {
-									ndefRecordModelProperty.setValue("Zero byte data");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
 								} else {
-									ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes binary payload");
+									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
 								}	
 							}
 						};

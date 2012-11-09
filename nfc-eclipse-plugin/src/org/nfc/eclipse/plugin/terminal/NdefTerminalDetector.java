@@ -221,11 +221,17 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 					if(detectTerminal()) {
 						notfiyChange();
 					}
-				} catch(IllegalArgumentException e) {
+				} catch(RuntimeException e) {
+					// usually caused by SCARD_E_NO_READERS_AVAILABLE on list()
 					// ignore
 				}
 				try {
-					Thread.sleep(1000);
+					// sleep for less time (be more responsive) if we know the user has an NFC reader
+					if(NdefTerminalWrapper.hasSeenReader()) {
+						Thread.sleep(1000);
+					} else {
+						Thread.sleep(5000);
+					}
 				} catch (InterruptedException e) {
 					
 				}

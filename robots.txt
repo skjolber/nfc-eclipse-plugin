@@ -13,4 +13,4 @@ Disallow: /nfc-eclipse-plugin/bin/
 User-agent: *
 Disallow: /Android*/
 
-Sitemap: http://code.google.com/p/nfc-eclipse-plugin/source/browse/sitemap.xml
+Sitemap: http://nfc-eclipse-plugin.googlecode.com/git/sitemap.xml

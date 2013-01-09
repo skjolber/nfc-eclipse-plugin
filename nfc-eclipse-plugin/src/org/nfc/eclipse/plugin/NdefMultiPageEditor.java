@@ -510,7 +510,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	 */
 	
 	public void resourceChanged(final IResourceChangeEvent event){
-		Activator.info(event.toString());
+		Activator.info(event.getClass().getName() + " " + event.getType());
 		
 		final IEditorInput input=getEditorInput();
 	    if (!( input instanceof IFileEditorInput )) {
@@ -519,6 +519,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	    final IFile jmolfile=((IFileEditorInput)input).getFile();
 	       
 		if(event.getType() == IResourceChangeEvent.PRE_CLOSE){
+			Activator.info("Pre close");
 			Display.getDefault().asyncExec(new Runnable(){
 				public void run(){
 					IWorkbenchPage[] pages = getSite().getWorkbenchWindow().getPages();
@@ -533,6 +534,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 			});
 		} else if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
 	        // Close editor if resource is deleted (or if any resource that is a parent is deleted)
+			Activator.info("Post change");
 
 			IResourceDelta rootDelta = event.getDelta();
 			// get the delta, if any, for the documentation directory
@@ -543,9 +545,11 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 				IResourceDeltaVisitor visitor = new IResourceDeltaVisitor() {
 					public boolean visit(IResourceDelta delta) {
 						// only interested in removal changes
-						if ((delta.getFlags() & IResourceDelta.REMOVED) == 0) {
+						if(delta.getKind() == IResourceDelta.REMOVED) {
 							deletedlist.add(delta.getResource());
 						}
+						
+						Activator.info(delta.toString());
 						return true;
 					}
 				};

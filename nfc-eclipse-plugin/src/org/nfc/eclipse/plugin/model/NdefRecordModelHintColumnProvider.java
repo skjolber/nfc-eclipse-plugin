@@ -37,6 +37,8 @@ import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.mime.MimeRecord;
 import org.nfctools.ndef.wkt.records.UriRecord;
 
+import android.nfc16.NdefMessage;
+
 public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 
 		private NdefEncoder encoder = NdefContext.getNdefEncoder();
@@ -52,7 +54,13 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 				// first check problems with encoding
 				if(element instanceof NdefRecordModelRecord) {
 					try {
-						encoder.encode(ndefRecordModelNode.getRecord());
+						byte[] bytes = encoder.encode(ndefRecordModelNode.getRecord());
+						
+						try {
+							new NdefMessage(bytes);
+						} catch(Exception e) {
+							return "Android incompatible";
+						}
 					} catch(NdefEncoderException e) {
 						
 						if(e.getLocation() == ndefRecordModelNode.getRecord()) {
@@ -141,7 +149,13 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 				// first check problems with encoding
 				if(element instanceof NdefRecordModelRecord) {
 					try {
-						encoder.encode(ndefRecordModelNode.getRecord());
+						byte[] bytes = encoder.encode(ndefRecordModelNode.getRecord());
+						
+						try {
+							new NdefMessage(bytes);
+						} catch(Exception e) {
+							return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 
+						}
 					} catch(NdefEncoderException e) {
 						if(e.getLocation() == ndefRecordModelNode.getRecord()) {
 							return new Color(Display.getCurrent(), 0xFF, 0x00, 0x00); 

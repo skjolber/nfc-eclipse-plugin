@@ -545,7 +545,7 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 				IResourceDeltaVisitor visitor = new IResourceDeltaVisitor() {
 					public boolean visit(IResourceDelta delta) {
 						// only interested in removal changes
-						if(delta.getKind() == IResourceDelta.REMOVED) {
+						if((delta.getKind() & IResourceDelta.REMOVED) == IResourceDelta.REMOVED) {
 							deletedlist.add(delta.getResource());
 						}
 						

@@ -39,7 +39,9 @@ import org.nfc.eclipse.plugin.model.NdefRecordModelChangeListener;
 public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelChangeListener {
 
 	private Label binaryQRLabel;
-
+	private Composite composite;
+	private boolean qrShows = true;
+	
 	public NdefQREditorPart(NdefModelOperator operator, NdefMultiPageEditor ndefMultiPageEditor) {
 		super(operator, ndefMultiPageEditor);
 	}
@@ -51,7 +53,6 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
 
 	@Override
 	public void createPartControl(final Composite composite) {
-
 		super.createPartControl(composite);
 
 		Composite wrapper = new Composite(form, SWT.NONE);
@@ -77,11 +78,34 @@ public class NdefQREditorPart extends NdefEditorPart implements NdefRecordModelC
                	refreshBinaryQR();
 			}
 		});
-	
+		
+		this.composite = composite;
+	}
+
+	public void showQR() {
+		if(!qrShows) {
+			form.setWeights(new int[] {10, 10});
+			composite.layout();
+			
+			qrShows = true;
+		}
+	}
+
+	public void hideQR() {
+		if(qrShows) {
+			form.setWeights(new int[] {10, 0});
+			composite.layout();
+		
+			qrShows = false;
+		}
 	}
 
 	public void refreshBinaryQR() {
-		operator.refreshBinaryQR(binaryQRLabel);
+		if(operator.refreshBinaryQR(binaryQRLabel)) {
+			showQR();
+		} else {
+			hideQR();
+		}
 	}	
 
 	@Override

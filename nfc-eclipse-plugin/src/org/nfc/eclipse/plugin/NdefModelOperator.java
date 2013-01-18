@@ -295,7 +295,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	public NdefRecordModelParent getModel() {
 		return model;
 	}
-	public void refreshBinaryQR(Label label) {
+	public boolean refreshBinaryQR(Label label) {
 		
 		// implementation note: Label seems to display an image OR an label, whatever is set last.
 		try {
@@ -336,6 +336,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 					label.setImage(new Image(getDisplay(), imageData));
 					Activator.info("NDEF size is " + ndef.length + ", set image size " + parent + "x" + parent);
 				}
+				
+				return true;
 			} else {
 				Activator.info("NDEF size is zero");
 				
@@ -348,6 +350,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 			Activator.error("Cannot create ", e);
 			label.setImage(null);
 		}
+		return false;
 	}
 
 	public static Display getDisplay() {

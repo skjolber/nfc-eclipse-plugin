@@ -598,7 +598,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 							UnknownRecord unknownRecord = (UnknownRecord) record;
 							
 							payload = unknownRecord.getPayload();
+						} else if(record instanceof UnsupportedExternalTypeRecord) {
+							UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) record;
 							
+							payload = unsupportedExternalTypeRecord.getData();
 						} else if(record instanceof SignatureRecord) {
 
 							if(selectedNode.getRecordBranchIndex() == 2) {
@@ -1024,6 +1027,16 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 							if(mimeRecord.hasContent()) {
 								//menuManager.add(viewContent);
 								saveContent.setMimeType(mimeRecord.getContentType());
+								menuManager.add(saveContent);
+							}
+						}
+					} else if(record instanceof UnsupportedExternalTypeRecord) {
+
+						if(selectedNode.getRecordBranchIndex() == 2) {
+							UnsupportedExternalTypeRecord mimeRecord = (UnsupportedExternalTypeRecord)record;
+							if(mimeRecord.hasData()) {
+								//menuManager.add(viewContent);
+								saveContent.setMimeType(null);
 								menuManager.add(saveContent);
 							}
 						}

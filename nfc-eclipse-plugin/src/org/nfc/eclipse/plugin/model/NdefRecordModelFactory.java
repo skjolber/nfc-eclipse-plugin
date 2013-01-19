@@ -119,9 +119,9 @@ public class NdefRecordModelFactory {
 			}
 
 			if(externalTypeRecord.hasData()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", String.format(N_BYTES, externalTypeRecord.getData().length), ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelBinaryProperty("Content", String.format(N_BYTES, externalTypeRecord.getData().length), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", NO_BYTES, ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelBinaryProperty("Content", NO_BYTES, ndefRecordModelRecord));
 			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof AbsoluteUriRecord) {
@@ -211,9 +211,9 @@ public class NdefRecordModelFactory {
 			}
 
 			if(payload != null && payload.length > 0) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", String.format(N_BYTES, payload.length), ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelBinaryProperty("Content", String.format(N_BYTES, payload.length), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Content", NO_BYTES, ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelBinaryProperty("Content", NO_BYTES, ndefRecordModelRecord));
 			}
 
 			// remember content type for file dialogs
@@ -228,9 +228,9 @@ public class NdefRecordModelFactory {
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 			
 			if(unknownRecord.hasPayload()) {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", String.format(N_BYTES, unknownRecord.getPayload().length), ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelBinaryProperty("Payload", String.format(N_BYTES, unknownRecord.getPayload().length), ndefRecordModelRecord));
 			} else {
-				ndefRecordModelRecord.add(new NdefRecordModelProperty("Payload", NO_BYTES, ndefRecordModelRecord));
+				ndefRecordModelRecord.add(new NdefRecordModelBinaryProperty("Payload", NO_BYTES, ndefRecordModelRecord));
 			}
 			
 			return ndefRecordModelRecord;

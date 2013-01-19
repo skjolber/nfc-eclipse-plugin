@@ -26,7 +26,7 @@
 
 package org.nfc.eclipse.plugin.model;
 
-public class NdefRecordModelValue extends NdefRecordModelNode {
+public class NdefRecordModelValue extends NdefRecordModelNode { // i.e. no name
 
 	private String value;
 	

@@ -26,41 +26,34 @@
 
 package org.nfc.eclipse.plugin.model;
 
-public class NdefRecordModelProperty extends NdefRecordModelNode {
+public class NdefRecordModelBinaryProperty extends NdefRecordModelProperty {
 
-	protected String name;
-	protected String value;
-	
-	public NdefRecordModelProperty(String name, String value, NdefRecordModelParent parent) {
-		super(parent);
-		this.name = name;
-		this.value = value;
+	private String file;
+
+	private NdefRecordModelBinaryProperty(String name, String value, String file, NdefRecordModelParent parent) {
+		this(name, value, parent);
+		this.file = file;
 	}
 
-	@Override
-	public String toString() {
-		return name;
+	public NdefRecordModelBinaryProperty(String name, String value, NdefRecordModelParent parent) {
+		super(name, value, parent);
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getValue() {
-		return value;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-	
 	@Override
 	public NdefRecordModelNode clone() {
-		return new NdefRecordModelProperty(name, value, parent);
+		return new NdefRecordModelBinaryProperty(name, value, file, parent);
+	}
+
+	public String getFile() {
+		return file;
+	}
+
+	public void setFile(String file) {
+		this.file = file;
+	}
+	
+	public boolean hasFile() {
+		return this.file != null;
 	}
 	
 }

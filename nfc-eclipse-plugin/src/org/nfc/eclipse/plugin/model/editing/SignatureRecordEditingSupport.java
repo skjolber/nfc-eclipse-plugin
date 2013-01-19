@@ -26,11 +26,6 @@
 
 package org.nfc.eclipse.plugin.model.editing;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +54,82 @@ import org.nfctools.ndef.wkt.records.SignatureRecord.SignatureType;
 
 
 public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
+
+	public static NdefModelOperation newSetSignatureOperation(SignatureRecord record, NdefRecordModelProperty node, byte[] next) {
+		return new SetSignatureContentOperation(record, (NdefRecordModelProperty)node, record.getSignature(), next);
+	}
+
+	private static class SetSignatureContentOperation extends DefaultNdefModelPropertyOperation<byte[], SignatureRecord> {
+
+		public SetSignatureContentOperation(SignatureRecord record, NdefRecordModelProperty ndefRecordModelProperty, byte[] previous, byte[] next) {
+			super(record, ndefRecordModelProperty, previous, next);
+		}
+
+		@Override
+		public void execute() {
+			super.execute();
+			
+			record.setSignature(next);
+			
+			if(next == null) {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
+			} else {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
+			}	
+
+		}
+		
+		@Override
+		public void revoke() {
+			super.revoke();
+			
+			record.setSignature(previous);
+			
+			if(previous == null) {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
+			} else {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
+			}	
+		}		
+	}
+
+	public static NdefModelOperation newSetCertificateValueOperation(SignatureRecord record, NdefRecordModelPropertyListItem node, byte[] next) {
+		return new SetContentOperation(record, (NdefRecordModelPropertyListItem)node, record.getCertificates().get(node.getParentIndex()), next);
+	}
+
+	private static class SetContentOperation extends DefaultNdefModelListItemOperation<byte[], SignatureRecord> {
+
+		public SetContentOperation(SignatureRecord record, NdefRecordModelPropertyListItem ndefRecordModelProperty, byte[] previous, byte[] next) {
+			super(record, ndefRecordModelProperty, previous, next);
+		}
+
+		@Override
+		public void execute() {
+			super.execute();
+			
+			int index = ndefRecordModelPropertyListItem.getParentIndex();
+
+			record.getCertificates().set(index, next);
+		}
+		
+		@Override
+		public void revoke() {
+			super.revoke();
+
+			int index = ndefRecordModelPropertyListItem.getParentIndex();
+
+			record.getCertificates().set(index, previous);
+		}
+		
+		@Override
+		public String toString(byte[] object) {
+			if(object == null || object.length == 0) {
+				return NdefRecordModelFactory.getNoBytesString();
+			} else {
+				return NdefRecordModelFactory.getBytesString(object.length);
+			}	
+		}
+	}
 
 	// convention: empty string or empty certificates, but no null values
 	
@@ -339,64 +410,11 @@ public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 					
 					if(value != null) {
 						
-						String path = (String)value;
+						byte[] payload = load((String)value);
 						
-						File file = new File(path);
-		
-						int length = (int)file.length();
-						
-						byte[] payload = new byte[length];
-						
-						InputStream in = null;
-						try {
-							in = new FileInputStream(file);
-							DataInputStream din = new DataInputStream(in);
-							
-							din.readFully(payload);
-						} catch(IOException e) {
-							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-							MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-							
-							return null;
-						} finally {
-							if(in != null) {
-								try {
-									in.close();
-								} catch(IOException e) {
-									// ignore
-								}
-							}
+						if(payload != null) {
+							return newSetSignatureOperation(record, (NdefRecordModelProperty)node, payload);
 						}
-						
-						return new DefaultNdefModelPropertyOperation<byte[], SignatureRecord>(record, (NdefRecordModelProperty)node, record.getSignature(), payload) {
-							
-							@Override
-							public void execute() {
-								super.execute();
-								
-								record.setSignature(next);
-								
-								if(next == null) {
-									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
-								} else {
-									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
-								}	
-
-							}
-							
-							@Override
-							public void revoke() {
-								super.revoke();
-								
-								record.setSignature(previous);
-								
-								if(previous == null) {
-									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
-								} else {
-									ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
-								}	
-							}
-						};
 					}				
 				}
 			}
@@ -437,66 +455,11 @@ public class SignatureRecordEditingSupport extends DefaultRecordEditingSupport {
 				
 				if(value != null) {
 					
-					String path = (String)value;
+					byte[] payload = load((String)value);
 					
-					File file = new File(path);
-	
-					int length = (int)file.length();
-					
-					byte[] payload = new byte[length];
-					
-					InputStream in = null;
-					try {
-						in = new FileInputStream(file);
-						DataInputStream din = new DataInputStream(in);
-						
-						din.readFully(payload);
-					} catch(IOException e) {
-						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-						MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-						
-						return null;
-					} finally {
-						if(in != null) {
-							try {
-								in.close();
-							} catch(IOException e) {
-								// ignore
-							}
-						}
+					if(payload != null) {
+						return newSetCertificateValueOperation(record, (NdefRecordModelPropertyListItem)node, payload);
 					}
-					
-					int index = node.getParentIndex();
-					
-					return new DefaultNdefModelListItemOperation<byte[], SignatureRecord>(record, (NdefRecordModelPropertyListItem)node, record.getCertificates().get(index), payload) {
-						
-						@Override
-						public void execute() {
-							super.execute();
-							
-							int index = ndefRecordModelPropertyListItem.getParentIndex();
-
-							record.getCertificates().set(index, next);
-						}
-						
-						@Override
-						public void revoke() {
-							super.revoke();
-
-							int index = ndefRecordModelPropertyListItem.getParentIndex();
-
-							record.getCertificates().set(index, previous);
-						}
-						
-						@Override
-						public String toString(byte[] object) {
-							if(object == null || object.length == 0) {
-								return NdefRecordModelFactory.getNoBytesString();
-							} else {
-								return NdefRecordModelFactory.getBytesString(object.length);
-							}	
-						}
-					};
 				}				
 			}
 		} else if(recordIndex == 5) {

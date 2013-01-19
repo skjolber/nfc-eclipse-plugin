@@ -26,10 +26,19 @@
 
 package org.nfc.eclipse.plugin.model.editing;
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
 import org.nfc.eclipse.plugin.model.NdefRecordModelPropertyList;
 import org.nfc.eclipse.plugin.model.NdefRecordModelRecord;
@@ -165,6 +174,37 @@ public class DefaultRecordEditingSupport implements RecordEditingSupport {
 			}
 		}
 		return -1;
+	}
+	
+	public static byte[] load(String path) {
+		File file = new File(path);
+
+		int length = (int)file.length();
+		
+		byte[] payload = new byte[length];
+		
+		InputStream in = null;
+		try {
+			in = new FileInputStream(file);
+			DataInputStream din = new DataInputStream(in);
+			
+			din.readFully(payload);
+			
+			return payload;
+		} catch(IOException e) {
+			Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+			MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
+			
+			return null;
+		} finally {
+			if(in != null) {
+				try {
+					in.close();
+				} catch(IOException e) {
+					// ignore
+				}
+			}
+		}
 	}
 
 }

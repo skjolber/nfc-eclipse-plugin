@@ -37,6 +37,7 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.nfc.eclipse.plugin.model.NdefRecordModelBinaryProperty;
 import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
 import org.nfc.eclipse.plugin.model.NdefRecordModelProperty;
 import org.nfc.eclipse.plugin.operation.DefaultNdefModelPropertyOperation;
@@ -46,6 +47,44 @@ import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 
 public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSupport {
 
+	public static NdefModelOperation newSetContentOperation(UnsupportedExternalTypeRecord record, NdefRecordModelProperty node, byte[] next) {
+		return new SetContentOperation(record, (NdefRecordModelProperty)node, record.getData(), next);
+	}
+
+	private static class SetContentOperation extends DefaultNdefModelPropertyOperation<byte[], UnsupportedExternalTypeRecord> {
+
+		public SetContentOperation(UnsupportedExternalTypeRecord record, NdefRecordModelProperty ndefRecordModelProperty, byte[] previous, byte[] next) {
+			super(record, ndefRecordModelProperty, previous, next);
+		}
+
+		@Override
+		public void execute() {
+			super.execute();
+			
+			record.setData(next);
+			
+			if(next == null) {
+				ndefRecordModelProperty.setValue("Zero bytes");
+			} else {
+				ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes");
+			}	
+
+		}
+		
+		@Override
+		public void revoke() {
+			super.revoke();
+			
+			record.setData(previous);
+			
+			if(previous == null) {
+				ndefRecordModelProperty.setValue("Zero bytes");
+			} else {
+				ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes");
+			}	
+		}
+	}
+	
 	public ExternalTypeRecordEditingSupport(
 			TreeViewer treeViewer) {
 		super(treeViewer);
@@ -100,64 +139,13 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 				}
 			} else if(parentIndex == 2) {				
 				
-				String path = (String)value;
+				byte[] payload = load((String)value);
+				if(payload != null) {
+					NdefRecordModelBinaryProperty ndefRecordModelBinaryProperty = (NdefRecordModelBinaryProperty)node;
+					ndefRecordModelBinaryProperty.setFile((String)value);
 				
-				File file = new File(path);
-
-				int length = (int)file.length();
-				
-				byte[] payload = new byte[length];
-				
-				DataInputStream din = null;
-				try {
-					din = new DataInputStream(new FileInputStream(file));
-					
-					din.readFully(payload);
-				} catch(IOException e) {
-					Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-					MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-					
-					return null;
-				} finally {
-					if(din != null) {
-						try {
-							din.close();
-						} catch(IOException e) {
-							// ignore
-						}
-					}
+					return newSetContentOperation(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, payload);
 				}
-				
-				return new DefaultNdefModelPropertyOperation<byte[], UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getData(), payload) {
-					
-					@Override
-					public void execute() {
-						super.execute();
-						
-						record.setData(next);
-						
-						if(next == null) {
-							ndefRecordModelProperty.setValue("Zero bytes");
-						} else {
-							ndefRecordModelProperty.setValue(Integer.toString(next.length) + " bytes");
-						}	
-
-					}
-					
-					@Override
-					public void revoke() {
-						super.revoke();
-						
-						record.setData(previous);
-						
-						if(previous == null) {
-							ndefRecordModelProperty.setValue("Zero bytes");
-						} else {
-							ndefRecordModelProperty.setValue(Integer.toString(previous.length) + " bytes");
-						}	
-					}
-				};				
-				
 			}
 			
 			return null;

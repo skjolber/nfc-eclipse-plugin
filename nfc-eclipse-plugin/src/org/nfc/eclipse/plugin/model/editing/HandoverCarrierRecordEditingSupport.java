@@ -26,19 +26,11 @@
 
 package org.nfc.eclipse.plugin.model.editing;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 import org.nfc.eclipse.plugin.NdefRecordFactory;
+import org.nfc.eclipse.plugin.model.NdefRecordModelBinaryProperty;
 import org.nfc.eclipse.plugin.model.NdefRecordModelFactory;
 import org.nfc.eclipse.plugin.model.NdefRecordModelMenuListener;
 import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
@@ -55,6 +47,45 @@ import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord.CarrierTypeF
 
 public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSupport {
 
+	public static NdefModelOperation newSetCarrierDataOperation(HandoverCarrierRecord record, NdefRecordModelProperty node, byte[] next) {
+		return new SetCarrierDataOperation(record, (NdefRecordModelProperty)node, record.getCarrierData(), next);
+	}
+
+	private static class SetCarrierDataOperation extends DefaultNdefModelPropertyOperation<byte[], HandoverCarrierRecord> {
+
+		public SetCarrierDataOperation(HandoverCarrierRecord record, NdefRecordModelProperty ndefRecordModelProperty, byte[] previous, byte[] next) {
+			super(record, ndefRecordModelProperty, previous, next);
+		}
+
+		@Override
+		public void execute() {
+			super.execute();
+			
+			record.setCarrierData(next);
+			
+			if(next == null) {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
+			} else {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
+			}	
+
+		}
+		
+		@Override
+		public void revoke() {
+			super.revoke();
+			
+			record.setCarrierData(previous);
+			
+			if(previous == null) {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
+			} else {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
+			}	
+		}
+	}
+
+	
 	private NdefRecordFactory ndefRecordFactory;
 
 	public HandoverCarrierRecordEditingSupport(TreeViewer treeViewer, NdefRecordFactory ndefRecordFactory) {
@@ -177,69 +208,14 @@ public class HandoverCarrierRecordEditingSupport extends DefaultRecordEditingSup
 					}
 				} else if(parentIndex == 2) {
 					
-					String path = (String)value;
+					byte[] payload = load((String)value);
 					
-					byte[] payload;
-					if(path != null) {
-						File file = new File(path);
-	
-						int length = (int)file.length();
+					if(payload != null) {
+						NdefRecordModelBinaryProperty ndefRecordModelBinaryProperty = (NdefRecordModelBinaryProperty)node;
+						ndefRecordModelBinaryProperty.setFile((String)value);
 						
-						payload = new byte[length];
-						
-						InputStream in = null;
-						try {
-							in = new FileInputStream(file);
-							DataInputStream din = new DataInputStream(in);
-							
-							din.readFully(payload);
-						} catch(IOException e) {
-							Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-							MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-							
-							return null;
-						} finally {
-							if(in != null) {
-								try {
-									in.close();
-								} catch(IOException e) {
-									// ignore
-								}
-							}
-						}
-					} else {
-						payload = null;
+						return newSetCarrierDataOperation(record, ndefRecordModelBinaryProperty, payload);
 					}
-					
-					return new DefaultNdefModelPropertyOperation<byte[], HandoverCarrierRecord>(record, (NdefRecordModelProperty)node, record.getCarrierData(), payload) {
-						
-						@Override
-						public void execute() {
-							super.execute();
-							
-							record.setCarrierData(next);
-							
-							if(next == null) {
-								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
-							} else {
-								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length));
-							}	
-
-						}
-						
-						@Override
-						public void revoke() {
-							super.revoke();
-							
-							record.setCarrierData(previous);
-							
-							if(previous == null) {
-								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
-							} else {
-								ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
-							}	
-						}
-					};
 					
 				} else {
 					throw new RuntimeException();

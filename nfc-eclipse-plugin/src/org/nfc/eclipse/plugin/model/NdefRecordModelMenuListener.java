@@ -26,7 +26,9 @@
 
 package org.nfc.eclipse.plugin.model;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -52,6 +54,11 @@ import org.nfc.eclipse.plugin.Activator;
 import org.nfc.eclipse.plugin.NdefEditorPart;
 import org.nfc.eclipse.plugin.NdefMultiPageEditor;
 import org.nfc.eclipse.plugin.Startup;
+import org.nfc.eclipse.plugin.model.editing.DefaultRecordEditingSupport;
+import org.nfc.eclipse.plugin.model.editing.ExternalTypeRecordEditingSupport;
+import org.nfc.eclipse.plugin.model.editing.MimeRecordEditingSupport;
+import org.nfc.eclipse.plugin.model.editing.UnknownRecordEditingSupport;
+import org.nfc.eclipse.plugin.operation.NdefModelOperation;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalListener;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalWrapper;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalListener.Type;
@@ -228,6 +235,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	
 	// mime content
 	private SaveContentAction saveContent;
+	private ReloadContentAction reloadContent;
 
 	private class WriteTerminal extends Action {
 		
@@ -548,6 +556,42 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		}
 	}
 	*/
+	private class ReloadContentAction extends Action {
+
+		public ReloadContentAction(String name) {
+			super(name);
+		}
+		
+		@Override
+		public void run() {
+			if(editorPart != null) {
+				
+		    	Display.getCurrent().asyncExec(
+		                new Runnable()
+		                {
+		                    public void run()
+		                    {
+
+		                    	if(selectedNode instanceof NdefRecordModelBinaryProperty) {
+		                    		NdefRecordModelBinaryProperty binary = (NdefRecordModelBinaryProperty)selectedNode;
+		                    		
+			                    	String fileString = binary.getFile();
+			                    	
+			                    	Activator.info("Reload file " + fileString);
+	
+			                    	loadBinaryContent(fileString);
+		                    	} else {
+		                    		throw new RuntimeException();
+		                    	}
+		                    }
+		                }
+		            );
+
+			}
+		                    
+		                    
+		}
+	}
 	
 	private class SaveContentAction extends Action {
 
@@ -582,66 +626,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				if(fileString != null) {
 					Activator.info("Save to file " + fileString);
 
-					File file = new File(fileString);
-					
-					OutputStream outputStream = null;
-					try {
-						outputStream = new FileOutputStream(file);
-
-						byte[] payload = null;
-						Record record = selectedNode.getRecord();
-						if(record instanceof MimeRecord) {
-							MimeRecord mimeRecord = (MimeRecord) record;
-							
-							payload = mimeRecord.getContentAsBytes();
-						} else if(record instanceof UnknownRecord) {
-							UnknownRecord unknownRecord = (UnknownRecord) record;
-							
-							payload = unknownRecord.getPayload();
-						} else if(record instanceof UnsupportedExternalTypeRecord) {
-							UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) record;
-							
-							payload = unsupportedExternalTypeRecord.getData();
-						} else if(record instanceof SignatureRecord) {
-
-							if(selectedNode.getRecordBranchIndex() == 2) {
-								SignatureRecord signatureRecord = (SignatureRecord)record;
-								
-								if(signatureRecord.hasSignature()) {
-									payload = signatureRecord.getSignature();
-								}
-							} else if(selectedNode.getRecordBranchIndex() == 4) {
-								if(selectedNode instanceof NdefRecordModelPropertyListItem) {
-									SignatureRecord signatureRecord = (SignatureRecord)record;
-									
-									payload = signatureRecord.getCertificate(selectedNode.getParentIndex());
-								}
-							}
-						}
-
-						if(payload == null) {
-							throw new RuntimeException();
-						}
-						
-						Activator.info("Save " + payload.length + " bytes");
-
-						outputStream.write(payload);
-					} catch(IOException e) {
-						
-						Activator.warn("Unable to save to file " + fileString, e);
-						
-						// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
-						Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-						MessageDialog.openError(shell, "Error", "Unable to save to file " + fileString);
-					} finally {
-						try {
-							if(outputStream != null) {
-								outputStream.close();
-							}
-						} catch(Exception e) {
-							// ignore
-						}
-					}
+					saveBinaryContent(fileString);
 				} else {
 					Activator.info("No save");
 				}
@@ -651,13 +636,115 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		            );
 
 			}
-		                    
-		                    
 		}
-		                
-		                
+	}
+
+	private void loadBinaryContent(final String fileString) {
+		
+		byte[] payload = DefaultRecordEditingSupport.load(fileString);
+		if(payload != null) {
+			NdefModelOperation operation = null;
+			Record record = selectedNode.getRecord();
+			if(record instanceof BinaryMimeRecord) {
+				BinaryMimeRecord mimeRecord = (BinaryMimeRecord) record;
+
+				operation = MimeRecordEditingSupport.newSetContentOperation(mimeRecord, (NdefRecordModelProperty) selectedNode, payload);
+			} else if(record instanceof UnknownRecord) {
+				UnknownRecord unknownRecord = (UnknownRecord) record;
+				
+				operation = UnknownRecordEditingSupport.newSetContentOperation(unknownRecord, (NdefRecordModelProperty) selectedNode, payload);
+			} else if(record instanceof UnsupportedExternalTypeRecord) {
+				UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) record;
+				
+				operation = ExternalTypeRecordEditingSupport.newSetContentOperation(unsupportedExternalTypeRecord, (NdefRecordModelProperty) selectedNode, payload);
+			} else if(record instanceof SignatureRecord) {
+				
+				// TODO add reload capability
+				if(selectedNode.getRecordBranchIndex() == 2) {
+					SignatureRecord signatureRecord = (SignatureRecord)record;
+					
+					if(signatureRecord.hasSignature()) {
+						payload = signatureRecord.getSignature();
+					}
+				} else if(selectedNode.getRecordBranchIndex() == 4) {
+					if(selectedNode instanceof NdefRecordModelPropertyListItem) {
+						SignatureRecord signatureRecord = (SignatureRecord)record;
+						
+						payload = signatureRecord.getCertificate(selectedNode.getParentIndex());
+					}
+				}
+			}
+
+			if(operation != null) {
+				editorPart.update(selectedNode, operation);
+			}
+		}
 	}
 	
+
+	
+	private void saveBinaryContent(final String fileString) {
+		File file = new File(fileString);
+		
+		OutputStream outputStream = null;
+		try {
+			outputStream = new FileOutputStream(file);
+
+			byte[] payload = null;
+			Record record = selectedNode.getRecord();
+			if(record instanceof MimeRecord) {
+				MimeRecord mimeRecord = (MimeRecord) record;
+				
+				payload = mimeRecord.getContentAsBytes();
+			} else if(record instanceof UnknownRecord) {
+				UnknownRecord unknownRecord = (UnknownRecord) record;
+				
+				payload = unknownRecord.getPayload();
+			} else if(record instanceof UnsupportedExternalTypeRecord) {
+				UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) record;
+				
+				payload = unsupportedExternalTypeRecord.getData();
+			} else if(record instanceof SignatureRecord) {
+
+				if(selectedNode.getRecordBranchIndex() == 2) {
+					SignatureRecord signatureRecord = (SignatureRecord)record;
+					
+					if(signatureRecord.hasSignature()) {
+						payload = signatureRecord.getSignature();
+					}
+				} else if(selectedNode.getRecordBranchIndex() == 4) {
+					if(selectedNode instanceof NdefRecordModelPropertyListItem) {
+						SignatureRecord signatureRecord = (SignatureRecord)record;
+						
+						payload = signatureRecord.getCertificate(selectedNode.getParentIndex());
+					}
+				}
+			}
+
+			if(payload == null) {
+				throw new RuntimeException();
+			}
+			
+			Activator.info("Save " + payload.length + " bytes");
+
+			outputStream.write(payload);
+		} catch(IOException e) {
+			
+			Activator.warn("Unable to save to file " + fileString, e);
+			
+			// http://www.vogella.de/articles/EclipseDialogs/article.html#dialogs_jfacemessage
+			Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+			MessageDialog.openError(shell, "Error", "Unable to save to file " + fileString);
+		} finally {
+			try {
+				if(outputStream != null) {
+					outputStream.close();
+				}
+			} catch(Exception e) {
+				// ignore
+			}
+		}
+	}
 	
 	private class SetChildAction extends Action {
 
@@ -831,6 +918,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
         
         // mime interaction
         saveContent = new SaveContentAction("Save to file");
+        reloadContent = new ReloadContentAction("Reload previous file");
         
 		manager.setRemoveAllWhenShown(true);
 		
@@ -1061,6 +1149,14 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 						}
 					} 
+					
+					if(selectedNode instanceof NdefRecordModelBinaryProperty) {
+						NdefRecordModelBinaryProperty ndefRecordModelBinaryProperty = (NdefRecordModelBinaryProperty)selectedNode;
+						
+						if(ndefRecordModelBinaryProperty.hasFile()) {
+							menuManager.add(reloadContent);
+						}
+					}
 				}
 			}
 		} else {

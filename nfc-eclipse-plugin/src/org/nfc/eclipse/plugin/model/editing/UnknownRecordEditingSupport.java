@@ -26,17 +26,9 @@
 
 package org.nfc.eclipse.plugin.model.editing;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
+import org.nfc.eclipse.plugin.model.NdefRecordModelBinaryProperty;
 import org.nfc.eclipse.plugin.model.NdefRecordModelFactory;
 import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
 import org.nfc.eclipse.plugin.model.NdefRecordModelProperty;
@@ -47,6 +39,45 @@ import org.nfctools.ndef.unknown.UnknownRecord;
 
 public class UnknownRecordEditingSupport extends DefaultRecordEditingSupport {
 
+	public static NdefModelOperation newSetContentOperation(UnknownRecord record, NdefRecordModelProperty node, byte[] next) {
+		return new SetContentOperation(record, (NdefRecordModelProperty)node, record.getPayload(), next);
+	}
+
+	private static class SetContentOperation extends DefaultNdefModelPropertyOperation<byte[], UnknownRecord> {
+
+		public SetContentOperation(UnknownRecord record, NdefRecordModelProperty ndefRecordModelProperty, byte[] previous, byte[] next) {
+			super(record, ndefRecordModelProperty, previous, next);
+		}
+
+		@Override
+		public void execute() {
+			super.execute();
+			
+			record.setPayload(next);
+			
+			if(next == null) {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
+			} else {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length) );
+			}	
+
+		}
+		
+		@Override
+		public void revoke() {
+			super.revoke();
+			
+			record.setPayload(previous);
+			
+			if(previous == null) {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
+			} else {
+				ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
+			}	
+		}
+	}
+
+	
 	public UnknownRecordEditingSupport(
 			TreeViewer treeViewer) {
 		super(treeViewer);
@@ -59,64 +90,13 @@ public class UnknownRecordEditingSupport extends DefaultRecordEditingSupport {
 
 			if(value != null) {
 			
-				String path = (String)value;
-				
-				File file = new File(path);
+				byte[] payload = load((String)value);
+				if(payload != null) {
+					NdefRecordModelBinaryProperty ndefRecordModelBinaryProperty = (NdefRecordModelBinaryProperty)node;
+					ndefRecordModelBinaryProperty.setFile((String)value);
 
-				int length = (int)file.length();
-				
-				byte[] payload = new byte[length];
-				
-				InputStream in = null;
-				try {
-					in = new FileInputStream(file);
-					DataInputStream din = new DataInputStream(in);
-					
-					din.readFully(payload);
-				} catch(IOException e) {
-					Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-					MessageDialog.openError(shell, "Error", "Could not read file '" + file + "', reverting to previous value.");
-					
-					return null;
-				} finally {
-					if(in != null) {
-						try {
-							in.close();
-						} catch(IOException e) {
-							// ignore
-						}
-					}
+					return newSetContentOperation(unknownRecord, (NdefRecordModelProperty)node, payload);
 				}
-				
-				return new DefaultNdefModelPropertyOperation<byte[], UnknownRecord>(unknownRecord, (NdefRecordModelProperty)node, unknownRecord.getPayload(), payload) {
-					
-					@Override
-					public void execute() {
-						super.execute();
-						
-						record.setPayload(next);
-						
-						if(next == null) {
-							ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
-						} else {
-							ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(next.length) );
-						}	
-
-					}
-					
-					@Override
-					public void revoke() {
-						super.revoke();
-						
-						record.setPayload(previous);
-						
-						if(previous == null) {
-							ndefRecordModelProperty.setValue(NdefRecordModelFactory.getNoBytesString());
-						} else {
-							ndefRecordModelProperty.setValue(NdefRecordModelFactory.getBytesString(previous.length));
-						}	
-					}
-				};
 			}				
 			return null;
 		} else {

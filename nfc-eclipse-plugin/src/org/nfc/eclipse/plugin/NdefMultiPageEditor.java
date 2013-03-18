@@ -95,8 +95,6 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	
 	private NdefRecordFactory ndefRecordFactory = new NdefRecordFactory();
 	
-	private NdefTerminalListener.Type type;
-	
 	protected boolean dirty = false;
 	
 	protected boolean saveEditorPartPreference = false;
@@ -609,19 +607,17 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
 	public void setNdefContent(final List<Record> content) {
 		
     	Display.getDefault().asyncExec(
-                new Runnable()
-                {
-                    public void run()
-                    {
+                new Runnable() {
+                    public void run() {
 		
 						modelOperator.setRecords(content);
 						
 						if(ndefEditor == getActiveEditor()) {
-							ndefEditor.modified(type != Type.READ_WRITE);
+							ndefEditor.modified(false);
 						}
 						
 						if(ndefQREditor == getActiveEditor()) {
-							ndefQREditor.modified(type != Type.READ_WRITE);
+							ndefQREditor.modified(false);
 						}
 						
 						setDirty(true);
@@ -631,16 +627,6 @@ public class NdefMultiPageEditor extends MultiPageEditorPart implements IResourc
             );
 
 
-	}
-
-	@Override
-	public Type getType() {
-		return type;
-	}
-	
-	@Override
-	public void setType(Type type) {
-		this.type = type;
 	}
 
 	@Override

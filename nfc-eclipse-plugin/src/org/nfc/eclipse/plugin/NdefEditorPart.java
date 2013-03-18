@@ -86,7 +86,6 @@ import org.nfc.eclipse.plugin.model.editing.NdefRecordModelEditingSupport;
 import org.nfc.eclipse.plugin.operation.NdefModelOperation;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalListener;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalWrapper;
-import org.nfc.eclipse.plugin.terminal.NdefTerminalListener.Type;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefException;
@@ -195,35 +194,31 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 	private void handleTerminal() {
 		if(NdefTerminalWrapper.isAvailable()) {
 			
-			NdefTerminalListener ndefTerminalListener = NdefTerminalWrapper.getNdefTerminalListener();
+			NdefTerminalListener ndefTerminalListener = NdefTerminalWrapper.getNdefTerminalWriteListener();
 			
 			if(ndefTerminalListener != null) {
 				if(ndefTerminalListener == ndefMultiPageEditor) {
 					
-					Type type = ndefMultiPageEditor.getType();
+					NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
 					
-					if(type == Type.WRITE || type == Type.READ_WRITE) {
-						NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
+					if(ndefOperations != null) {
+						List<Record> records = operator.getRecords();
 						
-						if(ndefOperations != null) {
-							List<Record> records = operator.getRecords();
-							
-			        		// add write option IF message can in fact be written
-							NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
-			        		
-			        		try {
-			        			ndefMessageEncoder.encode(records);
+		        		// add write option IF message can in fact be written
+						NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+		        		
+		        		try {
+		        			ndefMessageEncoder.encode(records);
 
-								if(ndefOperations.isFormatted()) {
-									ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
-								} else {
-									ndefOperations.format(records.toArray(new Record[records.size()]));
-								}
-			        			setStatus("Auto-write successful.");
-			        		} catch(Exception e) {
-			        			setStatus("Auto-write not possible.");
-			        		}
-						}
+							if(ndefOperations.isFormatted()) {
+								ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
+							} else {
+								ndefOperations.format(records.toArray(new Record[records.size()]));
+							}
+		        			setStatus("Auto-write successful.");
+		        		} catch(Exception e) {
+		        			setStatus("Auto-write not possible.");
+		        		}
 					}
 				}
 			}			
@@ -717,13 +712,22 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 		
 		if(NdefTerminalWrapper.isAvailable()) {
 			
-			NdefTerminalListener ndefTerminalListener = NdefTerminalWrapper.getNdefTerminalListener();
+			NdefTerminalListener ndefTerminalReadListener = NdefTerminalWrapper.getNdefTerminalReadListener();
 			
-			if(ndefTerminalListener != null) {
-				if(ndefTerminalListener == ndefMultiPageEditor) {
-					NdefTerminalWrapper.setNdefTerminalListener(null);
+			if(ndefTerminalReadListener != null) {
+				if(ndefTerminalReadListener == ndefMultiPageEditor) {
+					NdefTerminalWrapper.setNdefTerminalReadListener(null);
 				}
 			}
+			
+			NdefTerminalListener ndefTerminalWriteListener = NdefTerminalWrapper.getNdefTerminalWriteListener();
+			
+			if(ndefTerminalWriteListener != null) {
+				if(ndefTerminalWriteListener == ndefMultiPageEditor) {
+					NdefTerminalWrapper.setNdefTerminalWriteListener(null);
+				}
+			}
+
 		}
 
 	}

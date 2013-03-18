@@ -39,8 +39,6 @@ import org.eclipse.ui.PlatformUI;
 import org.nfc.eclipse.plugin.Activator;
 import org.nfc.eclipse.plugin.NdefEditorPart;
 import org.nfc.eclipse.plugin.NdefMultiPageEditor;
-import org.nfc.eclipse.plugin.Startup;
-import org.nfc.eclipse.plugin.terminal.NdefTerminalListener.Type;
 import org.nfctools.NfcAdapter;
 import org.nfctools.api.Tag;
 import org.nfctools.api.UnknownTagListener;
@@ -80,8 +78,10 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 	
 	private boolean close = false;
 		
-	private NdefTerminalListener ndefTerminalListener;
-	
+	private NdefTerminalListener ndefTerminalReadListener;
+
+	private NdefTerminalListener ndefTerminalWriteListener;
+
 	private NdefOperations ndefOperations;
 	
 	private TerminalStatus terminalStatus = null;
@@ -317,72 +317,76 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		synchronized(this) {
 			this.ndefOperations = ndefOperations;
 			
-			Type type = Type.NONE;
-			if(ndefTerminalListener != null) {
-				type = ndefTerminalListener.getType();
-
-				if(type == Type.WRITE) {
-					log("Write NDEF from editor " + ndefTerminalListener.getClass().getSimpleName());
-
-					List<Record> records = ndefTerminalListener.getNdefRecords();
-					
-					if(ndefOperations != null) {
-						
-		        		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
-		        		
-		        		try {
-		        			ndefMessageEncoder.encode(records);
-
-							if(ndefOperations.isFormatted()) {
-								ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
-							} else {
-								ndefOperations.format(records.toArray(new Record[records.size()]));
-							}
-		        			setStatus("Auto-write successful.");
-		        		} catch(Exception e) {
-		        			setStatus("Auto-write not possible.");
-		        		}
-					}
-					
-					return;
-				} else {
-					log("Read " + ndefTerminalListener.getClass().getSimpleName() + " type " + type);
+			if(ndefTerminalWriteListener != null && ndefTerminalReadListener != null) {
+				// read first then write, if not the same editor
+				read(false);
+				if(ndefTerminalWriteListener != ndefTerminalReadListener) {
+					write();
 				}
-			}
-			
-			List<Record> list; 
-			if (ndefOperations.isFormatted()) {
-				if (ndefOperations.hasNdefMessage()) {
-					list = ndefOperations.readNdefMessage();
-				} else {
-					log("Empty formatted tag. Size: " + ndefOperations.getMaxSize() + " bytes");
-					
-					 list = new ArrayList<Record>();
-				}
+			} else if(ndefTerminalWriteListener != null) {
+				write();
+			} else if(ndefTerminalReadListener != null) {
+				read(false);
 			} else {
-				log("Empty tag. NOT formatted. Size: " + ndefOperations.getMaxSize() + " bytes");
+				read(true);
+			}
+		}
+	}
+	
+	private void read(boolean newEditor) {
+		List<Record> list; 
+		if (ndefOperations.isFormatted()) {
+			if (ndefOperations.hasNdefMessage()) {
+				list = ndefOperations.readNdefMessage();
+			} else {
+				log("Empty formatted tag. Size: " + ndefOperations.getMaxSize() + " bytes");
 				
 				 list = new ArrayList<Record>();
 			}
-				
+		} else {
+			log("Empty tag. NOT formatted. Size: " + ndefOperations.getMaxSize() + " bytes");
 			
-			if(type == Type.NONE) {
-				log("Read NDEF into new editor");
-				
-				final byte[] encode = NdefContext.getNdefEncoder().encode(list);
+			 list = new ArrayList<Record>();
+		}
+		
+		if(newEditor) {
+			log("Read NDEF into new editor");
+			
+			final byte[] encode = NdefContext.getNdefEncoder().encode(list);
 
-				openNewEditor(encode);
-			} else {
-				log("Read NDEF into open editor " + ndefTerminalListener.getClass().getSimpleName());
-				
-				ndefTerminalListener.setNdefContent(list);
-				
-				setStatus("Auto-read successful.");
-			}
-
+			openNewEditor(encode);
+		} else {
+			log("Read NDEF into open editor " + ndefTerminalReadListener.getClass().getSimpleName());
+			
+			ndefTerminalReadListener.setNdefContent(list);
+			
+			setStatus("Auto-read successful.");
 		}
 
+	}
+	
+	private void write() {
+		log("Write NDEF from editor " + ndefTerminalWriteListener.getClass().getSimpleName());
+
+		List<Record> records = ndefTerminalWriteListener.getNdefRecords();
 		
+		if(ndefOperations != null) {
+			
+    		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+    		
+    		try {
+    			ndefMessageEncoder.encode(records);
+
+				if(ndefOperations.isFormatted()) {
+					ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
+				} else {
+					ndefOperations.format(records.toArray(new Record[records.size()]));
+				}
+    			setStatus("Auto-write successful.");
+    		} catch(Exception e) {
+    			setStatus("Auto-write not possible.");
+    		}
+		}
 	}
 
 	@Override
@@ -408,13 +412,23 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		}
 	}
 
-	public NdefTerminalListener getNdefTerminalListener() {
-		return ndefTerminalListener;
+	public NdefTerminalListener getNdefTerminalReadListener() {
+		return ndefTerminalReadListener;
 	}
 
-	public void setNdefTerminalListener(NdefTerminalListener ndefTerminalListener) {
+	public void setNdefTerminalReadListener(NdefTerminalListener ndefTerminalReadListener) {
 		synchronized(this) {
-			this.ndefTerminalListener = ndefTerminalListener;
+			this.ndefTerminalReadListener = ndefTerminalReadListener;
+		}
+	}
+	
+	public NdefTerminalListener getNdefTerminalWriteListener() {
+		return ndefTerminalWriteListener;
+	}
+
+	public void setNdefTerminalWriteListener(NdefTerminalListener ndefTerminalWriteListener) {
+		synchronized(this) {
+			this.ndefTerminalWriteListener = ndefTerminalWriteListener;
 		}
 	}
 

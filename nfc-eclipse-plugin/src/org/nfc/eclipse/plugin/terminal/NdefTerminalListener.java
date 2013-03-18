@@ -41,15 +41,8 @@ import org.nfctools.ndef.Record;
 
 public interface NdefTerminalListener {
 
-	public enum Type {
-		READ, WRITE, NONE, READ_WRITE;
-	}
-	
 	List<Record> getNdefRecords();
 	
 	void setNdefContent(List<Record> content);
 	
-	Type getType();
-	
-	void setType(Type type);
 }

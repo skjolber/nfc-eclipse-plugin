@@ -52,12 +52,12 @@ public class NdefTerminalWrapper {
 	}
 	
 
-	public static NdefTerminalListener getNdefTerminalListener() {
+	public static NdefTerminalListener getNdefTerminalReadListener() {
 		try {
 			org.nfc.eclipse.plugin.terminal.NdefTerminalDetector detector = org.nfc.eclipse.plugin.terminal.NdefTerminalDetector.getInstance();
 	
 			if(detector != null) {
-				return detector.getNdefTerminalListener();
+				return detector.getNdefTerminalReadListener();
 			}
 		} catch(Exception e) {
 			// ignore
@@ -65,12 +65,37 @@ public class NdefTerminalWrapper {
 		return null;
 	}
 
-	public static void setNdefTerminalListener(NdefTerminalListener ndefTerminalListener) {
+	public static void setNdefTerminalReadListener(NdefTerminalListener ndefTerminalListener) {
 		try {
 			org.nfc.eclipse.plugin.terminal.NdefTerminalDetector detector = org.nfc.eclipse.plugin.terminal.NdefTerminalDetector.getInstance();
 	
 			if(detector != null) {
-				detector.setNdefTerminalListener(ndefTerminalListener);
+				detector.setNdefTerminalReadListener(ndefTerminalListener);
+			}
+		} catch(Exception e) {
+			// ignore
+		} 
+	}
+	
+	public static NdefTerminalListener getNdefTerminalWriteListener() {
+		try {
+			org.nfc.eclipse.plugin.terminal.NdefTerminalDetector detector = org.nfc.eclipse.plugin.terminal.NdefTerminalDetector.getInstance();
+	
+			if(detector != null) {
+				return detector.getNdefTerminalWriteListener();
+			}
+		} catch(Exception e) {
+			// ignore
+		} 
+		return null;
+	}
+
+	public static void setNdefTerminalWriteListener(NdefTerminalListener ndefTerminalListener) {
+		try {
+			org.nfc.eclipse.plugin.terminal.NdefTerminalDetector detector = org.nfc.eclipse.plugin.terminal.NdefTerminalDetector.getInstance();
+	
+			if(detector != null) {
+				detector.setNdefTerminalWriteListener(ndefTerminalListener);
 			}
 		} catch(Exception e) {
 			// ignore

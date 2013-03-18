@@ -61,7 +61,6 @@ import org.nfc.eclipse.plugin.model.editing.UnknownRecordEditingSupport;
 import org.nfc.eclipse.plugin.operation.NdefModelOperation;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalListener;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalWrapper;
-import org.nfc.eclipse.plugin.terminal.NdefTerminalListener.Type;
 import org.nfc.eclipse.plugin.util.FileDialogUtil;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
@@ -341,22 +340,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Automatically export to terminal");
 			
-			Type type = ndefMultiPageEditor.getType();
-
 			if(isChecked()) {
-				if(type == Type.READ) {
-					ndefMultiPageEditor.setType(Type.READ_WRITE);
-				} else {
-					ndefMultiPageEditor.setType(Type.WRITE);
-				}
-				NdefTerminalListener listener = NdefTerminalWrapper.getNdefTerminalListener();
-				if(listener != null) {
-					if(listener != ndefMultiPageEditor) {
-						listener.setType(Type.NONE);
-					}
-				}
-				
-				NdefTerminalWrapper.setNdefTerminalListener(ndefMultiPageEditor);
+				NdefTerminalWrapper.setNdefTerminalWriteListener(ndefMultiPageEditor);
 
 				// write now
 				NdefOperations ndefOperations = NdefTerminalWrapper.getNdefOperations();
@@ -376,13 +361,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					}
 				}					
 			} else {
-				if(type == Type.READ_WRITE) {
-					ndefMultiPageEditor.setType(Type.READ);
-				} else {
-					ndefMultiPageEditor.setType(Type.NONE);
-					
-					NdefTerminalWrapper.setNdefTerminalListener(null);
-				}
+				NdefTerminalWrapper.setNdefTerminalWriteListener(null);
 			}
 			
 		}
@@ -398,33 +377,10 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		public void run() {
 			Activator.info("Automatically import from terminal");
 
-			Type type = ndefMultiPageEditor.getType();
-			
 			if(isChecked()) {
-				if(type == Type.WRITE) {
-					ndefMultiPageEditor.setType(Type.READ_WRITE);
-				} else {
-					ndefMultiPageEditor.setType(Type.READ);
-				}
-				
-				NdefTerminalListener listener = NdefTerminalWrapper.getNdefTerminalListener();
-				if(listener != null) {
-					if(listener != ndefMultiPageEditor) {
-						listener.setType(Type.NONE);
-					}
-				}
-				
-				NdefTerminalWrapper.setNdefTerminalListener(ndefMultiPageEditor);
-
+				NdefTerminalWrapper.setNdefTerminalReadListener(ndefMultiPageEditor);
 			} else {
-
-				if(type == Type.READ_WRITE) {
-					ndefMultiPageEditor.setType(Type.WRITE);
-				} else {
-					ndefMultiPageEditor.setType(Type.NONE);
-					
-					NdefTerminalWrapper.setNdefTerminalListener(null);
-				}
+				NdefTerminalWrapper.setNdefTerminalReadListener(null);
 			}
 		}
 	}
@@ -1197,22 +1153,28 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 		        			writeTerminal.setEnabled(false);
 				        }
 				        
-				        NdefTerminalListener current = NdefTerminalWrapper.getNdefTerminalListener();
-				        if(current != null) {
-				        	if(current != ndefMultiPageEditor) {
+				        NdefTerminalListener read = NdefTerminalWrapper.getNdefTerminalReadListener();
+				        if(read != null) {
+				        	if(read != ndefMultiPageEditor) {
 				        		autoReadTerminal.setChecked(false);
-				        		autoWriteTerminal.setChecked(false);
 				        	} else {
-				        		Type type = current.getType();
-				        		
-				        		autoReadTerminal.setChecked(type == Type.READ || type == Type.READ_WRITE);
-				        		autoWriteTerminal.setChecked(type == Type.WRITE || type == Type.READ_WRITE);
+				        		autoReadTerminal.setChecked(true);
 				        	}
 				        } else {
 			        		autoReadTerminal.setChecked(false);
+				        }
+
+				        NdefTerminalListener write = NdefTerminalWrapper.getNdefTerminalWriteListener();
+				        if(write != null) {
+				        	if(write != ndefMultiPageEditor) {
+				        		autoWriteTerminal.setChecked(false);
+				        	} else {
+				        		autoWriteTerminal.setChecked(true);
+				        	}
+				        } else {
 			        		autoWriteTerminal.setChecked(false);
 				        }
-				        
+
 				        // always present
 				        terminalMenuManager.add(autoReadTerminal);
 				        terminalMenuManager.add(autoWriteTerminal);

@@ -143,10 +143,15 @@ public class NdefRecordModelFactory {
 			
 			NdefRecordModelRecord ndefRecordModelRecord = new NdefRecordModelRecord(record, ndefRecordModelParent);
 
-			ndefRecordModelRecord.add(getNode(smartPosterRecord.getTitle(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(getNode( smartPosterRecord.getUri(), ndefRecordModelRecord));
-			ndefRecordModelRecord.add(getNode(smartPosterRecord.getAction(), ndefRecordModelRecord));
-			
+			if(smartPosterRecord.hasTitle()) {
+				ndefRecordModelRecord.add(getNode(smartPosterRecord.getTitle(), ndefRecordModelRecord));
+			}
+			if(smartPosterRecord.hasUri()) {
+				ndefRecordModelRecord.add(getNode(smartPosterRecord.getUri(), ndefRecordModelRecord));
+			}
+			if(smartPosterRecord.hasAction()) {
+				ndefRecordModelRecord.add(getNode(smartPosterRecord.getAction(), ndefRecordModelRecord));
+			}
 			return ndefRecordModelRecord;
 		} else if(record instanceof TextRecord) {
 			TextRecord textRecord = (TextRecord)record;

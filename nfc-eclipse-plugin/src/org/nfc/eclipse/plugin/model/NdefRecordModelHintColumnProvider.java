@@ -26,15 +26,30 @@
 
 package org.nfc.eclipse.plugin.model;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.security.NoSuchProviderException;
+import java.security.Security;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import org.bouncycastle.crypto.RuntimeCryptoException;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
+import org.nfc.eclipse.ndef.signature.SignatureVerifier;
 import org.nfctools.ndef.NdefContext;
 import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
+import org.nfctools.ndef.NdefRecord;
+import org.nfctools.ndef.NdefRecordEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.mime.MimeRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord.CertificateFormat;
+import org.nfctools.ndef.wkt.records.SignatureRecord.SignatureType;
 import org.nfctools.ndef.wkt.records.UriRecord;
 
 import android.nfc16.NdefMessage;
@@ -116,6 +131,103 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 								return "Uri prefix not in preset list";
 							}
 						}			
+						
+						
+					} else if(record instanceof SignatureRecord) {
+						SignatureRecord signatureRecord = (SignatureRecord)record;
+						if(element instanceof NdefRecordModelPropertyListItem) {
+							
+							int index = ndefRecordModelNode.getParentIndex();
+							
+							if(signatureRecord.getCertificateFormat() == CertificateFormat.X_509) {
+								byte[] certificate = signatureRecord.getCertificate(index);
+								
+						        try {
+									java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
+									
+									X509Certificate x509Certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(certificate));
+
+									return x509Certificate.getSubjectX500Principal().getName();
+									
+								} catch (Exception e) {
+									
+								}
+
+								
+							}
+						} else if(element instanceof NdefRecordModelParentProperty) {
+							
+							int index = ndefRecordModelNode.getParentIndex();
+
+							if(index == 2) {
+								if(signatureRecord.hasSignature()) {
+									byte[] signature = signatureRecord.getSignature();
+									if(signature == null || signature.length == 0) {
+										return null;
+									}
+
+									if(signatureRecord.getCertificates().isEmpty()) {
+										return "No certificate to verify signature";
+									}
+									
+									int level = ndefRecordModelNode.getLevel();
+									if(level == 2) {
+										int treeRootIndex = ndefRecordModelNode.getTreeRootIndex();
+										
+										NdefRecordModelParent parent = ndefRecordModelNode.getRecordNode().getParent();
+										
+										ByteArrayOutputStream bout = new ByteArrayOutputStream();
+										for(int i = 0; i < treeRootIndex; i++) {
+											NdefRecordModelParent recordParent = (NdefRecordModelParent) parent.getChild(i);
+											
+											Record covered = recordParent.getRecord();
+											
+											NdefRecordEncoder ndefRecordEncoder = NdefContext.getNdefRecordEncoder();
+											NdefEncoder ndefEncoder = NdefContext.getNdefEncoder();
+											
+											NdefRecord encode = ndefRecordEncoder.encode(covered, ndefEncoder);
+
+											try {
+												byte[] type = encode.getType();
+												if(type != null) {
+													bout.write(type);
+												}
+												byte[] id = encode.getId();
+												if(id != null) {
+													bout.write(id);
+												}
+												byte[] payload  = encode.getPayload();
+												if(payload != null) {
+													bout.write(payload);
+												}
+											} catch (IOException e) {
+												throw new RuntimeException();
+											}
+										}
+									
+
+										SignatureVerifier signatureVerifier = new SignatureVerifier();
+										
+										Boolean verify;
+										try {
+											verify = signatureVerifier.verify(signatureRecord.getCertificateFormat(), signatureRecord.getCertificates().get(0), signatureRecord.getSignatureType(), signatureRecord.getSignature(), bout.toByteArray());
+											
+											if(verify != null) {
+												if(!verify) {
+													return "Signature does not verify";
+												} 
+											} else {
+												return "Verification unsupported";
+											}
+										} catch (Exception e) {
+											return "Problem verifying signature";
+										}
+									}										
+								}
+							} else {
+								return index + "";
+							}
+						}
 					}
 				}
 			}

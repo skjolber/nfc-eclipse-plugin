@@ -37,7 +37,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.nfc.eclipse.plugin.Activator;
 
-
 import eu.medsea.mimeutil.MimeType;
 import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 

@@ -28,6 +28,9 @@ package org.nfc.eclipse.plugin.model;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.List;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -46,6 +49,7 @@ import org.nfctools.ndef.wkt.records.ActionRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
 import org.nfctools.ndef.wkt.records.GcTargetRecord;
 import org.nfctools.ndef.wkt.records.SignatureRecord;
+import org.nfctools.ndef.wkt.records.SignatureRecord.CertificateFormat;
 import org.nfctools.ndef.wkt.records.TextRecord;
 
 
@@ -315,8 +319,32 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 				}
 			}
 
-		}
+		} else if(element instanceof NdefRecordModelPropertyListItem) {
+			NdefRecordModelPropertyListItem node = (NdefRecordModelPropertyListItem)element;
 
+			Record record = node.getRecord();
+			if(record instanceof SignatureRecord) {
+				SignatureRecord signatureRecord = (SignatureRecord)record;
+				
+				byte[] certificateBytes = signatureRecord.getCertificate(node.getParentIndex());
+				
+				if(signatureRecord.getCertificateFormat() == CertificateFormat.X_509) {
+
+					try {
+						if (Security.getProvider("BC") == null) {
+				            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+				        }
+
+						java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509", "BC");
+
+						return cf.generateCertificate(new ByteArrayInputStream(certificateBytes)).toString();
+					} catch (Exception e) {
+						// ignore
+					}
+				}
+				
+			}			
+		}
 		return super.getToolTipText(element);
 	}
 

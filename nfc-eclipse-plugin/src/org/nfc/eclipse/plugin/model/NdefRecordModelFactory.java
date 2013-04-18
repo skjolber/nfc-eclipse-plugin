@@ -26,6 +26,7 @@
 
 package org.nfc.eclipse.plugin.model;
 
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 

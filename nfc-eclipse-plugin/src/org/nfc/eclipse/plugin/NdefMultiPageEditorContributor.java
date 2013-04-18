@@ -28,9 +28,12 @@ package org.nfc.eclipse.plugin;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IStatusLineManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.StatusLineContributionItem;
+import org.eclipse.jface.action.ToolBarContributionItem;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.MultiPageEditorActionBarContributor;
 
@@ -50,6 +53,17 @@ public class NdefMultiPageEditorContributor extends MultiPageEditorActionBarCont
 		super.init(bars);
 	}
 
+	/*
+	@Override
+	public void contributeToToolBar(IToolBarManager toolBarManager) {
+		super.contributeToToolBar(toolBarManager);
+
+		Activator.info("Contribute to toolbar");
+
+		toolBarManager.add(new ToolBarContributionItem(toolBarManager, IWorkbenchActionConstants.TOOLBAR_FILE));
+	}
+	*/
+	
 	@Override
 	public void contributeToStatusLine(IStatusLineManager statusLineManager) {
 		super.contributeToStatusLine(statusLineManager);

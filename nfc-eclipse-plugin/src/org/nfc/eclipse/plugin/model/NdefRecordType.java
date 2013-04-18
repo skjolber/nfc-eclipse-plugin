@@ -40,7 +40,6 @@ import org.nfctools.ndef.ext.AndroidApplicationRecord;
 import org.nfctools.ndef.ext.GeoRecord;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
-import org.nfctools.ndef.mime.TextMimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.unknown.unsupported.UnsupportedRecord;
 import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;

@@ -24,13 +24,15 @@
  * THE SOFTWARE.
  ****************************************************************************/
 
-package org.nfc.eclipse.plugin;
+package org.nfc.eclipse.plugin.wizard;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.ide.IDE;
 
 /**
  * 
@@ -43,6 +45,7 @@ import org.eclipse.ui.IWorkbench;
 public class NewNdefFileWizard extends Wizard implements INewWizard {
 
     private IStructuredSelection selection;
+    private IWorkbench workbench;
     private NewNdefFileWizardPage newFileWizardPage;
 
     public NewNdefFileWizard() {
@@ -59,13 +62,20 @@ public class NewNdefFileWizard extends Wizard implements INewWizard {
     public boolean performFinish() {
         
         IFile file = newFileWizardPage.createNewFile();
-        if (file != null)
+        if (file != null) {
+            try {
+                IDE.openEditor(workbench.getActiveWorkbenchWindow().getActivePage(), file);
+            } catch (PartInitException e) {
+            }
+         
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     public void init(IWorkbench workbench, IStructuredSelection selection) {
+    	this.workbench = workbench;
         this.selection = selection;
     }
 }

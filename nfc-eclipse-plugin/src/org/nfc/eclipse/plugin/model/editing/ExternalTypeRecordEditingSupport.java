@@ -26,17 +26,9 @@
 
 package org.nfc.eclipse.plugin.model.editing;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 import org.nfc.eclipse.plugin.model.NdefRecordModelBinaryProperty;
 import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
 import org.nfc.eclipse.plugin.model.NdefRecordModelProperty;

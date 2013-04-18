@@ -184,6 +184,8 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 			List<Record> list = ndefMessageDecoder.decodeToRecords(ndef);
 			
+			
+			
 			Record[] records = list.toArray(new Record[list.size()]);
 			
 			return NdefRecordModelFactory.represent(records);

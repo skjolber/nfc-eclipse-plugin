@@ -26,9 +26,7 @@
 
 package org.nfc.eclipse.plugin.model;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,7 +51,6 @@ import org.eclipse.ui.PlatformUI;
 import org.nfc.eclipse.plugin.Activator;
 import org.nfc.eclipse.plugin.NdefEditorPart;
 import org.nfc.eclipse.plugin.NdefMultiPageEditor;
-import org.nfc.eclipse.plugin.Startup;
 import org.nfc.eclipse.plugin.model.editing.DefaultRecordEditingSupport;
 import org.nfc.eclipse.plugin.model.editing.ExternalTypeRecordEditingSupport;
 import org.nfc.eclipse.plugin.model.editing.MimeRecordEditingSupport;
@@ -238,7 +235,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 	private class WriteTerminal extends Action {
 		
-		public WriteTerminal() {
+		public WriteTerminal() {	
 			super("Write");
 		}
 		

@@ -16,12 +16,15 @@
 
 package android.nfc16;
 
-import android.nfc.FormatException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.nfctools.NfcAdapter;
+
+import android.nfc.FormatException;
 
 /**
  * Represents an immutable NDEF Record.

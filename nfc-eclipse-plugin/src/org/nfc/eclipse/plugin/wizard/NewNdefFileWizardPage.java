@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  ****************************************************************************/
 
-package org.nfc.eclipse.plugin;
+package org.nfc.eclipse.plugin.wizard;
 
 import java.io.InputStream;
 

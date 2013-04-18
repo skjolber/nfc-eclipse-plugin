@@ -19,6 +19,8 @@ package android.nfc16;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.nfctools.NfcAdapter;
+
 import android.nfc.FormatException;
 
 

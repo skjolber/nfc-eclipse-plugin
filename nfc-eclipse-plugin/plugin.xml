@@ -36,11 +36,59 @@
     </category>
     <wizard
           category="NFC"
-          class="org.nfc.eclipse.plugin.NewNdefFileWizard"
+          class="org.nfc.eclipse.plugin.wizard.NewNdefFileWizard"
           icon="icons/icon.gif"
-          id="org.nfc.eclipse.plugin.NewNdefFileWizard"
+          id="org.nfc.eclipse.plugin.wizard.NewNdefFileWizard"
           name="NDEF File">
     </wizard>
  </extension>
+
+	<!--
+
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution 
+		       locationURI="toolbar:org.eclipse.ui.main.toolbar"> 
+		    <toolbar id="org.nfc.eclipse.toolbar"> 
+   		       <command commandId="org.nfc.eclipse.command.wizard" style="push"> 
+		           <visibleWhen>
+					   <or>
+					      <with variable="selection">
+					         <iterate ifEmtpy="false">
+					           <reference definitionId="org.nfc.eclipse.testExtension"/>
+					         </iterate>
+					      </with>
+					      <with variable="activeEditorInput">
+					        <reference definitionId="org.nfc.eclipse.testExtension"/>
+					      </with>
+					   </or>
+					</visibleWhen>
+		       </command> 
+		    </toolbar> 
+		 </menuContribution>
+	
+	</extension>
+	
+	<extension point="org.eclipse.ui.commands">
+	    <command id="org.nfc.eclipse.command.wizard" name="Sign"/>
+	</extension>
+	
+	<extension point="org.eclipse.ui.handlers">
+	    <handler
+	        class="org.nfc.eclipse.plugin.wizard.WizardHandler"
+	        commandId="org.nfc.eclipse.command.wizard">
+	    </handler>
+	</extension>
+	
+	<extension point="org.eclipse.core.expressions.definitions">
+	   <definition id="org.nfc.eclipse.testExtension">
+	      <adapt type="org.eclipse.core.resources.IResource">
+	         <or>
+	             <test property="org.eclipse.core.resources.extension" value="ndef"/>
+	         </or>
+	      </adapt>
+	   </definition>
+	</extension>
+
+	-->
 
 </plugin>

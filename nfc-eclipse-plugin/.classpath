@@ -7,18 +7,15 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="src-zxing-javase"/>
-	<classpathentry kind="src" path="zxing-binaryqr"/>
-	<classpathentry kind="src" path="zxing-core"/>
-	<classpathentry kind="src" path="nfctools-core"/>
-	<classpathentry kind="src" path="nfctools-ndef"/>
-	<classpathentry kind="src" path="nfctools-ndef-test"/>
-	<classpathentry kind="src" path="nfctools-ndef-test-resources"/>
-	<classpathentry kind="src" path="nfctools-api"/>
-	<classpathentry kind="src" path="nfctools-p2p"/>
+	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.6.jar"/>
 	<classpathentry kind="lib" path="lib/RXTXcomm.jar"/>
 	<classpathentry kind="lib" path="lib/binaryqr.jar"/>
+	<classpathentry kind="lib" path="lib/nfctools.jar"/>
+	<classpathentry kind="lib" path="lib/bcmail-jdk15on-148.jar"/>
+	<classpathentry kind="lib" path="lib/bcpkix-jdk15on-148.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-ext-jdk15on-148.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk15on-148.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

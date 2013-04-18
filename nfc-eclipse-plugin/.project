@@ -42,6 +42,11 @@
 			<type>2</type>
 			<location>WORKSPACE_LOC/nfctools2/nfctools-core/src/main/java</location>
 		</link>
+		<link>
+			<name>nfctools-core-test</name>
+			<type>2</type>
+			<location>WORKSPACE_LOC/nfctools2/nfctools-core/src/test/java</location>
+		</link>
 		<link>	
 			<name>nfctools-ndef</name>
 			<type>2</type>

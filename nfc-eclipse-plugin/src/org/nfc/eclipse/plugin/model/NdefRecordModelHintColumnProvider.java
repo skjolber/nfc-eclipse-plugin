@@ -173,11 +173,21 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 									int level = ndefRecordModelNode.getLevel();
 									if(level == 2) {
 										int treeRootIndex = ndefRecordModelNode.getTreeRootIndex();
-										
+
 										NdefRecordModelParent parent = ndefRecordModelNode.getRecordNode().getParent();
+
+										// find any previuos signature record
+										int startIndex = 0;
+										for(int i = treeRootIndex - 1; i >= 0; i--) {
+											Record siblingRecord = parent.getChild(i).getRecord();
+											if(siblingRecord instanceof SignatureRecord) {
+												startIndex = i + 1;
+												break;
+											}
+										}
 										
 										ByteArrayOutputStream bout = new ByteArrayOutputStream();
-										for(int i = 0; i < treeRootIndex; i++) {
+										for(int i = startIndex; i < treeRootIndex; i++) {
 											NdefRecordModelParent recordParent = (NdefRecordModelParent) parent.getChild(i);
 											
 											Record covered = recordParent.getRecord();

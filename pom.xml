@@ -7,15 +7,10 @@
   <packaging>pom</packaging>
   <modules>
     <module>xzing-binaryqr</module>
+    <module>nfc-eclipse-plugin-parent</module>
   </modules>
 
-  <properties>
-    <tycho-version>0.21.0</tycho-version>
-
-    <kepler-repo.url>http://download.eclipse.org/releases/kepler</kepler-repo.url>
-  </properties>
-
-    <name>NFC Eclipse plugin</name>
+    <name>NFC Eclipse plugin parent</name>
     <description>NDEF editor for Eclipse</description>
     <url>https://code.google.com/p/nfc-eclipse-plugin/</url>
     <inceptionYear>2012</inceptionYear>

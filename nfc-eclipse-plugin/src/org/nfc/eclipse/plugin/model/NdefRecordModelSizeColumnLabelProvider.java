@@ -28,11 +28,12 @@ package org.nfc.eclipse.plugin.model;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefEncoder;
+import org.nfctools.ndef.NdefMessageEncoder;
 
 public class NdefRecordModelSizeColumnLabelProvider extends ColumnLabelProvider {
 
-	private NdefEncoder encoder = NdefContext.getNdefEncoder();
+	
+	private NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 	
 	@Override
 	public String getText(Object element) {
@@ -40,7 +41,7 @@ public class NdefRecordModelSizeColumnLabelProvider extends ColumnLabelProvider 
 			NdefRecordModelRecord ndefRecordModelRecord = (NdefRecordModelRecord)element;
 			
 			try {
-				byte[] encodeSingle = encoder.encode(ndefRecordModelRecord.getRecord());
+				byte[] encodeSingle = ndefMessageEncoder.encode(ndefRecordModelRecord.getRecord());
 				
 				return Integer.toString(encodeSingle.length);
 			} catch(Exception e) {

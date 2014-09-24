@@ -87,8 +87,8 @@ import org.nfc.eclipse.plugin.operation.NdefModelOperation;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalListener;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalWrapper;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefException;
+import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
 
@@ -205,7 +205,7 @@ public class NdefEditorPart extends EditorPart implements NdefRecordModelChangeL
 						List<Record> records = operator.getRecords();
 						
 		        		// add write option IF message can in fact be written
-						NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+						NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 		        		
 		        		try {
 		        			ndefMessageEncoder.encode(records);

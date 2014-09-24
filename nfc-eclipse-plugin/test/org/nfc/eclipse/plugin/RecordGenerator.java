@@ -35,7 +35,6 @@ import java.util.Locale;
 
 import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
@@ -148,7 +147,7 @@ public class RecordGenerator {
 		handoverSelectRecord.setError(new ErrorRecord(ErrorReason.PermanenteMemoryConstraints, new Long(1L)));
 		
 		// add some certificates to signature
-		signatureRecord.addCertificate(new byte[]{0x00, 0x10, 0x11});
+		signatureRecord.getCertificates().add(new byte[]{0x00, 0x10, 0x11});
 		signatureRecord.setSignatureType(SignatureType.RSASSA_PSS_SHA_1);
 		signatureRecord.setSignature(new byte[]{0x01, 0x11, 0x12});
 		
@@ -175,7 +174,7 @@ public class RecordGenerator {
 			}
 		}
 		
-		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 
 		// SINGLE
 		for(int i = 0; i < records.length; i++) {

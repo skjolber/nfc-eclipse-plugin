@@ -44,6 +44,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
+import org.nfctools.ndef.ext.GenericExternalTypeRecord;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
@@ -105,8 +106,8 @@ public class NdefRecordFactory {
 			}
 			
 			child = androidApplicationRecord;
-		} else if(recordType == UnsupportedExternalTypeRecord.class) {
-			UnsupportedExternalTypeRecord externalTypeRecord = new UnsupportedExternalTypeRecord();
+		} else if(recordType == GenericExternalTypeRecord.class) {
+			GenericExternalTypeRecord externalTypeRecord = new GenericExternalTypeRecord();
 			
 			child = externalTypeRecord;
 		} else if(recordType == EmptyRecord.class) {

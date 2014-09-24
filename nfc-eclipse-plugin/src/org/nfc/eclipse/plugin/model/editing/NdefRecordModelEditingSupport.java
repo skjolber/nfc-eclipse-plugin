@@ -41,6 +41,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
+import org.nfctools.ndef.ext.GenericExternalTypeRecord;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
@@ -95,7 +96,7 @@ public class NdefRecordModelEditingSupport extends EditingSupport {
 		editing.put(AbsoluteUriRecord.class, new AbsoluteUriRecordEditingSupport(treeViewer));
 		editing.put(UriRecord.class, new UriRecordEditingSuppport(treeViewer));
 		editing.put(ErrorRecord.class, new ErrorRecordEditingSupport(treeViewer));
-		editing.put(UnsupportedExternalTypeRecord.class, new ExternalTypeRecordEditingSupport(treeViewer));
+		editing.put(GenericExternalTypeRecord.class, new ExternalTypeRecordEditingSupport(treeViewer));
 		
 		editing.put(SmartPosterRecord.class, new DefaultRecordEditingSupport(treeViewer));
 		editing.put(EmptyRecord.class, new DefaultRecordEditingSupport(treeViewer));

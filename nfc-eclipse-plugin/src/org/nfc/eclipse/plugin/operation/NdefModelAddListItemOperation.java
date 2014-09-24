@@ -65,7 +65,7 @@ public class NdefModelAddListItemOperation implements NdefModelOperation {
 
 			SignatureRecord signatureRecord = (SignatureRecord)record;
 			
-			signatureRecord.addCertificate(new byte[0]);
+			signatureRecord.getCertificates().add(new byte[0]);
 		}
 		
 		parent.insert(childNode, index);
@@ -83,7 +83,7 @@ public class NdefModelAddListItemOperation implements NdefModelOperation {
 
 			SignatureRecord signatureRecord = (SignatureRecord)record;
 		
-			signatureRecord.removeCertificate(index);
+			signatureRecord.getCertificates().remove(index);
 		}	
 
 		parent.remove(index);

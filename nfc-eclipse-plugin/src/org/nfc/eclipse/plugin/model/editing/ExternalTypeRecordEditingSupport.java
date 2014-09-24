@@ -34,18 +34,18 @@ import org.nfc.eclipse.plugin.model.NdefRecordModelNode;
 import org.nfc.eclipse.plugin.model.NdefRecordModelProperty;
 import org.nfc.eclipse.plugin.operation.DefaultNdefModelPropertyOperation;
 import org.nfc.eclipse.plugin.operation.NdefModelOperation;
-import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
+import org.nfctools.ndef.ext.GenericExternalTypeRecord;
 
 
 public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSupport {
 
-	public static NdefModelOperation newSetContentOperation(UnsupportedExternalTypeRecord record, NdefRecordModelProperty node, byte[] next) {
+	public static NdefModelOperation newSetContentOperation(GenericExternalTypeRecord record, NdefRecordModelProperty node, byte[] next) {
 		return new SetContentOperation(record, (NdefRecordModelProperty)node, record.getData(), next);
 	}
 
-	private static class SetContentOperation extends DefaultNdefModelPropertyOperation<byte[], UnsupportedExternalTypeRecord> {
+	private static class SetContentOperation extends DefaultNdefModelPropertyOperation<byte[], GenericExternalTypeRecord> {
 
-		public SetContentOperation(UnsupportedExternalTypeRecord record, NdefRecordModelProperty ndefRecordModelProperty, byte[] previous, byte[] next) {
+		public SetContentOperation(GenericExternalTypeRecord record, NdefRecordModelProperty ndefRecordModelProperty, byte[] previous, byte[] next) {
 			super(record, ndefRecordModelProperty, previous, next);
 		}
 
@@ -84,14 +84,14 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 
 	@Override
 	public NdefModelOperation setValue(NdefRecordModelNode node, Object value) {
-		UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) node.getRecord();
+		GenericExternalTypeRecord unsupportedExternalTypeRecord = (GenericExternalTypeRecord) node.getRecord();
 		if(node instanceof NdefRecordModelProperty) {
 			String stringValue = (String)value;
 			
 			int parentIndex = node.getParentIndex();
 			if(parentIndex == 0) {
 				if(!stringValue.equals(unsupportedExternalTypeRecord.getDomain())) {
-					return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getDomain(), stringValue) {
+					return new DefaultNdefModelPropertyOperation<String, GenericExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getDomain(), stringValue) {
 						
 						@Override
 						public void execute() {
@@ -111,7 +111,7 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 				}
 			} else if(parentIndex == 1) {
 				if(!stringValue.equals(unsupportedExternalTypeRecord.getType())) {
-					return new DefaultNdefModelPropertyOperation<String, UnsupportedExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getType(), stringValue) {
+					return new DefaultNdefModelPropertyOperation<String, GenericExternalTypeRecord>(unsupportedExternalTypeRecord, (NdefRecordModelProperty)node, unsupportedExternalTypeRecord.getType(), stringValue) {
 						
 						@Override
 						public void execute() {
@@ -148,7 +148,7 @@ public class ExternalTypeRecordEditingSupport extends DefaultRecordEditingSuppor
 
 	@Override
 	public Object getValue(NdefRecordModelNode node) {
-		UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) node.getRecord();
+		GenericExternalTypeRecord unsupportedExternalTypeRecord = (GenericExternalTypeRecord) node.getRecord();
 		if(node instanceof NdefRecordModelProperty) {
 			
 			int parentIndex = node.getParentIndex();

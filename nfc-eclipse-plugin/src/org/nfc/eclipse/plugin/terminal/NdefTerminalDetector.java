@@ -45,7 +45,6 @@ import org.nfctools.api.UnknownTagListener;
 import org.nfctools.mf.classic.MfClassicNfcTagListener;
 import org.nfctools.mf.ul.Type2NfcTagListener;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.NdefOperationsListener;
 import org.nfctools.ndef.Record;
@@ -352,7 +351,7 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		if(newEditor) {
 			log("Read NDEF into new editor");
 			
-			final byte[] encode = NdefContext.getNdefEncoder().encode(list);
+			final byte[] encode = NdefContext.getNdefMessageEncoder().encode(list);
 
 			openNewEditor(encode);
 		} else {
@@ -371,11 +370,8 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 		List<Record> records = ndefTerminalWriteListener.getNdefRecords();
 		
 		if(ndefOperations != null) {
-			
-    		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
-    		
     		try {
-    			ndefMessageEncoder.encode(records);
+    			NdefContext.getNdefMessageEncoder().encode(records);
 
 				if(ndefOperations.isFormatted()) {
 					ndefOperations.writeNdefMessage(records.toArray(new Record[records.size()]));
@@ -394,11 +390,14 @@ public class NdefTerminalDetector implements Runnable, NdefOperationsListener, T
 
 		synchronized(this) {
 			if(this.terminalStatus != status) {
+				/*
 				if(status == TerminalStatus.CLOSED) {
 					stopReader();
 					
 					notfiyChange();
-				} else if(status == TerminalStatus.CONNECTED) {
+				} else 
+				*/
+				if(status == TerminalStatus.CONNECTED) {
 					setStatus("Tag connected.");
 				} else if(status == TerminalStatus.DISCONNECTED) {
 					setStatus("Tag disconnected.");

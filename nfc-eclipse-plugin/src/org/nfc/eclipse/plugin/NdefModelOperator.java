@@ -63,10 +63,10 @@ import org.nfc.eclipse.plugin.operation.NdefModelRemoveListItemOperation;
 import org.nfc.eclipse.plugin.operation.NdefModelRemoveNodeOperation;
 import org.nfc.eclipse.plugin.operation.NdefModelReplaceChildRecordsOperation;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefDecoder;
-import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
 import org.nfctools.ndef.NdefException;
+import org.nfctools.ndef.NdefMessageDecoder;
+import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
 import org.nfctools.ndef.wkt.records.GcActionRecord;
@@ -180,7 +180,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 
 	private NdefRecordModelParent loadModel(byte[] ndef) throws IOException {
 		if(ndef.length > 0) {
-			NdefDecoder ndefMessageDecoder = NdefContext.getNdefDecoder();
+			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
 
 			List<Record> list = ndefMessageDecoder.decodeToRecords(ndef);
 			
@@ -218,7 +218,7 @@ public class NdefModelOperator implements NdefRecordModelChangeListener {
 	}
 
 	public byte[] toNdefMessage() {
-		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 
 		return ndefMessageEncoder.encode(getRecords());
 	}

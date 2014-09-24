@@ -41,7 +41,9 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
 import org.nfc.eclipse.plugin.model.editing.NdefRecordModelEditingSupport;
 import org.nfctools.ndef.Record;
+import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
+import org.nfctools.ndef.mime.TextMimeRecord;
 import org.nfctools.ndef.wkt.handover.records.ErrorRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverSelectRecord;
@@ -287,14 +289,28 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 						String contentType = mimeRecord.getContentType();
 						if(contentType.startsWith("text/")) {
 
-							if(mimeRecord.hasContent()) {
-								try {
-									byte[] content = mimeRecord.getContentAsBytes();
-	
-									return new String(content);
-								} catch(Exception e) {
-									// ignore
+							if(mimeRecord instanceof TextMimeRecord) {
+								TextMimeRecord textMimeRecord = (TextMimeRecord)mimeRecord;
+								
+								String content = textMimeRecord.getContent(); // null or not
+								if(content != null) {
+									return content;
 								}
+								
+							} else if(mimeRecord instanceof BinaryMimeRecord) {
+								BinaryMimeRecord binaryMimeRecord = (BinaryMimeRecord)mimeRecord;
+								
+								byte[] content = binaryMimeRecord.getContent();
+								
+								if(content != null) {
+									try {
+										return new String(content);
+									} catch(Exception e) {
+										// ignore
+									}
+								}
+							} else {
+								throw new IllegalArgumentException();
 							}
 						}
 					}
@@ -326,7 +342,7 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 			if(record instanceof SignatureRecord) {
 				SignatureRecord signatureRecord = (SignatureRecord)record;
 				
-				byte[] certificateBytes = signatureRecord.getCertificate(node.getParentIndex());
+				byte[] certificateBytes = signatureRecord.getCertificates().get(node.getParentIndex());
 				
 				if(signatureRecord.getCertificateFormat() == CertificateFormat.X_509) {
 
@@ -377,15 +393,19 @@ public class NdefRecordModelValueColumnLabelProvider extends ColumnLabelProvider
 						String contentType = mimeRecord.getContentType();
 						if(contentType.startsWith("image/")) {
 
-							if(mimeRecord.hasContent()) {
-								try {
-									byte[] content = mimeRecord.getContentAsBytes();
-
-									BufferedInputStream inputStreamReader = new BufferedInputStream(new ByteArrayInputStream(content));
-									ImageData imageData = new ImageData(inputStreamReader);
-									return new Image(Display.getCurrent(), imageData );
-								} catch(Exception e) {
-									// ignore
+							if(mimeRecord instanceof BinaryMimeRecord) {
+								BinaryMimeRecord binaryMimeRecord = (BinaryMimeRecord)mimeRecord;
+								
+								byte[] content = binaryMimeRecord.getContent();
+								
+								if(content != null && content.length > 0) {
+									try {
+										BufferedInputStream inputStreamReader = new BufferedInputStream(new ByteArrayInputStream(content));
+										ImageData imageData = new ImageData(inputStreamReader);
+										return new Image(Display.getCurrent(), imageData );
+									} catch(Exception e) {
+										// ignore
+									}
 								}
 							}
 						}

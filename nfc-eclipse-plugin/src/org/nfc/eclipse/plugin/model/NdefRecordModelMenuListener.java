@@ -60,15 +60,16 @@ import org.nfc.eclipse.plugin.terminal.NdefTerminalListener;
 import org.nfc.eclipse.plugin.terminal.NdefTerminalWrapper;
 import org.nfc.eclipse.plugin.util.FileDialogUtil;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefEncoder;
+import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefOperations;
 import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
-import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
+import org.nfctools.ndef.ext.GenericExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.mime.MimeRecord;
+import org.nfctools.ndef.mime.TextMimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
 import org.nfctools.ndef.wkt.handover.records.AlternativeCarrierRecord;
 import org.nfctools.ndef.wkt.handover.records.HandoverCarrierRecord;
@@ -93,7 +94,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 			NdefRecordType.getType(AbsoluteUriRecord.class),
 			NdefRecordType.getType(ActionRecord.class),
 			NdefRecordType.getType(AndroidApplicationRecord.class),
-			NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
+			NdefRecordType.getType(GenericExternalTypeRecord.class),
 			NdefRecordType.getType(EmptyRecord.class),
 			NdefRecordType.getType(GenericControlRecord.class),
 
@@ -142,7 +143,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 	
 	public static NdefRecordType[] externalRecordTypes = NdefRecordType.sort(new NdefRecordType[]{
 		NdefRecordType.getType(AndroidApplicationRecord.class),
-		NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
+		NdefRecordType.getType(GenericExternalTypeRecord.class),
 	});
 
 
@@ -606,8 +607,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				UnknownRecord unknownRecord = (UnknownRecord) record;
 				
 				operation = UnknownRecordEditingSupport.newSetContentOperation(unknownRecord, (NdefRecordModelProperty) selectedNode, payload);
-			} else if(record instanceof UnsupportedExternalTypeRecord) {
-				UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) record;
+			} else if(record instanceof GenericExternalTypeRecord) {
+				GenericExternalTypeRecord unsupportedExternalTypeRecord = (GenericExternalTypeRecord) record;
 				
 				operation = ExternalTypeRecordEditingSupport.newSetContentOperation(unsupportedExternalTypeRecord, (NdefRecordModelProperty) selectedNode, payload);
 			} else if(record instanceof SignatureRecord) {
@@ -623,7 +624,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					if(selectedNode instanceof NdefRecordModelPropertyListItem) {
 						SignatureRecord signatureRecord = (SignatureRecord)record;
 						
-						payload = signatureRecord.getCertificate(selectedNode.getParentIndex());
+						payload = signatureRecord.getCertificates().get(selectedNode.getParentIndex());
 					}
 				}
 			}
@@ -653,8 +654,8 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				UnknownRecord unknownRecord = (UnknownRecord) record;
 				
 				payload = unknownRecord.getPayload();
-			} else if(record instanceof UnsupportedExternalTypeRecord) {
-				UnsupportedExternalTypeRecord unsupportedExternalTypeRecord = (UnsupportedExternalTypeRecord) record;
+			} else if(record instanceof GenericExternalTypeRecord) {
+				GenericExternalTypeRecord unsupportedExternalTypeRecord = (GenericExternalTypeRecord) record;
 				
 				payload = unsupportedExternalTypeRecord.getData();
 			} else if(record instanceof SignatureRecord) {
@@ -669,7 +670,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 					if(selectedNode instanceof NdefRecordModelPropertyListItem) {
 						SignatureRecord signatureRecord = (SignatureRecord)record;
 						
-						payload = signatureRecord.getCertificate(selectedNode.getParentIndex());
+						payload = signatureRecord.getCertificates().get(selectedNode.getParentIndex());
 					}
 				}
 			}
@@ -1065,16 +1066,38 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 
 						if(selectedNode.getRecordBranchIndex() == 1) {
 							MimeRecord mimeRecord = (MimeRecord)record;
-							if(mimeRecord.hasContent()) {
+							
+							boolean hasContent = false;
+							if(mimeRecord instanceof BinaryMimeRecord) {
+								BinaryMimeRecord binaryMimeRecord = (BinaryMimeRecord)mimeRecord;
+								
+								byte[] content = binaryMimeRecord.getContent();
+								
+								if(content != null && content.length > 0) {
+									hasContent = true;
+								}
+							} else if(mimeRecord instanceof TextMimeRecord) {
+								TextMimeRecord textMimeRecord = (TextMimeRecord)mimeRecord;
+								
+								String content = textMimeRecord.getContent();
+								
+								if(content != null && content.length() > 0) {
+									hasContent = true;
+								}
+							} else {
+								throw new IllegalArgumentException();
+							}
+							
+							if(hasContent) {
 								//menuManager.add(viewContent);
 								saveContent.setMimeType(mimeRecord.getContentType());
 								menuManager.add(saveContent);
 							}
 						}
-					} else if(record instanceof UnsupportedExternalTypeRecord) {
+					} else if(record instanceof GenericExternalTypeRecord) {
 
 						if(selectedNode.getRecordBranchIndex() == 2) {
-							UnsupportedExternalTypeRecord mimeRecord = (UnsupportedExternalTypeRecord)record;
+							GenericExternalTypeRecord mimeRecord = (GenericExternalTypeRecord)record;
 							if(mimeRecord.hasData()) {
 								//menuManager.add(viewContent);
 								saveContent.setMimeType(null);
@@ -1135,7 +1158,7 @@ public class NdefRecordModelMenuListener implements IMenuListener, ISelectionCha
 				        	if(ndefOperations.isWritable()) {
 		
 				        		// add write option IF message can in fact be written
-				        		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+				        		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 				        		
 				        		try {
 				        			ndefMessageEncoder.encode(ndefMultiPageEditor.getNdefRecords());

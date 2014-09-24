@@ -40,8 +40,8 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.nfc.eclipse.ndef.signature.SignatureVerifier;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefEncoderException;
+import org.nfctools.ndef.NdefMessageEncoder;
 import org.nfctools.ndef.NdefRecord;
 import org.nfctools.ndef.NdefRecordEncoder;
 import org.nfctools.ndef.Record;
@@ -56,7 +56,7 @@ import android.nfc16.NdefMessage;
 
 public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 
-		private NdefEncoder encoder = NdefContext.getNdefEncoder();
+		private NdefMessageEncoder encoder = NdefContext.getNdefMessageEncoder();
 
 		@Override
 		public String getText(Object element) {
@@ -140,7 +140,7 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 							int index = ndefRecordModelNode.getParentIndex();
 							
 							if(signatureRecord.getCertificateFormat() == CertificateFormat.X_509) {
-								byte[] certificate = signatureRecord.getCertificate(index);
+								byte[] certificate = signatureRecord.getCertificates().get(index);
 								
 						        try {
 									java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
@@ -193,7 +193,7 @@ public class NdefRecordModelHintColumnProvider extends ColumnLabelProvider {
 											Record covered = recordParent.getRecord();
 											
 											NdefRecordEncoder ndefRecordEncoder = NdefContext.getNdefRecordEncoder();
-											NdefEncoder ndefEncoder = NdefContext.getNdefEncoder();
+											NdefMessageEncoder ndefEncoder = NdefContext.getNdefMessageEncoder();
 											
 											NdefRecord encode = ndefRecordEncoder.encode(covered, ndefEncoder);
 

@@ -37,6 +37,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
+import org.nfctools.ndef.ext.GenericExternalTypeRecord;
 import org.nfctools.ndef.ext.GeoRecord;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
@@ -87,7 +88,7 @@ public class NdefRecordType {
 		// map.put(ExternalTypeRecord.class, new NdefRecordType(ExternalTypeRecord.class)); 
 		map.put(AndroidApplicationRecord.class, new NdefRecordType(AndroidApplicationRecord.class, "Android Application Record"));
 		map.put(GeoRecord.class, new NdefRecordType(GeoRecord.class, "Geo Record"));
-		map.put(UnsupportedExternalTypeRecord.class, new NdefRecordType(UnsupportedExternalTypeRecord.class, "External Type Record"));
+		map.put(GenericExternalTypeRecord.class, new NdefRecordType(GenericExternalTypeRecord.class, "External Type Record"));
 		
 		// mime
 		//map.put(MimeRecord.class, new NdefRecordType(MimeRecord.class, "MimeRecord"));

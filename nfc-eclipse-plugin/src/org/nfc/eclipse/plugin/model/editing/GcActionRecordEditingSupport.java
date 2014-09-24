@@ -41,6 +41,7 @@ import org.nfctools.ndef.Record;
 import org.nfctools.ndef.auri.AbsoluteUriRecord;
 import org.nfctools.ndef.empty.EmptyRecord;
 import org.nfctools.ndef.ext.AndroidApplicationRecord;
+import org.nfctools.ndef.ext.GenericExternalTypeRecord;
 import org.nfctools.ndef.ext.UnsupportedExternalTypeRecord;
 import org.nfctools.ndef.mime.BinaryMimeRecord;
 import org.nfctools.ndef.unknown.UnknownRecord;
@@ -72,7 +73,7 @@ public class GcActionRecordEditingSupport extends DefaultRecordEditingSupport  {
 		NdefRecordType.getType(ActionRecord.class),
 		NdefRecordType.getType(AndroidApplicationRecord.class),
 		NdefRecordType.getType(EmptyRecord.class),
-		NdefRecordType.getType(UnsupportedExternalTypeRecord.class),
+		NdefRecordType.getType(GenericExternalTypeRecord.class),
 		NdefRecordType.getType(BinaryMimeRecord.class),
 		NdefRecordType.getType(SmartPosterRecord.class),
 		NdefRecordType.getType(TextRecord.class),

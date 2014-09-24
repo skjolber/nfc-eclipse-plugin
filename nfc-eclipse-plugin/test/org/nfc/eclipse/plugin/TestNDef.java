@@ -44,8 +44,6 @@ import javax.imageio.ImageIO;
 import org.junit.Test;
 import org.nfctools.ndef.NdefConstants;
 import org.nfctools.ndef.NdefContext;
-import org.nfctools.ndef.NdefDecoder;
-import org.nfctools.ndef.NdefEncoder;
 import org.nfctools.ndef.NdefMessage;
 import org.nfctools.ndef.NdefMessageDecoder;
 import org.nfctools.ndef.NdefMessageEncoder;
@@ -159,7 +157,7 @@ public class TestNDef {
 		handoverSelectRecord.setError(new ErrorRecord(ErrorReason.PermanenteMemoryConstraints, new Long(1L)));
 		
 		// add some certificates to signature
-		signatureRecord.addCertificate(new byte[]{0x00, 0x10, 0x11});
+		signatureRecord.getCertificates().add(new byte[]{0x00, 0x10, 0x11});
 		signatureRecord.setSignatureType(SignatureType.RSASSA_PSS_SHA_1);
 		signatureRecord.setSignature(new byte[]{0x01, 0x11, 0x12});
 		
@@ -180,7 +178,7 @@ public class TestNDef {
 		int awidth = 500;
 		int aheight = 500;
 
-		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 
 		for(Record record : records) {
 			List<Record> originalRecords = new ArrayList<Record>();
@@ -188,11 +186,10 @@ public class TestNDef {
 			byte[] ndef = ndefMessageEncoder.encode(originalRecords);
 
 			NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
-			NdefDecoder ndefDecoder = NdefContext.getNdefDecoder();
 			
 			NdefMessage decode = ndefMessageDecoder.decode(ndef);
 
-			List<Record> roundTripRecordes = ndefDecoder.decodeToRecords(decode);
+			List<Record> roundTripRecordes = ndefMessageDecoder.decodeToRecords(decode);
 			
 			for(int i = 0; i < roundTripRecordes.size(); i++) {
 				System.out.println(originalRecords.get(i));
@@ -257,7 +254,7 @@ public class TestNDef {
 		int awidth = 400;
 		int aheight = 400;
 
-		NdefEncoder ndefMessageEncoder = NdefContext.getNdefEncoder();
+		NdefMessageEncoder ndefMessageEncoder = NdefContext.getNdefMessageEncoder();
 
 		List<Record> list = new ArrayList<Record>();
 		for(Record record : records) {
@@ -268,9 +265,7 @@ public class TestNDef {
 		NdefMessageDecoder ndefMessageDecoder = NdefContext.getNdefMessageDecoder();
 		NdefMessage decode = ndefMessageDecoder.decode(ndef);
 
-		NdefDecoder ndefDecoder = NdefContext.getNdefDecoder();
-
-		List<Record> lists = ndefDecoder.decodeToRecords(decode);
+		List<Record> lists = ndefMessageDecoder.decodeToRecords(decode);
 
 		//get a byte matrix for the data
 		BinaryQRCodeWriter writer = new BinaryQRCodeWriter();

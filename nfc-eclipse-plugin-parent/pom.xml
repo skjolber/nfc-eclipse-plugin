@@ -20,18 +20,15 @@
 
   <properties>
     <tycho.version>0.21.0</tycho.version>
-
-    <kepler-repo.url>http://download.eclipse.org/releases/kepler</kepler-repo.url>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>kepler</id>
-      <url>${kepler-repo.url}</url>
+ <repositories>
+   <repository>
+      <id>eclipse-indigo</id>
       <layout>p2</layout>
-    </repository>
-
-  </repositories>
+      <url>http://download.eclipse.org/releases/indigo</url>
+   </repository>
+ </repositories>
 
   <build>
     <plugins>
@@ -45,7 +42,9 @@
       <plugin>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>target-platform-configuration</artifactId>
+        <version>${tycho.version}</version>
         <configuration>
+		  <pomDependencies>consider</pomDependencies>
           <environments>
             <environment>
               <os>linux</os>

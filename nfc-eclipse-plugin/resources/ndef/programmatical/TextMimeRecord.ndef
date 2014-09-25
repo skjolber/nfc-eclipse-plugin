@@ -1,1 +1,5 @@
-Òtext/xml; charset=utf-8abcd...ï¿½ï¿½ï¿½
+ÒÉapplication/json{"menu": {"id": "file","value": "File","popup": {"menuitem": [
+{"value": "New", "onclick": "CreateNewDoc()"},
+{"value": "Open", "onclick": "Ã¸Ã¦Ã¥()"},
+{"value": "Close", "onclick": "CloseDoc()"}
+]}}}

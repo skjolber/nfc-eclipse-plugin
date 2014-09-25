@@ -25,62 +25,16 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.m2e.core.maven2Builder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
+		<nature>org.eclipse.m2e.core.maven2Nature</nature>
 		<nature>org.eclipse.pde.PluginNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>net.sourceforge.metrics.nature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>nfctools-api</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-api/src/main/java</location>
-		</link>
-		<link>
-			<name>nfctools-core</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-core/src/main/java</location>
-		</link>
-		<link>
-			<name>nfctools-core-test</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-core/src/test/java</location>
-		</link>
-		<link>	
-			<name>nfctools-ndef</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-ndef/src/main/java</location>
-		</link>
-		<link>
-			<name>nfctools-ndef-test</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-ndef/src/test/java</location>
-		</link>
-		<link>
-			<name>nfctools-ndef-test-resources</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-ndef/src/test/resources</location>
-		</link>
-		<link>
-			<name>nfctools-p2p</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfctools2/nfctools-p2p/src/main/java</location>
-		</link>
-		<link>
-			<name>src-zxing-javase</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfc-eclipse-plugin/zxing/zxing-javase/src</location>
-		</link>
-		<link>
-			<name>zxing-binaryqr</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfc-eclipse-plugin/zxing/zxing-binaryqr/src</location>
-		</link>
-		<link>
-			<name>zxing-core</name>
-			<type>2</type>
-			<location>WORKSPACE_LOC/nfc-eclipse-plugin/zxing/zxing-core/src</location>
-		</link>
-	</linkedResources>
 </projectDescription>

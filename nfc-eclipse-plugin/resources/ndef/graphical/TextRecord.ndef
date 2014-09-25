@@ -1,1 +1,3 @@
-—Tus
+—ÊTusThis will allow you to set your layout, appearance, layout params in xml making it much easier to read and debug.
+
+For the scrolling problem, you'll need to add your TableLayout to a ScrollView. Something like this in your xml:

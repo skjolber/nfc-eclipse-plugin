@@ -1,0 +1,9 @@
+—ÎTno<catalog>
+    <book id="bk101">
+<author>Skj√∏lberg, Thomas</author>
+        <title>NFC Eclipse plugin developer's guide</title>
+        <genre>NFC</genre>
+<price>free</price>
+<publish_year>2013</publish_year>
+    </book>
+</catalog>

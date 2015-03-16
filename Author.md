@@ -8,10 +8,3 @@ I am a happy fish from [Norway](http://en.wikipedia.org/wiki/Norway) born 1978 i
   * Beer, some wine.
 
 Also, I have an identical twin, consider yourself [warned](https://plus.google.com/110575031590839135351/about?gl=en&hl=en) ;)
-
-## Other open source projects ##
-
-  * [NDEF Tools for Android](http://code.google.com/p/ndef-tools-for-android/)
-  * [XML stream writer for iOS](http://code.google.com/p/xswi/)
-  * [FasterDDR](http://fastwurfl.sourceforge.net/)
-  * [MPEG-21 DIDL](http://mpeg-21.sourceforge.net/)

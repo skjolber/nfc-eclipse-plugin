@@ -60,7 +60,7 @@ August 26th 2012: Version 1.3.1 released.<br>
 August 13th 2012: Version 1.3.0 released.<br>
 
 # Need help? #
-If you need professional help with an NFC project, get in touch.<br>
+If you need professional help with an NFC project, get [in touch](http://www.linkedin.com/in/skjolberg).<br>
 
 # Donate # 
 Chip in to help me buy some more NFC tags and readers and divert time from paid work.<br>

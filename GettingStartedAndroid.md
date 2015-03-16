@@ -32,7 +32,7 @@ As the below resources will get you started on sending and receiving messages, y
 
 A good, hands-on way to learn is to create some records in the editor hosted on this site, [install](Installation.md) and try the [tutorial](Tutorial.md), then do some experimentation in the editor on your own.
 
-The editor supports [most](https://code.google.com/p/nfc-eclipse-plugin/wiki/Specifications) of the known NDEF Record types, and probably all the ones you will need.
+The editor supports [most](Specifications.md) of the known NDEF Record types, and probably all the ones you will need.
 
 # NFC on Android #
 The Android NFC API is specified [here](http://developer.android.com/guide/topics/nfc/nfc.html). Note that NDEF classes are supported but byte-array based.
@@ -53,14 +53,14 @@ For a soft learning curve, check out [this](https://github.com/skjolber/Fagmote/
 There is a boilerplate Eclipse project for Android included within the download section of this project.
 
 ## NDEF Tools for Android ##
-For <b>dynamic</b> reading and writing of NDEF messages at runtime, check out [NDEF Tools for Android](http://code.google.com/p/ndef-tools-for-android/). This library has higher-level functionality than the current Android NDEF byte-array-based implementation.
+For <b>dynamic</b> reading and writing of NDEF messages at runtime, check out [NDEF Tools for Android](https://github.com/skjolber/ndef-tools-for-android). This library has higher-level functionality than the current Android NDEF byte-array-based implementation.
 
 ## NFC Tools for Java ##
 If  you are into interacting Android devices with NFC readers (terminals) and such, you might also check out [NFC Tools for Java](https://github.com/grundid/nfctools).
 
 # Links #
   * [NFC developer forum](https://groups.google.com/forum/?fromgroups#!forum/nfc-developers)
-  * [NDEF Tools for Java](http://code.google.com/p/ndef-tools-for-android/)
+  * [NDEF Tools for Android](https://github.com/skjolber/ndef-tools-for-android)
   * [NFC Tools for Java](https://github.com/grundid/nfctools)
   * [Android NFC demo](http://developer.android.com/resources/samples/NFCDemo/index.html)
   * [Android Beam demo](http://developer.android.com/resources/samples/AndroidBeamDemo/index.html)

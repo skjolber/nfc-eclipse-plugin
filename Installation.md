@@ -8,7 +8,7 @@ This plugin [works](Requirements.md) with any Eclipse distribution above version
   http://nfc-eclipse-plugin.googlecode.com/git/nfc-eclipse-plugin-feature/update-site/
 ```
 > > You should see something like
-> > ![![](http://wiki.nfc-eclipse-plugin.googlecode.com/git/images/update_site.png)](http://wiki.nfc-eclipse-plugin.googlecode.com/git/images/update_site.png)
+> > ![![](https://raw.githubusercontent.com/skjolber/nfc-eclipse-plugin/wiki/images/update_site.png)](https://raw.githubusercontent.com/skjolber/nfc-eclipse-plugin/wiki/images/update_site.png)
   1. Check <b>Near Field Communications</b>, finish the wizard, and restart Eclipse.
 
 Now you can either use an NFC reader or your Android device's NFC chip via the free [NFC Developer](http://play.google.com/store/apps/details?id=com.antares.nfc) app. Or just use the editor for editing files.

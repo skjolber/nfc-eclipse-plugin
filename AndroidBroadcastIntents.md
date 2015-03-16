@@ -55,6 +55,6 @@ The NFC Developer app supports sending and receiving the above broadcasts. Sendi
   * NFC device: Select 'Broadcast' from the menu.
   * Non-NFC device: Tap message on screen.
 
-<img src='http://wiki.nfc-eclipse-plugin.googlecode.com/git/images/broadcasts/broadcast_actions.png' width='50%' /><br />
+<img src='https://raw.githubusercontent.com/skjolber/nfc-eclipse-plugin/wiki/images/broadcasts/broadcast_actions.png' width='50%' /><br />
 Obiously, both alternatives require you first load up an NDEF message using load file, broadcast, scan a tag or a QR code from the Eclipse plugin editor.
 

@@ -27,11 +27,9 @@ I recommend you at least <b>buy some 192 or 1k bytes tags for development</b>.
 You could move to smaller tags later as an optimization - when you ready for production, but on the other hand, starter/developer kits are pretty cheap these days, so getting yourself one is a good starting point.
 
 # Where to order tags online #
-My experiments have been using tags from multiple suppliers, however I've come to prefer [RapidNFC](http://rapidnfc.com/r/1372) because:
-  * Their developer kit tags are clearly labeled
+My experiments have been using tags from multiple suppliers, I'd recommend any that has the following:
+  * Developer kit tags are clearly labeled
   * Healty suite of products available
-  * Prices seem competitive
+  * Competitive prices
   * Orders delivered on time, and to many countries.
-  * The website is informative
-
-Order from RapidNFC using [this link](http://rapidnfc.com/r/1372) and you support this project at the same time. 
+  * Informative website

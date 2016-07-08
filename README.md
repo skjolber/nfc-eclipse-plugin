@@ -25,7 +25,7 @@ update site. See the [installation](https://github.com/skjolber/nfc-eclipse-plug
 Try the walk-through [tutorial](https://github.com/skjolber/nfc-eclipse-plugin/blob/wiki/Tutorial.md), it is **short and has a lot of images** ;-)
 
 # Tags #
-Order yourself some [NFC tags starter kit](http://rapidnfc.com/r/1372) to take full advantage of this project (also to have the most fun ;-)). See the [tags](https://github.com/skjolber/nfc-eclipse-plugin/blob/wiki/Tags.md) wiki page for more.
+Order yourself some NFC tags starter kits to take full advantage of this project (also to have the most fun ;-)). See the [tags](https://github.com/skjolber/nfc-eclipse-plugin/blob/wiki/Tags.md) wiki page for more.
 
 # Android client #
 Download the free <b>'NFC Developer'</b> app from [Android market](http://play.google.com/store/apps/details?id=com.antares.nfc&referrer=eclipse) for **a painless workflow**: NDEF messages are automagically represented as custom QR codes in the plugin editor, then promptly scanned and written to NFC tags using the app - simple, fast and convenient :-)

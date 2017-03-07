@@ -18,7 +18,7 @@ Eclipse [Juno](https://raw.githubusercontent.com/skjolber/nfc-eclipse-plugin/wik
 # Eclipse update site <a href='http://marketplace.eclipse.org/marketplace-client-intro?mpc_install=288653' title='Drag and drop into a running Eclipse Indigo workspace to install NFC Eclipse plugin'><img src='http://marketplace.eclipse.org/misc/installbutton.png' /></a> #
 From Eclipse <b>3.7.2 or later</b>, select Help -> Install new Software and add
 ```
-http://wiki.nfc-eclipse-plugin.googlecode.com/git/updatesite 
+https://raw.githubusercontent.com/skjolber/nfc-eclipse-plugin/master/nfc-eclipse-plugin-update-site 
 ```
 update site. See the [installation](https://github.com/skjolber/nfc-eclipse-plugin/blob/wiki/Installation.md) page for more details.
 # Getting started #
